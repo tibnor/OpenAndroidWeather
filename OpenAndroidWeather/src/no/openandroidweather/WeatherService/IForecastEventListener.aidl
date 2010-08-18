@@ -19,24 +19,20 @@
 
 package no.openandroidweather.WeatherService;
 
-import java.util.EventListener;
-
-import android.location.Location;
-
-public interface ForecastEventListener extends EventListener {
+interface IForecastEventListener{
 	/**
 	 * When a new forecast is ready.
 	 * 
 	 * @param event
 	 */
-	void newForecast(ForecastEvent event);
+	void newForecast(int rowId);
 
 	/**
 	 * When there is a new status for the event
 	 * 
 	 * @param event
 	 */
-	void newStatus(ForecastEvent event);
+	void newStatus(double status,int rowId);
 
 	/**
 	 * Check if the location is in target zone.
@@ -45,13 +41,19 @@ public interface ForecastEventListener extends EventListener {
 	 *            of the forecast
 	 * @return true if in target zone
 	 */
-	Boolean isInTargetZone(Location location);
+	boolean isInTargetZone(int rowId, double latitude, double longitude, double hightAboveSeaLevel);
 
 	/**
 	 * 
-	 * @return The desired point of the forecast.
+	 * @return Latitude of desired point of the forecast.
 	 */
-	Location targetPoint();
+	double targetPointLatitude();
+	
+	/**
+	 * 
+	 * @return Longitude of desired point of the forecast.
+	 */
+	double targetPointLongitude();
 
 	/**
 	 * 
@@ -72,5 +74,5 @@ public interface ForecastEventListener extends EventListener {
 	 */
 	void setExpectedNextUpdate(int time);
 
-	void exceptionOccured(Exception e);
+	void exceptionOccured(int errorcode);
 }

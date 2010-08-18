@@ -17,15 +17,19 @@
     along with OpenAndroidWeather.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package no.openandroidweather.weatherproxy.database;
+package no.openandroidweather.weathercontentprovider;
 
+import android.content.ContentProvider;
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.net.Uri;
 
-public class WeatherProxyDatabase {
-	private static final String TAG = "WeatherProxyDatabase";
+public class WeatherContentProvider extends ContentProvider {
+	private static final String TAG = "WeatherContentProvider";
 
 	/**
 	 * Table for meta data From each weather forecast there are some meta data,
@@ -53,11 +57,13 @@ public class WeatherProxyDatabase {
 	 * milliseconds, for meta data
 	 */
 	public static final String META_GENERATED = "generated";
+	/** Provider of the forecast */
+	public static final String META_PROVIDER = "provider";
 	static final String META_CREATE_TABLE = "CREATE TABLE " + META_TABLE_NAME
 			+ " (" + META_ID + " INTEGER PRIMARY KEY," + META_ALTITUDE
 			+ " REAL," + META_EXPIRES + " INTEGER," + META_GENERATED
 			+ " INTEGER," + META_LATITUDE + " REAL," + META_LONGITUDE
-			+ " REAL," + META_PLACE_NAME + " TEXT)";
+			+ " REAL," + META_PLACE_NAME + " TEXT," + META_PROVIDER + " TEXT)";
 
 	/**
 	 * Table for forecast data: This tables have each data point and the meta
@@ -90,10 +96,48 @@ public class WeatherProxyDatabase {
 			+ " INTEGER PRIMARY KEY, " + FORECAST_FROM + " INTEGER, "
 			+ FORECAST_META + " INTEGER, " + FORECAST_TO + " INTEGER, "
 			+ FORECAST_TYPE + " INTEGER, " + FORECAST_VALUE + " TEXT )";
-	
-	private WeatherDatabaseOpenHelper openHelper;
-	
-	public WeatherProxyDatabase(Context context){
-		openHelper = new WeatherDatabaseOpenHelper(context);
+
+	private WeatherContentProviderDatabaseOpenHelper openHelper;
+
+	public WeatherContentProvider(Context context) {
+		openHelper = new WeatherContentProviderDatabaseOpenHelper(context);
+	}
+
+	@Override
+	public int delete(Uri uri, String selection, String[] selectionArgs) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Not implemented!");
+	}
+
+	@Override
+	public String getType(Uri uri) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Not implemented!");
+	}
+
+	@Override
+	public Uri insert(Uri uri, ContentValues values) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Not implemented!");
+	}
+
+	@Override
+	public boolean onCreate() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Not implemented!");
+	}
+
+	@Override
+	public Cursor query(Uri uri, String[] projection, String selection,
+			String[] selectionArgs, String sortOrder) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Not implemented!");
+	}
+
+	@Override
+	public int update(Uri uri, ContentValues values, String selection,
+			String[] selectionArgs) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Not implemented!");
 	}
 }

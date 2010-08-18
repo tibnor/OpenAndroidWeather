@@ -17,7 +17,7 @@
     along with OpenAndroidWeather.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package no.openandroidweather.weatherproxy.database;
+package no.openandroidweather.weathercontentprovider;
 
 public class WeatherType {
 	public static final int symbol = 0;

@@ -22,21 +22,18 @@
  */
 package no.openandroidweather.weatherproxy;
 
-import android.content.ContentValues;
-import android.database.Cursor;
-import android.net.Uri;
+import android.location.Location;
 
 
 public class YrProxy implements WeatherProxy {
+	
 
-	/* (non-Javadoc)
-	 * @see no.openandroidweather.weatherproxy.WeatherProxy#query(android.net.Uri, android.content.ContentValues, java.lang.String, java.lang.String[])
-	 */
+
 	@Override
-	public Cursor query(Uri uri, ContentValues values, String selection,
-			String[] selectionArgs) {
+	public int getWeatherForecast(Location location) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("Not implemented!");
 	}
+	
 
 }

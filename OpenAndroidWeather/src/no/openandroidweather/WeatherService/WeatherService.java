@@ -3,6 +3,7 @@ package no.openandroidweather.WeatherService;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.os.RemoteException;
 
 /*
  Copyright 2010 Torstein Ingebrigtsen Bø
@@ -26,39 +27,40 @@ import android.os.IBinder;
 /**
  * This service should get the forecast from yr.no, via event listeners.
  */
+// Tricks from this guide:
+// http://developer.android.com/guide/developing/tools/aidl.html#exposingtheinterface
 public class WeatherService extends Service {
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Not implemented!");
+		if (IWeatherService.class.getName().equals(intent.getAction()))
+			return mBind;
+
+		return null;
 	}
 
-	// TODO Refactor the functions under so that they can be called to...
+	private final IWeatherService.Stub mBind = new IWeatherService.Stub() {
+		
+		@Override
+		public void removeForecastEventListener(IForecastEventListener listener)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			throw new UnsupportedOperationException("Not implemented!");
+		}
+		
+		@Override
+		public void forceUpdateForecasts(int[] rowIds) throws RemoteException {
+			// TODO Auto-generated method stub
+			throw new UnsupportedOperationException("Not implemented!");
+		}
+		
+		@Override
+		public void addForecastEventListener(IForecastEventListener listener)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			throw new UnsupportedOperationException("Not implemented!");
+		}
+	};
 
-	private void removeNewForecastEventListener(ForecastEventListener listener) {
-		throw new UnsupportedOperationException("Not implemented!");
-	}
-
-	/**
-	 * Adds a forecast listener who is called when a new forecast is ready. If
-	 * there is a forecast in the within the target zone, the listener will be
-	 * called with a reference to the row in the database. If the forecast is
-	 * old or there is no forecast in the database a new forecast is fetched
-	 * from the provider.
-	 * 
-	 * @param listener
-	 */
-	private void addNewForecastEventListener(ForecastEventListener listener) {
-		throw new UnsupportedOperationException("Not implemented!");
-	}
-
-	/**
-	 * Force an update of forecasts or if id==null, all forecasts registered as ForecastEventListener. 
-	 * @param id The row id's of the forecasts
-	 */
-	private void forceForcastUpdate(int[] id) {
-		throw new UnsupportedOperationException("Not implemented!");
-	}
 
 }

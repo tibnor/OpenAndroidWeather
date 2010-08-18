@@ -17,7 +17,7 @@
     along with OpenAndroidWeather.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package no.openandroidweather.weatherproxy.database;
+package no.openandroidweather.weathercontentprovider;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -25,27 +25,25 @@ import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-class WeatherDatabaseOpenHelper extends SQLiteOpenHelper {
+class WeatherContentProviderDatabaseOpenHelper extends SQLiteOpenHelper {
 	private static final String TAG = "WeatherProxyDatabaseOpenHelper"; 
 	private static final String DATABASE_FILE = "weather.db";
 	static final int DATABASE_VERSION = 1;
-	private static final String CREATE_DB = WeatherProxyDatabase.FORECAST_CREATE_TABLE
-			+ "; " + WeatherProxyDatabase.META_CREATE_TABLE;
 
-	public WeatherDatabaseOpenHelper(Context context, String name,
+	public WeatherContentProviderDatabaseOpenHelper(Context context, String name,
 			CursorFactory factory, int version) {
 		super(context, name, factory, version);
 	}
 
-	public WeatherDatabaseOpenHelper(Context context) {
+	public WeatherContentProviderDatabaseOpenHelper(Context context) {
 		super(context, DATABASE_FILE, null, DATABASE_VERSION);
 	}
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		Log.v(TAG, WeatherProxyDatabase.META_CREATE_TABLE + WeatherProxyDatabase.FORECAST_CREATE_TABLE);
-		db.execSQL(WeatherProxyDatabase.META_CREATE_TABLE);
-		db.execSQL(WeatherProxyDatabase.FORECAST_CREATE_TABLE);
+		Log.v(TAG, WeatherContentProvider.META_CREATE_TABLE + WeatherContentProvider.FORECAST_CREATE_TABLE);
+		db.execSQL(WeatherContentProvider.META_CREATE_TABLE);
+		db.execSQL(WeatherContentProvider.FORECAST_CREATE_TABLE);
 		
 	}
 
@@ -59,8 +57,8 @@ class WeatherDatabaseOpenHelper extends SQLiteOpenHelper {
 	}
 
 	void deleteDatabase(SQLiteDatabase db) {
-		db.execSQL("DROP TABLE IF EXISTS "+WeatherProxyDatabase.FORECAST_TABLE_NAME);
-		db.execSQL("DROP TABLE IF EXISTS "+WeatherProxyDatabase.META_TABLE_NAME);
+		db.execSQL("DROP TABLE IF EXISTS "+WeatherContentProvider.FORECAST_TABLE_NAME);
+		db.execSQL("DROP TABLE IF EXISTS "+WeatherContentProvider.META_TABLE_NAME);
 	}
 
 }
