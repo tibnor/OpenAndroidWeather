@@ -19,18 +19,30 @@
 
 package no.openandroidweather.weathercontentprovider;
 
+import java.net.URISyntaxException;
+
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteDatabase.CursorFactory;
-import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.util.Log;
+import android.widget.SectionIndexer;
 
+/**
+ * The WeatherProxy should call the provider when inserting, the WeatherService
+ * to check witch forecast is available and the client to get the forecast
+ * 
+ */
 public class WeatherContentProvider extends ContentProvider {
 	private static final String TAG = "WeatherContentProvider";
 
+	public static final Uri CONTENT_URI = Uri
+			.parse("content://no.openandroidweather.weathercontentprovider");
+	public static final String FORECAST_CONTENT_DIRECTORY = "forecast";
 	/**
 	 * Table for meta data From each weather forecast there are some meta data,
 	 * they are grouped in this table and is referred back with FORECAST_META
@@ -97,6 +109,25 @@ public class WeatherContentProvider extends ContentProvider {
 			+ FORECAST_META + " INTEGER, " + FORECAST_TO + " INTEGER, "
 			+ FORECAST_TYPE + " INTEGER, " + FORECAST_VALUE + " TEXT )";
 
+	// UriMatcher
+	private static final int sMETA = 1;
+	private static final int sMETA_ID = 2;
+	private static final int sFORECAST = 3;
+	private static final int sFORECAST_ID = 4;
+	private static final int sID_FORECAST = 5;
+	private static final int sID_FORECAST_ID = 6;
+	private static final UriMatcher sURIMatcher = new UriMatcher(sMETA);
+
+	static {
+		String autority = CONTENT_URI.getAuthority();
+		sURIMatcher.addURI(autority, "#", sMETA_ID);
+		sURIMatcher.addURI(autority, FORECAST_CONTENT_DIRECTORY, sFORECAST);
+		sURIMatcher.addURI(autority, FORECAST_CONTENT_DIRECTORY + "/#", sFORECAST_ID);
+		sURIMatcher.addURI(autority, "#/" + FORECAST_CONTENT_DIRECTORY, sID_FORECAST);
+		sURIMatcher.addURI(autority, "#/" + FORECAST_CONTENT_DIRECTORY + "/#",
+				sID_FORECAST_ID);
+	}
+
 	private WeatherContentProviderDatabaseOpenHelper openHelper;
 
 	public WeatherContentProvider(Context context) {
@@ -117,21 +148,90 @@ public class WeatherContentProvider extends ContentProvider {
 
 	@Override
 	public Uri insert(Uri uri, ContentValues values) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Not implemented!");
+		String path = uri.getPath();
+		String table = null;
+		if (path == null || path.equals("")) {
+			// Is meta data:
+			table = META_TABLE_NAME;
+		} else if (path.contains(FORECAST_CONTENT_DIRECTORY)) {
+			// is forecast:
+			table = FORECAST_TABLE_NAME;
+
+			// gets id:
+			String split[] = path.split("/");
+
+			// Checks that the second split is a integer
+			if (!split[1].matches("^-{0,1}[0-9]+$"))
+				throw new UnsupportedOperationException(
+						"Path was not recognized in insert:" + path);
+			values.put(FORECAST_META, split[1]);
+
+		} else {
+			Log.e(TAG, "Path was not recognized in insert:" + path);
+			throw new UnsupportedOperationException(
+					"Path was not recognized in insert:" + path);
+		}
+
+		SQLiteDatabase db = openHelper.getWritableDatabase();
+		Long id = db.insert(table, null, values);
+		db.close();
+		return Uri.withAppendedPath(uri, id.toString());
 	}
 
 	@Override
 	public boolean onCreate() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Not implemented!");
+		return true;
 	}
 
 	@Override
 	public Cursor query(Uri uri, String[] projection, String selection,
 			String[] selectionArgs, String sortOrder) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Not implemented!");
+		SQLiteQueryBuilder q = new SQLiteQueryBuilder();
+
+		// Find table
+		int uriMatch = sURIMatcher.match(uri);
+		Log.d(TAG, new Integer(uriMatch).toString()+uri);
+		switch (uriMatch) {
+		case sMETA:
+		case sMETA_ID:
+			q.setTables(META_TABLE_NAME);
+			break;
+		case sFORECAST:
+		case sFORECAST_ID:
+		case sID_FORECAST:
+		case sID_FORECAST_ID:
+			q.setTables(FORECAST_TABLE_NAME);
+			break;
+		default:
+			Log.e(TAG, "Something wrong with the uri!, uriMatch:"+uriMatch+" uri:"+uri.toString());
+			throw new UnsupportedOperationException("Something wrong with the uri!");
+		}
+
+		//Find id in meta table
+		switch (uriMatch) {
+		case sMETA_ID:
+			q.appendWhereEscapeString(META_ID + "=" + uri.getLastPathSegment());
+			break;
+		case sID_FORECAST:
+		case sID_FORECAST_ID:
+			q.appendWhereEscapeString(FORECAST_META + "="
+					+ uri.getPathSegments().get(0));
+
+			break;
+		}
+
+		//Find id in forecast table
+		switch (uriMatch) {
+		case sFORECAST_ID:
+		case sID_FORECAST_ID:
+			q.appendWhereEscapeString(FORECAST_ID + "="
+					+ uri.getLastPathSegment());
+		}
+
+		
+		return q.query(openHelper.getReadableDatabase(), projection, selection,
+				selectionArgs, null, null, sortOrder);
+
 	}
 
 	@Override
@@ -140,4 +240,5 @@ public class WeatherContentProvider extends ContentProvider {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("Not implemented!");
 	}
+
 }

@@ -17,9 +17,9 @@
     along with OpenAndroidWeather.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package no.openandroidweather.WeatherService;
+package no.openandroidweather.weatherservice;
 
-import no.openandroidweather.WeatherService.IForecastEventListener;
+import no.openandroidweather.weatherservice.IForecastEventListener;
 
 
 /* See http://github.com/commonsguy/cw-andtutorials/blob/master/19-RemoteService/Patchy/src/apt/tutorial/ 

@@ -1,4 +1,4 @@
-package no.openandroidweather.WeatherService;
+package no.openandroidweather.weatherservice;
 
 import android.app.Service;
 import android.content.Intent;

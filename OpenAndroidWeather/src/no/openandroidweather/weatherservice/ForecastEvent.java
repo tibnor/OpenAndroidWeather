@@ -17,7 +17,7 @@
     along with OpenAndroidWeather.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package no.openandroidweather.WeatherService;
+package no.openandroidweather.weatherservice;
 
 import java.util.EventObject;
 
