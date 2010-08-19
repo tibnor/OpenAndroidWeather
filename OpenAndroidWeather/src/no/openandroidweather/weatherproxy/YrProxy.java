@@ -15,25 +15,103 @@
 
     You should have received a copy of the GNU General Public License
     along with OpenAndroidWeather.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 /**
  * 
  */
 package no.openandroidweather.weatherproxy;
 
-import android.location.Location;
+import java.io.IOException;
+import java.io.InputStream;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import no.openandroidweather.weatherproxy.yr.YrLocationForecastParser;
+
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.HttpResponseException;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.xml.sax.SAXException;
+
+import android.content.ContentResolver;
+import android.location.Location;
+import android.net.Uri;
+import android.util.Log;
 
 public class YrProxy implements WeatherProxy {
-	
+	private static final String TAG = "YrProxy";
+	public static final String PROVIDER = "met.no";
+	private ContentResolver mContentResolver;
 
-
-	@Override
-	public int getWeatherForecast(Location location) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Not implemented!");
+	public YrProxy(ContentResolver contentResolver){
+		super();
+		mContentResolver = contentResolver;
 	}
 	
+	@Override
+	public Uri getWeatherForecast(Location location) throws IOException,
+			ParserConfigurationException, SAXException {
+		return locationForecast(location);
+	}
 
+	/**
+	 * See http://api.met.no/weatherapi/locationforecast/1.8/documentation for
+	 * more information
+	 * 
+	 * @param location
+	 *            of the forecast
+	 * @return Uri to the data in WeatherContentProvider
+	 * @throws SAXException
+	 * @throws ParserConfigurationException
+	 */
+	private Uri locationForecast(Location location) throws IOException,
+			ParserConfigurationException, SAXException {
+		// Makes the uri
+		Uri.Builder uri = new Uri.Builder();
+		uri.authority("api.met.no");
+		uri.path("/weatherapi/locationforecast/1.8/");
+		uri.scheme("http");
+		String lat = new Double(location.getLatitude()).toString();
+		String lon = new Double(location.getLongitude()).toString();
+		uri.appendQueryParameter("lat", lat);
+		uri.appendQueryParameter("lon", lon);
+		if (location.hasAltitude()) {
+			Double altD = location.getAltitude();
+			String alt = Integer.toString(altD.intValue());
+			uri.appendQueryParameter("msl", alt);
+		}
+		Log.d(TAG, uri.toString());
+		
+		HttpRequest httpRequest = new HttpGet(uri.toString());
+		httpRequest.addHeader("Accept-Encoding", "gzip");
+
+		HttpClient httpClient = new DefaultHttpClient();
+		HttpHost httpHost = new HttpHost("api.met.no");
+		HttpResponse httpResponse = null;
+		httpResponse = httpClient.execute(httpHost, httpRequest);
+
+		if (httpResponse.getStatusLine().getStatusCode() != 200) {
+			int responseCode = httpResponse.getStatusLine().getStatusCode();
+			throw new HttpResponseException(responseCode,
+					"Trouble with response from api.yr.no: Response code: "
+							+ responseCode);
+		}
+
+		InputStream inputStream = httpResponse.getEntity().getContent();
+		SAXParserFactory spf = SAXParserFactory.newInstance();
+		SAXParser parser = spf.newSAXParser();
+
+		// Parse it
+		YrLocationForecastParser yrLocationForecastParser = new YrLocationForecastParser(mContentResolver);
+		parser.parse(inputStream, yrLocationForecastParser);
+
+		return yrLocationForecastParser.getContentUri();
+	}
 }

@@ -19,7 +19,8 @@
 
 package no.openandroidweather.weathercontentprovider;
 
-import java.net.URISyntaxException;
+import java.util.LinkedList;
+import java.util.List;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -27,10 +28,8 @@ import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.util.Log;
-import android.widget.SectionIndexer;
 
 /**
  * The WeatherProxy should call the provider when inserting, the WeatherService
@@ -38,6 +37,16 @@ import android.widget.SectionIndexer;
  * 
  */
 public class WeatherContentProvider extends ContentProvider {
+	public WeatherContentProvider() {
+		super();
+
+	}
+	
+	public WeatherContentProvider(Context context) {
+		super();
+		openHelper = new WeatherContentProviderDatabaseOpenHelper(context);
+	}
+
 	private static final String TAG = "WeatherContentProvider";
 
 	public static final Uri CONTENT_URI = Uri
@@ -63,7 +72,7 @@ public class WeatherContentProvider extends ContentProvider {
 	 * Time for when a new forecast is expected, Integer Unix time in
 	 * milliseconds, for meta data
 	 */
-	public static final String META_EXPIRES = "expires";
+	public static final String META_NEXT_FORECAST = "new_forecast";
 	/**
 	 * Time for when a the forecast was generated, Integer Unix time in
 	 * milliseconds, for meta data
@@ -73,7 +82,7 @@ public class WeatherContentProvider extends ContentProvider {
 	public static final String META_PROVIDER = "provider";
 	static final String META_CREATE_TABLE = "CREATE TABLE " + META_TABLE_NAME
 			+ " (" + META_ID + " INTEGER PRIMARY KEY," + META_ALTITUDE
-			+ " REAL," + META_EXPIRES + " INTEGER," + META_GENERATED
+			+ " REAL," + META_NEXT_FORECAST + " INTEGER," + META_GENERATED
 			+ " INTEGER," + META_LATITUDE + " REAL," + META_LONGITUDE
 			+ " REAL," + META_PLACE_NAME + " TEXT," + META_PROVIDER + " TEXT)";
 
@@ -102,7 +111,7 @@ public class WeatherContentProvider extends ContentProvider {
 	/** Value of forecast data, Text */
 	public static final String FORECAST_VALUE = "value";
 	/** _id in META table for forecast data */
-	public static final String FORECAST_META = "meta";
+	static final String FORECAST_META = "meta";
 	static final String FORECAST_CREATE_TABLE = "CREATE TABLE "
 			+ FORECAST_TABLE_NAME + " (" + FORECAST_ID
 			+ " INTEGER PRIMARY KEY, " + FORECAST_FROM + " INTEGER, "
@@ -120,24 +129,41 @@ public class WeatherContentProvider extends ContentProvider {
 
 	static {
 		String autority = CONTENT_URI.getAuthority();
+		sURIMatcher.addURI(autority, "", sMETA);
 		sURIMatcher.addURI(autority, "#", sMETA_ID);
 		sURIMatcher.addURI(autority, FORECAST_CONTENT_DIRECTORY, sFORECAST);
-		sURIMatcher.addURI(autority, FORECAST_CONTENT_DIRECTORY + "/#", sFORECAST_ID);
-		sURIMatcher.addURI(autority, "#/" + FORECAST_CONTENT_DIRECTORY, sID_FORECAST);
+		sURIMatcher.addURI(autority, FORECAST_CONTENT_DIRECTORY + "/#",
+				sFORECAST_ID);
+		sURIMatcher.addURI(autority, "#/" + FORECAST_CONTENT_DIRECTORY,
+				sID_FORECAST);
 		sURIMatcher.addURI(autority, "#/" + FORECAST_CONTENT_DIRECTORY + "/#",
 				sID_FORECAST_ID);
 	}
 
 	private WeatherContentProviderDatabaseOpenHelper openHelper;
 
-	public WeatherContentProvider(Context context) {
-		openHelper = new WeatherContentProviderDatabaseOpenHelper(context);
-	}
 
+	
+	/*
+	 * @see android.content.ContentProvider#delete(android.net.Uri, java.lang.String, java.lang.String[])
+	 * If the URI is for the root level with a id, all elements connected to this id is also deleted
+	 */
 	@Override
 	public int delete(Uri uri, String selection, String[] selectionArgs) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Not implemented!");
+		int uriMatch = sURIMatcher.match(uri);
+		// TODO: Handle this bug better:
+		if(uri.equals(CONTENT_URI))
+			uriMatch = 1;
+
+		String table = getTable(uri, uriMatch);
+		String newSelection = getNewSelection(uri, selection, uriMatch);
+		
+		if(uriMatch == sMETA_ID){
+			uri = Uri.withAppendedPath(uri, FORECAST_CONTENT_DIRECTORY);
+			delete(uri,selection,selectionArgs);
+		}
+		
+		return openHelper.getWritableDatabase().delete(table, newSelection, selectionArgs);
 	}
 
 	@Override
@@ -179,59 +205,93 @@ public class WeatherContentProvider extends ContentProvider {
 	}
 
 	@Override
+	
+	
 	public boolean onCreate() {
+		openHelper = new WeatherContentProviderDatabaseOpenHelper(getContext());
 		return true;
 	}
 
 	@Override
 	public Cursor query(Uri uri, String[] projection, String selection,
 			String[] selectionArgs, String sortOrder) {
-		SQLiteQueryBuilder q = new SQLiteQueryBuilder();
-
-		// Find table
 		int uriMatch = sURIMatcher.match(uri);
-		Log.d(TAG, new Integer(uriMatch).toString()+uri);
+		// TODO: Handle this bug better:
+		if(uri.equals(CONTENT_URI))
+			uriMatch = 1;
+
+		String table = getTable(uri, uriMatch);
+
+		String newSelection = getNewSelection(uri, selection, uriMatch);
+
+		return openHelper.getReadableDatabase().query(table, projection,
+				newSelection, selectionArgs, null, null, sortOrder);
+
+	}
+
+	/**
+	 * @param uri
+	 * @param selection
+	 * @param uriMatch
+	 * @return
+	 */
+	private String getNewSelection(Uri uri, String selection, int uriMatch) {
+		List<String> where = new LinkedList<String>();
+		if (selection != null)
+			where.add(selection);
+		// Find id in meta table
+		switch (uriMatch) {
+		case sMETA_ID:
+			where.add(META_ID + "=" + uri.getLastPathSegment());
+			break;
+		case sID_FORECAST:
+		case sID_FORECAST_ID:
+			where.add(FORECAST_META + "=" + uri.getPathSegments().get(0));
+
+			break;
+		}
+
+		// Find id in forecast table
+		switch (uriMatch) {
+		case sFORECAST_ID:
+		case sID_FORECAST_ID:
+			where.add(FORECAST_ID + "=" + uri.getLastPathSegment());
+		}
+
+		String newSelection = null;
+		if (where.size() > 0) {
+			newSelection = where.get(0);
+			for (int i = 1; i < where.size(); i++) {
+				newSelection += " AND " + where.get(i);
+			}
+		}
+		return newSelection;
+	}
+
+	/**
+	 * @param uri
+	 * @param uriMatch
+	 * @return
+	 */
+	private String getTable(Uri uri, int uriMatch) {
+		String table = null;
 		switch (uriMatch) {
 		case sMETA:
 		case sMETA_ID:
-			q.setTables(META_TABLE_NAME);
+			table = META_TABLE_NAME;
 			break;
 		case sFORECAST:
 		case sFORECAST_ID:
 		case sID_FORECAST:
 		case sID_FORECAST_ID:
-			q.setTables(FORECAST_TABLE_NAME);
+			table = FORECAST_TABLE_NAME;
 			break;
 		default:
-			Log.e(TAG, "Something wrong with the uri!, uriMatch:"+uriMatch+" uri:"+uri.toString());
-			throw new UnsupportedOperationException("Something wrong with the uri!");
+			throw new UnsupportedOperationException(
+					"Something wrong with the uri!, uriMatch:" + uriMatch
+					+ " uri:" + uri.toString());
 		}
-
-		//Find id in meta table
-		switch (uriMatch) {
-		case sMETA_ID:
-			q.appendWhereEscapeString(META_ID + "=" + uri.getLastPathSegment());
-			break;
-		case sID_FORECAST:
-		case sID_FORECAST_ID:
-			q.appendWhereEscapeString(FORECAST_META + "="
-					+ uri.getPathSegments().get(0));
-
-			break;
-		}
-
-		//Find id in forecast table
-		switch (uriMatch) {
-		case sFORECAST_ID:
-		case sID_FORECAST_ID:
-			q.appendWhereEscapeString(FORECAST_ID + "="
-					+ uri.getLastPathSegment());
-		}
-
-		
-		return q.query(openHelper.getReadableDatabase(), projection, selection,
-				selectionArgs, null, null, sortOrder);
-
+		return table;
 	}
 
 	@Override

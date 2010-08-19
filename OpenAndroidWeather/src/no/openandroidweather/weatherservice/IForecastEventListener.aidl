@@ -23,16 +23,16 @@ interface IForecastEventListener{
 	/**
 	 * When a new forecast is ready.
 	 * 
-	 * @param event
+	 * @param uri to the new forecast
 	 */
-	void newForecast(int rowId);
+	void newForecast(String uri);
 
 	/**
 	 * When there is a new status for the event
 	 * 
 	 * @param event
 	 */
-	void newStatus(double status,int rowId);
+	void newStatus(double status,String uri);
 
 	/**
 	 * Check if the location is in target zone.
@@ -41,7 +41,7 @@ interface IForecastEventListener{
 	 *            of the forecast
 	 * @return true if in target zone
 	 */
-	boolean isInTargetZone(int rowId, double latitude, double longitude, double hightAboveSeaLevel);
+	boolean isInTargetZone(double latitude, double longitude, double heigthAboveSeaLevel);
 
 	/**
 	 * 
@@ -54,12 +54,19 @@ interface IForecastEventListener{
 	 * @return Longitude of desired point of the forecast.
 	 */
 	double targetPointLongitude();
+	
+	/**
+	 * 
+	 * @return Height above sea level of desired point of the forecast.
+	 */
+	double targetPointHeigt();
 
 	/**
 	 * 
 	 * @return The radius of the target zone in meter.
 	 */
 	int radiusOfTargetZone();
+	
 
 	/**
 	 * @return Minimum time to next update of forecast in ms since 1970
@@ -70,7 +77,7 @@ interface IForecastEventListener{
 	/**
 	 * 
 	 * @param time
-	 *            to expected new forecast
+	 *            to expected new forecast in ms since 1970
 	 */
 	void setExpectedNextUpdate(int time);
 

@@ -49,14 +49,14 @@ public class WeatherService extends Service {
 		}
 		
 		@Override
-		public void forceUpdateForecasts(int[] rowIds) throws RemoteException {
+		public void addForecastEventListener(IForecastEventListener listener)
+				throws RemoteException {
 			// TODO Auto-generated method stub
 			throw new UnsupportedOperationException("Not implemented!");
 		}
-		
+
 		@Override
-		public void addForecastEventListener(IForecastEventListener listener)
-				throws RemoteException {
+		public void forceUpdateForecasts(String[] Uri) throws RemoteException {
 			// TODO Auto-generated method stub
 			throw new UnsupportedOperationException("Not implemented!");
 		}

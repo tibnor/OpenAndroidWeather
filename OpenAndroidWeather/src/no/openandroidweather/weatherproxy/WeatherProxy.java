@@ -1,6 +1,9 @@
 package no.openandroidweather.weatherproxy;
 
+import java.io.IOException;
+
 import android.location.Location;
+import android.net.Uri;
 
 public interface WeatherProxy {
 
@@ -10,7 +13,7 @@ public interface WeatherProxy {
 	 * 
 	 * @param location
 	 *            of the forecast
-	 * @return rowId in the content provider.
+	 * @return Uri in the content provider.
 	 */
-	int getWeatherForecast(Location location);
+	Uri getWeatherForecast(Location location) throws IOException, Exception ;
 }

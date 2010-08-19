@@ -45,8 +45,8 @@ interface IWeatherService{
 	
 	/**
 	 * Force an update of forecasts or if id==null, all forecasts registered as ForecastEventListener. 
-	 * @param id The row id's of the forecasts
+	 * @param Uri The uris for the forecasts or null  for all.
 	 */
-	void forceUpdateForecasts(in int[] rowIds);
+	void forceUpdateForecasts(in String[] Uri);
 
 }
