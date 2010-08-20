@@ -41,7 +41,7 @@ public class WeatherContentProvider extends ContentProvider {
 		super();
 
 	}
-	
+
 	public WeatherContentProvider(Context context) {
 		super();
 		openHelper = new WeatherContentProviderDatabaseOpenHelper(context);
@@ -142,34 +142,74 @@ public class WeatherContentProvider extends ContentProvider {
 
 	private WeatherContentProviderDatabaseOpenHelper openHelper;
 
-
-	
 	/*
-	 * @see android.content.ContentProvider#delete(android.net.Uri, java.lang.String, java.lang.String[])
-	 * If the URI is for the root level with a id, all elements connected to this id is also deleted
+	 * @see android.content.ContentProvider#delete(android.net.Uri,
+	 * java.lang.String, java.lang.String[]) If the URI is for the root level
+	 * with a id, all elements connected to this id is also deleted
 	 */
 	@Override
 	public int delete(Uri uri, String selection, String[] selectionArgs) {
 		int uriMatch = sURIMatcher.match(uri);
 		// TODO: Handle this bug better:
-		if(uri.equals(CONTENT_URI))
+		if (uri.equals(CONTENT_URI))
 			uriMatch = 1;
 
 		String table = getTable(uri, uriMatch);
 		String newSelection = getNewSelection(uri, selection, uriMatch);
-		
-		if(uriMatch == sMETA_ID){
+
+		if (uriMatch == sMETA_ID) {
 			uri = Uri.withAppendedPath(uri, FORECAST_CONTENT_DIRECTORY);
-			delete(uri,selection,selectionArgs);
+			delete(uri, selection, selectionArgs);
 		}
-		
-		return openHelper.getWritableDatabase().delete(table, newSelection, selectionArgs);
+
+		return openHelper.getWritableDatabase().delete(table, newSelection,
+				selectionArgs);
 	}
 
 	@Override
 	public String getType(Uri uri) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("Not implemented!");
+	}
+
+	@Override
+	public int bulkInsert(Uri uri, ContentValues[] values) {
+		int uriMatch = sURIMatcher.match(uri);
+		// TODO: Handle this bug better:
+		if (uri.equals(CONTENT_URI))
+			uriMatch = 1;
+
+		String table = FORECAST_TABLE_NAME;
+		int id = -1;
+		switch (uriMatch) {
+		case sMETA:
+			table = META_TABLE_NAME;
+			break;
+		case sMETA_ID:
+		case sFORECAST_ID:
+		case sID_FORECAST_ID:
+			throw new UnsupportedOperationException(
+					"An insert can not end with an id");
+		case sID_FORECAST:
+			id = new Integer(uri.getPathSegments().get(0));
+			break;
+		}
+
+		if (id >= 0) {
+			for (ContentValues contentValues : values) {
+				contentValues.put(FORECAST_META, id);
+			}
+		}
+		
+		int insertedRows = 0;
+		SQLiteDatabase db = openHelper.getWritableDatabase();
+		for (ContentValues contentValues : values) {
+			if(db.insertOrThrow(table, null, contentValues)!=-1)
+				insertedRows++;
+		}
+		db.close();
+		return insertedRows;
+
 	}
 
 	@Override
@@ -205,8 +245,6 @@ public class WeatherContentProvider extends ContentProvider {
 	}
 
 	@Override
-	
-	
 	public boolean onCreate() {
 		openHelper = new WeatherContentProviderDatabaseOpenHelper(getContext());
 		return true;
@@ -217,7 +255,7 @@ public class WeatherContentProvider extends ContentProvider {
 			String[] selectionArgs, String sortOrder) {
 		int uriMatch = sURIMatcher.match(uri);
 		// TODO: Handle this bug better:
-		if(uri.equals(CONTENT_URI))
+		if (uri.equals(CONTENT_URI))
 			uriMatch = 1;
 
 		String table = getTable(uri, uriMatch);
@@ -289,7 +327,7 @@ public class WeatherContentProvider extends ContentProvider {
 		default:
 			throw new UnsupportedOperationException(
 					"Something wrong with the uri!, uriMatch:" + uriMatch
-					+ " uri:" + uri.toString());
+							+ " uri:" + uri.toString());
 		}
 		return table;
 	}
@@ -297,8 +335,14 @@ public class WeatherContentProvider extends ContentProvider {
 	@Override
 	public int update(Uri uri, ContentValues values, String selection,
 			String[] selectionArgs) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Not implemented!");
+		int uriMatch = sURIMatcher.match(uri);
+		// TODO: Handle this bug better:
+		if (uri.equals(CONTENT_URI))
+			uriMatch = 1;
+
+		String table = getTable(uri, uriMatch);
+		String newSelection = getNewSelection(uri, selection, uriMatch);
+		return openHelper.getWritableDatabase().update(table, values, newSelection, selectionArgs);
 	}
 
 }

@@ -24,6 +24,7 @@ package no.openandroidweather.weatherproxy;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.UnknownHostException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -50,15 +51,18 @@ public class YrProxy implements WeatherProxy {
 	public static final String PROVIDER = "met.no";
 	private ContentResolver mContentResolver;
 
-	public YrProxy(ContentResolver contentResolver){
+	public YrProxy(ContentResolver contentResolver) {
 		super();
 		mContentResolver = contentResolver;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see no.openandroidweather.weatherproxy.WeatherProxy#getWeatherForecast(android.location.Location, long)
+	 */
 	@Override
-	public Uri getWeatherForecast(Location location) throws IOException,
-			ParserConfigurationException, SAXException {
-		return locationForecast(location);
+	public Uri getWeatherForecast(Location location, long lastForecastGenerated)
+			throws IOException, Exception {
+		return locationForecast(location, lastForecastGenerated);
 	}
 
 	/**
@@ -67,11 +71,15 @@ public class YrProxy implements WeatherProxy {
 	 * 
 	 * @param location
 	 *            of the forecast
+	 * @param lastForecastGenerated
 	 * @return Uri to the data in WeatherContentProvider
-	 * @throws SAXException
+	 * @throws UnknownHostException When no Internet connection
+	 * @throws SAXException parsing exception
 	 * @throws ParserConfigurationException
+	 * @throws IOException Internet trouble
 	 */
-	private Uri locationForecast(Location location) throws IOException,
+	private Uri locationForecast(Location location, long lastForecastGenerated)
+			throws UnknownHostException, IOException,
 			ParserConfigurationException, SAXException {
 		// Makes the uri
 		Uri.Builder uri = new Uri.Builder();
@@ -88,7 +96,7 @@ public class YrProxy implements WeatherProxy {
 			uri.appendQueryParameter("msl", alt);
 		}
 		Log.d(TAG, uri.toString());
-		
+
 		HttpRequest httpRequest = new HttpGet(uri.toString());
 		httpRequest.addHeader("Accept-Encoding", "gzip");
 
@@ -109,8 +117,17 @@ public class YrProxy implements WeatherProxy {
 		SAXParser parser = spf.newSAXParser();
 
 		// Parse it
-		YrLocationForecastParser yrLocationForecastParser = new YrLocationForecastParser(mContentResolver);
-		parser.parse(inputStream, yrLocationForecastParser);
+		YrLocationForecastParser yrLocationForecastParser = new YrLocationForecastParser(
+				mContentResolver, lastForecastGenerated);
+		try {
+			parser.parse(inputStream, yrLocationForecastParser);
+		} catch (SAXException e) {
+			if (e.getMessage().equals(
+					YrLocationForecastParser.NO_NEW_DATA_EXCEPTION))
+				return null;
+			else
+				throw e;
+		}
 
 		return yrLocationForecastParser.getContentUri();
 	}

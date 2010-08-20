@@ -1,6 +1,7 @@
 package no.openandroidweather.weatherproxy;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import android.content.ContentResolver;
@@ -11,12 +12,14 @@ import android.test.ProviderTestCase2;
 
 public class YrProxyTest extends ProviderTestCase2<WeatherContentProvider> {
 	public YrProxyTest() {
-		super(WeatherContentProvider.class,WeatherContentProvider.CONTENT_URI.getAuthority());
+		super(WeatherContentProvider.class, WeatherContentProvider.CONTENT_URI
+				.getAuthority());
 	}
-	
+
 	public YrProxyTest(Class<WeatherContentProvider> providerClass,
 			String providerAuthority) {
-		super(WeatherContentProvider.class,WeatherContentProvider.CONTENT_URI.getAuthority());
+		super(WeatherContentProvider.class, WeatherContentProvider.CONTENT_URI
+				.getAuthority());
 	}
 
 	WeatherProxy yr;
@@ -30,7 +33,7 @@ public class YrProxyTest extends ProviderTestCase2<WeatherContentProvider> {
 
 	}
 
-	public void testGetWeatherForecast() throws IOException, Exception {
+	public void testGetWeatherForecast() throws UnknownHostException, IOException, Exception {
 		// Sets a location Hovedbygget at NTNU, Trondheim as the location
 		Double lat = 63.41948, lon = 10.40189, alt = 40.;
 		Location loc = new Location("");
@@ -39,23 +42,42 @@ public class YrProxyTest extends ProviderTestCase2<WeatherContentProvider> {
 		loc.setAltitude(alt);
 
 		Uri uri = null;
-		uri = yr.getWeatherForecast(loc);
+		uri = yr.getWeatherForecast(loc, 0);
 
 		Cursor c = content.query(uri, null, null, null, null);
 		assertEquals(1, c.getCount());
 
 		c.moveToFirst();
 		assertEquals(lat, c.getDouble(c
-				.getColumnIndex(WeatherContentProvider.META_LATITUDE)),0.005);
+				.getColumnIndex(WeatherContentProvider.META_LATITUDE)), 0.005);
 		assertEquals(lon, c.getDouble(c
-				.getColumnIndex(WeatherContentProvider.META_LONGITUDE)),0.005);
+				.getColumnIndex(WeatherContentProvider.META_LONGITUDE)), 0.005);
 		assertEquals(alt, c.getDouble(c
-				.getColumnIndex(WeatherContentProvider.META_ALTITUDE)),1);
-		assertEquals(YrProxy.PROVIDER, c.getString(c.getColumnIndex(WeatherContentProvider.META_PROVIDER)));
+				.getColumnIndex(WeatherContentProvider.META_ALTITUDE)), 1);
+		assertEquals(YrProxy.PROVIDER, c.getString(c
+				.getColumnIndex(WeatherContentProvider.META_PROVIDER)));
 		c.close();
-		
-		c = content.query(Uri.withAppendedPath(uri,WeatherContentProvider.FORECAST_CONTENT_DIRECTORY), null, null, null, null);
-		assertTrue(500<c.getCount());
+
+		c = content.query(Uri.withAppendedPath(uri,
+				WeatherContentProvider.FORECAST_CONTENT_DIRECTORY), null, null,
+				null, null);
+		assertTrue(500 < c.getCount());
 		c.close();
+	}
+
+	public void testGetWeatherForecastOldDate() throws IOException, Exception {
+		// Sets a location Hovedbygget at NTNU, Trondheim as the location
+		Double lat = 63.41948, lon = 10.40189, alt = 40.;
+		Location loc = new Location("");
+		loc.setLatitude(lat);
+		loc.setLongitude(lon);
+		loc.setAltitude(alt);
+
+		assertNull(yr.getWeatherForecast(loc, System.currentTimeMillis()));
+
+	}
+
+	public void testGetWeatherForecastNoInternetConnection() {
+		fail("Not implemented!");
 	}
 }

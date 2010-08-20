@@ -21,6 +21,8 @@ package no.openandroidweather.weatherproxy.yr;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import no.openandroidweather.weathercontentprovider.WeatherType;
@@ -28,6 +30,7 @@ import no.openandroidweather.weatherproxy.YrProxy;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import android.content.ContentResolver;
@@ -36,6 +39,7 @@ import android.net.Uri;
 
 public class YrLocationForecastParser extends DefaultHandler {
 	private static final String TAG = "YrLocationForecastParser";
+	public final static String NO_NEW_DATA_EXCEPTION = "no new data!";
 	final private static SimpleDateFormat timeFormat = new SimpleDateFormat(
 			"yyyy-MM-dd'T'hh:mm:ss'Z'");
 	ContentResolver contentResolver;
@@ -46,13 +50,21 @@ public class YrLocationForecastParser extends DefaultHandler {
 	long from;
 	long to;
 	long nextForecastTime = 0;
-	long forecastRunned = 0;
+	long forecastGenerated = 0;
+	final long lastGenerated;
+	List<ContentValues> values = new ArrayList<ContentValues>();
 
-	public YrLocationForecastParser(ContentResolver contentResolver) {
+	public YrLocationForecastParser(ContentResolver contentResolver,
+			long lastGeneratedForecastTime) {
 		super();
+		this.lastGenerated = lastGeneratedForecastTime;
 		this.contentResolver = contentResolver;
 	}
 
+	/**
+	 * @return Uri to the content in WeatherContentProvider or null if it only
+	 *         updates the expected next forecast time
+	 */
 	public Uri getContentUri() {
 		return contentUri;
 	}
@@ -85,8 +97,8 @@ public class YrLocationForecastParser extends DefaultHandler {
 
 	private void parseModel(Attributes attributes) {
 		long runendedI = getTime(attributes, "runended");
-		if (runendedI > forecastRunned)
-			forecastRunned = runendedI;
+		if (runendedI > forecastGenerated)
+			forecastGenerated = runendedI;
 
 		long nextRunI = getTime(attributes, "nextrun");
 		if (nextRunI > nextForecastTime)
@@ -110,7 +122,7 @@ public class YrLocationForecastParser extends DefaultHandler {
 		return nextRunI;
 	}
 
-	private void parseLocation(Attributes attributes) {
+	private void parseLocation(Attributes attributes) throws SAXException {
 
 		double longtitude = new Double(attributes.getValue(attributes
 				.getIndex("longitude")));
@@ -119,17 +131,30 @@ public class YrLocationForecastParser extends DefaultHandler {
 		double altitude = new Double(attributes.getValue(attributes
 				.getIndex("altitude")));
 
-		ContentValues values = new ContentValues();
-		values.put(WeatherContentProvider.META_ALTITUDE, altitude);
-		values.put(WeatherContentProvider.META_GENERATED, forecastRunned);
-		values.put(WeatherContentProvider.META_LATITUDE, latitude);
-		values.put(WeatherContentProvider.META_LONGITUDE, longtitude);
-		values.put(WeatherContentProvider.META_NEXT_FORECAST, nextForecastTime);
-		values.put(WeatherContentProvider.META_PROVIDER, YrProxy.PROVIDER);
-
-		contentUri = contentResolver.insert(WeatherContentProvider.CONTENT_URI,
-				values);
-		locationIsSet = true;
+		if (lastGenerated >= forecastGenerated) {
+			ContentValues values = new ContentValues();
+			values.put(WeatherContentProvider.META_NEXT_FORECAST,
+					nextForecastTime);
+			String where = WeatherContentProvider.META_PROVIDER + "='"
+					+ YrProxy.PROVIDER + "'";
+			contentResolver.update(WeatherContentProvider.CONTENT_URI, values,
+					where, null);
+			contentUri = null;
+			// Stops parsing:
+			fatalError(new SAXParseException(NO_NEW_DATA_EXCEPTION, null));
+		} else {
+			ContentValues values = new ContentValues();
+			values.put(WeatherContentProvider.META_ALTITUDE, altitude);
+			values.put(WeatherContentProvider.META_GENERATED, forecastGenerated);
+			values.put(WeatherContentProvider.META_LATITUDE, latitude);
+			values.put(WeatherContentProvider.META_LONGITUDE, longtitude);
+			values.put(WeatherContentProvider.META_NEXT_FORECAST,
+					nextForecastTime);
+			values.put(WeatherContentProvider.META_PROVIDER, YrProxy.PROVIDER);
+			contentUri = contentResolver.insert(
+					WeatherContentProvider.CONTENT_URI, values);
+			locationIsSet = true;
+		}
 	}
 
 	private void parseTemperature(Attributes attributes) {
@@ -153,8 +178,7 @@ public class YrLocationForecastParser extends DefaultHandler {
 		v.put(WeatherContentProvider.FORECAST_TO, to);
 		v.put(WeatherContentProvider.FORECAST_TYPE, type);
 		v.put(WeatherContentProvider.FORECAST_VALUE, value);
-		contentResolver.insert(Uri.withAppendedPath(contentUri,
-				WeatherContentProvider.FORECAST_CONTENT_DIRECTORY), v);
+		values.add(v);
 
 	}
 
@@ -167,4 +191,12 @@ public class YrLocationForecastParser extends DefaultHandler {
 			isInMeta = false;
 	}
 
+	@Override
+	public void endDocument() throws SAXException {
+		super.endDocument();
+		ContentValues valueArray[] = new ContentValues[1];
+		valueArray = values.toArray(valueArray);
+		contentResolver.bulkInsert(Uri.withAppendedPath(contentUri,
+				WeatherContentProvider.FORECAST_CONTENT_DIRECTORY), valueArray);
+	}
 }
