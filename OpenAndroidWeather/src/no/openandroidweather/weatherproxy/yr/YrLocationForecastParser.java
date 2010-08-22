@@ -199,4 +199,9 @@ public class YrLocationForecastParser extends DefaultHandler {
 		contentResolver.bulkInsert(Uri.withAppendedPath(contentUri,
 				WeatherContentProvider.FORECAST_CONTENT_DIRECTORY), valueArray);
 	}
+
+	public long getNextExcpectedTime() {
+		// TODO Auto-generated method stub
+		return nextForecastTime;
+	}
 }

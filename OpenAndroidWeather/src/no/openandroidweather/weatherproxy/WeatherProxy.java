@@ -1,7 +1,6 @@
 package no.openandroidweather.weatherproxy;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 
 import android.location.Location;
 import android.net.Uri;
@@ -10,7 +9,8 @@ public interface WeatherProxy {
 
 	/**
 	 * Gets the newest forecast, if successful it returns the rowId where the
-	 * forecast is added in the meta table.
+	 * forecast is added in the meta table. If the provider is delayed, all
+	 * forecasts is updated with this new time.
 	 * 
 	 * @param location
 	 *            of the forecast
@@ -21,9 +21,12 @@ public interface WeatherProxy {
 	 *            Time is given in milliseconds since 01.01.1970
 	 * 
 	 * @return Uri in the content provider or null if there is no new data
-	 * @throws UnknownHostException If the device does not have Internet.
-	 * @throws Exception Something else went wrong: connection, parsing, etc. 
+	 * @throws IOException
+	 *             If the device does not have Internet.
+	 * @throws Exception
+	 *             Something else went wrong: parsing, etc.
 	 */
 	Uri getWeatherForecast(Location location, long lastForecastGenerated)
 			throws IOException, Exception;
+
 }

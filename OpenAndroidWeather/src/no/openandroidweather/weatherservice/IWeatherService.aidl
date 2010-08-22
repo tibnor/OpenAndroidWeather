@@ -33,20 +33,25 @@ interface IWeatherService{
 	 * old or there is no forecast in the database a new forecast is fetched
 	 * from the provider.
 	 * 
-	 * @param listener
+	 * @param listener for callbacks
+	 * @param latitude of the forecast
+	 * @param longitude of the forecast
+	 * @param altitude of the forecast
+	 * @param tolleranceRadius A horizontal tolerance radius, if there are already forecasts who are downloaded within this radius,
+	 *			 this forecast will be returned
+	 * @param tolleranceVerticalDistance A vertical tolerance distance.
 	 */
-	void addForecastEventListener(IForecastEventListener listener);
+	void getForecast(IForecastEventListener listener, double latitude, double longitude, 
+			double altitude, double toleranceRadius, double toleranceVerticalDistance);
 	
 	/**
-	 *	Removes the listener, if there is an ongoing update, the update will
-	 *	not be cancelled.
+	 * Downloads the forecast who is closest to to the current position of the device.
+	 *  
+	 *
+	 * @param listener for callbacks
+	 * @param tolleranceRadius A horizontal tolerance radius, if there are already forecasts who are downloaded within this radius,
+	 *			 this forecast will be returned
+	 * @param tolleranceVerticalDistance A vertical tolerance distance.
 	 */
-	void removeForecastEventListener(IForecastEventListener listener);
-	
-	/**
-	 * Force an update of forecasts or if id==null, all forecasts registered as ForecastEventListener. 
-	 * @param Uri The uris for the forecasts or null  for all.
-	 */
-	void forceUpdateForecasts(in String[] Uri);
-
+	void getNearestForecast(IForecastEventListener listener, double toleranceRadius, double toleranceVerticalDistance);
 }

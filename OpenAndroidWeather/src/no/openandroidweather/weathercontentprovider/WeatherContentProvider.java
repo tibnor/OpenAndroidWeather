@@ -110,13 +110,43 @@ public class WeatherContentProvider extends ContentProvider {
 	public static final String FORECAST_TYPE = "type";
 	/** Value of forecast data, Text */
 	public static final String FORECAST_VALUE = "value";
-	/** _id in META table for forecast data */
+	/** _id in META table for forecast data, integer */
 	static final String FORECAST_META = "meta";
 	static final String FORECAST_CREATE_TABLE = "CREATE TABLE "
 			+ FORECAST_TABLE_NAME + " (" + FORECAST_ID
 			+ " INTEGER PRIMARY KEY, " + FORECAST_FROM + " INTEGER, "
 			+ FORECAST_META + " INTEGER, " + FORECAST_TO + " INTEGER, "
 			+ FORECAST_TYPE + " INTEGER, " + FORECAST_VALUE + " TEXT )";
+	
+
+//	/**
+//	 * Table for adding favorites. When a row is added WeatherService will
+//	 * update forecasts after the permissions.
+//	 * 
+//	 */
+	
+//	public static class favorite {
+//		/**
+//		 * Id of the favorite, used when asking WeatherService to get a
+//		 * forecast. Integer
+//		 */
+//		public static final String ID = "_id";
+//
+//		/**
+//		 * A unique TEXT to identify an app in the favorite table
+//		 */
+//		public static final String APPID = "appid";
+//		public static final String LATITUDE = "latitude";
+//		public static final String LONGITUDE = "longitude";
+//		public static final String ALTITUDE = "altitude";
+//		public static final String GET_NEAREST = "get_nearest";
+//		static final String TABLE_NAME = "favorite";
+//		static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ("
+//				+ ID + "INTEGER PRIMARY KEY, " + ALTITUDE + " REAL, " + APPID
+//				+ " TEXT," + GET_NEAREST + " INTEGER, " + LATITUDE + " REAL, "
+//				+ LONGITUDE + " REAL)";
+//	}
+
 
 	// UriMatcher
 	private static final int sMETA = 1;
@@ -200,11 +230,11 @@ public class WeatherContentProvider extends ContentProvider {
 				contentValues.put(FORECAST_META, id);
 			}
 		}
-		
+
 		int insertedRows = 0;
 		SQLiteDatabase db = openHelper.getWritableDatabase();
 		for (ContentValues contentValues : values) {
-			if(db.insertOrThrow(table, null, contentValues)!=-1)
+			if (db.insertOrThrow(table, null, contentValues) != -1)
 				insertedRows++;
 		}
 		db.close();
@@ -342,7 +372,8 @@ public class WeatherContentProvider extends ContentProvider {
 
 		String table = getTable(uri, uriMatch);
 		String newSelection = getNewSelection(uri, selection, uriMatch);
-		return openHelper.getWritableDatabase().update(table, values, newSelection, selectionArgs);
+		return openHelper.getWritableDatabase().update(table, values,
+				newSelection, selectionArgs);
 	}
 
 }

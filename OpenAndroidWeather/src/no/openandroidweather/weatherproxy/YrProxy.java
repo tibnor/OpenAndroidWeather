@@ -30,6 +30,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import no.openandroidweather.weatherproxy.yr.YrLocationForecastParser;
 
 import org.apache.http.HttpHost;
@@ -42,6 +43,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.xml.sax.SAXException;
 
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.location.Location;
 import android.net.Uri;
 import android.util.Log;
@@ -56,14 +58,19 @@ public class YrProxy implements WeatherProxy {
 		mContentResolver = contentResolver;
 	}
 
-	/* (non-Javadoc)
-	 * @see no.openandroidweather.weatherproxy.WeatherProxy#getWeatherForecast(android.location.Location, long)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * no.openandroidweather.weatherproxy.WeatherProxy#getWeatherForecast(android
+	 * .location.Location, long)
 	 */
 	@Override
 	public Uri getWeatherForecast(Location location, long lastForecastGenerated)
 			throws IOException, Exception {
 		return locationForecast(location, lastForecastGenerated);
 	}
+
 
 	/**
 	 * See http://api.met.no/weatherapi/locationforecast/1.8/documentation for
@@ -73,10 +80,13 @@ public class YrProxy implements WeatherProxy {
 	 *            of the forecast
 	 * @param lastForecastGenerated
 	 * @return Uri to the data in WeatherContentProvider
-	 * @throws UnknownHostException When no Internet connection
-	 * @throws SAXException parsing exception
+	 * @throws UnknownHostException
+	 *             When no Internet connection
+	 * @throws SAXException
+	 *             parsing exception
 	 * @throws ParserConfigurationException
-	 * @throws IOException Internet trouble
+	 * @throws IOException
+	 *             Internet trouble
 	 */
 	private Uri locationForecast(Location location, long lastForecastGenerated)
 			throws UnknownHostException, IOException,
@@ -123,12 +133,24 @@ public class YrProxy implements WeatherProxy {
 			parser.parse(inputStream, yrLocationForecastParser);
 		} catch (SAXException e) {
 			if (e.getMessage().equals(
-					YrLocationForecastParser.NO_NEW_DATA_EXCEPTION))
+					YrLocationForecastParser.NO_NEW_DATA_EXCEPTION)) {
+				updateExpectedNewTime(yrLocationForecastParser
+						.getNextExcpectedTime());
 				return null;
-			else
+			} else
 				throw e;
 		}
 
 		return yrLocationForecastParser.getContentUri();
 	}
+
+	private void updateExpectedNewTime(long nextExcpectedTime) {
+		Uri uri = WeatherContentProvider.CONTENT_URI;
+		ContentValues values = new ContentValues();
+		values.put(WeatherContentProvider.META_NEXT_FORECAST, nextExcpectedTime);
+		String where = WeatherContentProvider.META_PROVIDER + "='" + PROVIDER
+				+ "'";
+		mContentResolver.update(uri, values, where, null);
+	}
+
 }
