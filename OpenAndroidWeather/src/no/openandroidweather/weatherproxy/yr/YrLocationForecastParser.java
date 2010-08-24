@@ -19,8 +19,6 @@
 
 package no.openandroidweather.weatherproxy.yr;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,12 +34,13 @@ import org.xml.sax.helpers.DefaultHandler;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.net.Uri;
+import android.text.format.Time;
 
 public class YrLocationForecastParser extends DefaultHandler {
 	private static final String TAG = "YrLocationForecastParser";
 	public final static String NO_NEW_DATA_EXCEPTION = "no new data!";
-	final private static SimpleDateFormat timeFormat = new SimpleDateFormat(
-			"yyyy-MM-dd'T'hh:mm:ss'Z'");
+
+
 	ContentResolver contentResolver;
 	Uri contentUri;
 	boolean isInMeta = false;
@@ -93,6 +92,7 @@ public class YrLocationForecastParser extends DefaultHandler {
 		isInTime = true;
 		from = getTime(attributes, "from");
 		to = getTime(attributes, "to");
+
 	}
 
 	private void parseModel(Attributes attributes) {
@@ -110,16 +110,12 @@ public class YrLocationForecastParser extends DefaultHandler {
 	 * @param key
 	 * @return time in ms since 01.01.1970
 	 */
-	private static long getTime(Attributes attributes, String key) {
-		String nextrunS = attributes.getValue(attributes.getIndex(key));
+	private static long getTime(Attributes attributes, String key){
+		String timeS = attributes.getValue(attributes.getIndex(key));
+		Time time = new Time("UTC");
+		time.parse3339(timeS);
 
-		long nextRunI = 0;
-		try {
-			nextRunI = timeFormat.parse(nextrunS).getTime();
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
-		return nextRunI;
+		return time.toMillis(false);
 	}
 
 	private void parseLocation(Attributes attributes) throws SAXException {
@@ -179,7 +175,6 @@ public class YrLocationForecastParser extends DefaultHandler {
 		v.put(WeatherContentProvider.FORECAST_TYPE, type);
 		v.put(WeatherContentProvider.FORECAST_VALUE, value);
 		values.add(v);
-
 	}
 
 	@Override
@@ -201,7 +196,6 @@ public class YrLocationForecastParser extends DefaultHandler {
 	}
 
 	public long getNextExcpectedTime() {
-		// TODO Auto-generated method stub
 		return nextForecastTime;
 	}
 }

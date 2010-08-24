@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="fill_parent"
+	android:background="@drawable/appwidget_bg">
+	<FrameLayout android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:padding="3dip">
+		<FrameLayout android:layout_width="fill_parent"
+			android:layout_height="fill_parent" android:padding="3px"
+			android:foreground="@drawable/photo_inner">
+			<LinearLayout android:orientation="vertical"
+				android:layout_width="fill_parent" android:layout_height="fill_parent">
+				<LinearLayout android:orientation="horizontal"
+					android:layout_width="fill_parent" android:layout_height="wrap_content"
+					android:layout_weight="1">
+
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image0" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp0" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert0" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time0" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image1" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp1" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert1" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time1" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image2" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp2" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert2" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time2" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image3" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp3" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert3" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time3" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image4" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp4" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert4" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time4" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image5" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp5" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert5" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time5" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image6" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp6" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert6" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time6" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image7" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp7" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert7" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time7" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image8" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp8" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert8" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time8" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+
+
+
+				</LinearLayout>
+
+				<LinearLayout android:orientation="horizontal"
+					android:layout_width="fill_parent" android:layout_height="wrap_content"
+					android:layout_weight="1">
+
+
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image9" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp9" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert9" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time9" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image10" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp10" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert10" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time10" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image11" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp11" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert11" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time11" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image12" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp12" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert12" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time12" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image13" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp13" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert13" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time13" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image14" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp14" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert14" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time14" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image15" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp15" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert15" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time15" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image16" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp16" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert16" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time16" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+					<LinearLayout android:layout_width="wrap_content"
+						android:layout_height="fill_parent" android:orientation="vertical"
+						android:layout_weight="1">
+						<ImageView android:id="@+id/image17" android:scaleType="fitCenter"
+							android:layout_gravity="center_horizontal" android:layout_width="wrap_content"
+							android:layout_height="wrap_content"></ImageView>
+						<TextView android:id="@+id/temp17" android:layout_width="wrap_content"
+							android:layout_height="wrap_content" android:textColor="#000"
+							android:layout_gravity="center_horizontal" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/pert17" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="10sp"></TextView>
+						<TextView android:id="@+id/time17" android:layout_width="wrap_content"
+							android:layout_gravity="center_horizontal" android:layout_height="wrap_content"
+							android:textColor="#000" android:gravity="center"
+							android:textSize="8sp"></TextView>
+					</LinearLayout>
+
+				</LinearLayout>
+			</LinearLayout>
+		</FrameLayout>
+	</FrameLayout>
+</FrameLayout>

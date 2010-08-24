@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="no.openandroidweather"
-      android:versionCode="1"
-      android:versionName="1.0">
-      <uses-permission android:name="android.permission.INTERNET" />
-    <application android:icon="@drawable/icon" android:label="@string/app_name" android:debuggable="true">
+	package="no.openandroidweather" android:versionCode="1"
+	android:versionName="1.0">
+	<uses-permission android:name="android.permission.INTERNET" />
+	<application android:icon="@drawable/icon" android:label="@string/app_name"
+		android:debuggable="true">
+		<receiver android:name=".widget.WidgetProvider">
+			<intent-filter>
+				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+			</intent-filter>
+			<meta-data android:name="android.appwidget.provider"
+				android:resource="@xml/widget_info" />
+		</receiver>
 
+		<provider android:name=".weathercontentprovider.WeatherContentProvider"
+			android:authorities="no.openandroidweather.weathercontentprovider"></provider>
+		<service android:name=".widget.WidgetProvider$UpdateService"></service>
+		<service android:name="no.openandroidweather.weatherservice.WeatherService"></service>
+	</application>
+	<uses-sdk android:minSdkVersion="3" />
 
-    <provider android:name=".weathercontentprovider.WeatherContentProvider" android:authorities="no.openandroidweather.weathercontentprovider"></provider>
-</application>
-    <uses-sdk android:minSdkVersion="3" />
-
-<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"></uses-permission>
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"></uses-permission>
 </manifest> 

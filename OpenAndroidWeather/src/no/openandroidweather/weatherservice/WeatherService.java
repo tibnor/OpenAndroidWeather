@@ -1,7 +1,6 @@
 package no.openandroidweather.weatherservice;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -10,7 +9,6 @@ import no.openandroidweather.weatherproxy.WeatherProxy;
 import no.openandroidweather.weatherproxy.YrProxy;
 import android.app.Service;
 import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -50,6 +48,7 @@ import android.util.Log;
 public class WeatherService extends Service {
 	public final static int ERROR_NETWORK_ERROR = 1;
 	public final static int ERROR_UNKNOWN_ERROR = 2;
+	public static final int ERROR_NO_KNOWN_POSITION = 3;
 	public static final String TAG = "WeatherService";
 	private Queue<GetForecast> mDbCheckQueue = new ConcurrentLinkedQueue<GetForecast>();
 	private Queue<GetForecast> mDownloadQueue = new ConcurrentLinkedQueue<GetForecast>();
@@ -60,7 +59,7 @@ public class WeatherService extends Service {
 		if (IWeatherService.class.getName().equals(intent.getAction()))
 			return mBind;
 
-		return null;
+		return mBind;
 	}
 
 	private final IWeatherService.Stub mBind = new IWeatherService.Stub() {
@@ -90,12 +89,25 @@ public class WeatherService extends Service {
 			Criteria criteria = new Criteria();
 			criteria.setAccuracy(Criteria.ACCURACY_COARSE);
 			String provider = locationManager.getBestProvider(criteria, true);
+			if(provider==null){
+				listener.exceptionOccurred(ERROR_NO_KNOWN_POSITION);
+				return;
+			}
+			
 			Location loc = locationManager.getLastKnownLocation(provider);
+			if (loc == null) {
+				listener.exceptionOccurred(ERROR_NO_KNOWN_POSITION);
+				return;
+			}
 			GetForecast getForecast = new GetForecast(listener, loc,
 					toleranceRadius, toleranceVerticalDistance);
 			mDbCheckQueue.add(getForecast);
 			work();
 		}
+	};
+	
+	public void onDestroy() {
+		super.onDestroy();
 	};
 
 	/**
@@ -126,24 +138,25 @@ public class WeatherService extends Service {
 		@Override
 		protected void onPostExecute(Void result) {
 			super.onPostExecute(result);
-			synchronized (isWorking) {
-				if (mDownloadQueue.isEmpty() && mDbCheckQueue.isEmpty())
+			//synchronized (isWorking) {
+				if (mDownloadQueue.isEmpty() && mDbCheckQueue.isEmpty()) {
 					isWorking = false;
-				else
+					stopSelf();
+				} else
 					new WorkAsync().execute(null);
-			}
+		//	}
 
 		}
 
 	}
 
 	protected void work() {
-		synchronized (isWorking) {
+		//synchronized (isWorking) {
 			if (!isWorking) {
 				isWorking = true;
 				new WorkAsync().execute(null);
 			}
-		}
+		//}
 	}
 
 	public void deleteOldForecasts() {
@@ -215,9 +228,9 @@ public class WeatherService extends Service {
 								WeatherContentProvider.CONTENT_URI,
 								id.toString()).toString(), generated);
 				// Notify that there is a new forecast
-				synchronized (getForecast.getListener()) {
-					getForecast.getListener().notifyAll();
-				}
+				//synchronized (getForecast.getListener()) {
+				//	getForecast.getListener().notifyAll();
+				//}
 
 				// Check if it is expected a new forecast:
 				long expectedNextForecast = c
@@ -230,6 +243,8 @@ public class WeatherService extends Service {
 									.getColumnIndexOrThrow(WeatherContentProvider.META_GENERATED));
 					getForecast.setLastGeneratedForecast(lastGeneratedForecast);
 					mDownloadQueue.add(getForecast);
+				} else {
+					getForecast.completed();
 				}
 
 				c.close();
@@ -282,9 +297,10 @@ public class WeatherService extends Service {
 		}
 
 		// Notify that there is a new forecast
-		synchronized (getForecast.getListener()) {
-			getForecast.getListener().notifyAll();
-		}
+		//synchronized (getForecast.getListener()) {
+		//	getForecast.getListener().notifyAll();
+		//}
+		getForecast.completed();
 
 	}
 
@@ -296,6 +312,15 @@ public class WeatherService extends Service {
 			this.location = location;
 			this.toleranceRadius = toleranceRadius;
 			this.toleranceVertical = toleranceVertical;
+		}
+
+		public void completed() {
+			try {
+				listener.completed();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 		public Location getLocation() {

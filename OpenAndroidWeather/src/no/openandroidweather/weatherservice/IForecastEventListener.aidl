@@ -40,6 +40,11 @@ interface IForecastEventListener{
 	void newExpectedTime();
 	
 	/**
+	 * When complete and no more messages will be delivered
+	 */
+	void completed();
+	
+	/**
 	 * An exception occurred
 	 */
 	void exceptionOccurred(int errorcode);
