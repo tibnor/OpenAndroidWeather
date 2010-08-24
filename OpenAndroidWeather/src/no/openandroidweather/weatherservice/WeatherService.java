@@ -251,9 +251,9 @@ public class WeatherService extends Service {
 				return;
 			}
 		}
-
-		mDownloadQueue.add(getForecast);
 		c.close();
+		mDownloadQueue.add(getForecast);
+
 
 	}
 

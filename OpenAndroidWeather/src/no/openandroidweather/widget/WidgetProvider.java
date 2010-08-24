@@ -63,27 +63,40 @@ public class WidgetProvider extends AppWidgetProvider {
 	}
 
 	public static class UpdateService extends Service {
+		private static boolean isAlreadyRunning = false;
 		private ForecastListener forcastListener;
 		private IWeatherService mService;
-		private boolean isWorking = true;
+
+		/**
+		 * Is true if a call to WeatherService is sent and updateWidget is not
+		 * completed
+		 */
+		private boolean isWorking = false;
 		private ServiceConnection mServiceConnection = new ServiceConnection() {
 
 			@Override
 			public void onServiceConnected(ComponentName name, IBinder service) {
-				// Debug.waitForDebugger();
 				mService = IWeatherService.Stub.asInterface(service);
-				// Sets up a call for new forecast
-				try {
-					mService.getNearestForecast(forcastListener, 2000, 100);
-				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				synchronized (mService) {
+					// Sets up a call for new forecast
+					try {
+						mService.getNearestForecast(forcastListener, 2000, 100);
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
+
 			}
 
 			@Override
 			public void onServiceDisconnected(ComponentName name) {
-				mService = null;
+				if (mService != null) {
+					synchronized (mService) {
+						mService = null;
+					}
+				}
+
 			}
 
 		};
@@ -91,26 +104,36 @@ public class WidgetProvider extends AppWidgetProvider {
 		@Override
 		public void onStart(Intent intent, int startId) {
 			// Bind to service
-			Log.i(TAG, "Updating weather widget");
-			forcastListener = new ForecastListener();
-
-			if (mService == null) {
-				bindService(new Intent(getApplicationContext(),
-						WeatherService.class), mServiceConnection,
-						BIND_AUTO_CREATE);
+			if (isAlreadyRunning) {
+				Log.i(TAG, "Updating is ongoing, new update ignored");
+				return;
 			} else {
-				try {
-					mService.getNearestForecast(forcastListener, 2000, 100);
-				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				isAlreadyRunning = true;
+				isWorking = true;
+				Log.i(TAG, "Updating weather widget");
+
+				if (mService == null) {
+					forcastListener = new ForecastListener();
+					bindService(new Intent(getApplicationContext(),
+							WeatherService.class), mServiceConnection,
+							BIND_AUTO_CREATE);
+				} else {
+					synchronized (mService) {
+						try {
+							mService.getNearestForecast(forcastListener, 2000,
+									100);
+						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
 				}
 			}
 
 		}
 
 		private void updateWidget(Uri contentUri) {
-
+			Log.i(TAG, "Rendering widget");
 			Context context = getApplicationContext();
 			RemoteViews view = new RemoteViews(context.getPackageName(),
 					R.layout.widget);
@@ -148,7 +171,6 @@ public class WidgetProvider extends AppWidgetProvider {
 			contentUri = Uri.withAppendedPath(contentUri,
 					WeatherContentProvider.FORECAST_CONTENT_DIRECTORY);
 			long timeStart = System.currentTimeMillis();
-			Log.d(TAG, "System time" + timeStart);
 			// Rounds down to last hour
 			timeStart -= timeStart % 3600000;
 			long timeStop = timeStart + 3600000;
@@ -183,12 +205,15 @@ public class WidgetProvider extends AppWidgetProvider {
 			AppWidgetManager manager = AppWidgetManager.getInstance(this);
 
 			manager.updateAppWidget(thisWidget, view);
+			isWorking = false;
 			if (forcastListener.isComplete()) {
 				stop();
 			}
 		}
 
 		public void stop() {
+			Log.i(TAG, "stopping");
+			isAlreadyRunning = false;
 			// Make an alarm for next update
 			Context context = getApplicationContext();
 			PendingIntent pendingIntent = PendingIntent.getService(context, 0,
@@ -204,11 +229,6 @@ public class WidgetProvider extends AppWidgetProvider {
 
 			alarm.set(AlarmManager.RTC, triggerAtTime, pendingIntent);
 			stopSelf();
-		}
-
-		@Override
-		public void onDestroy() {
-			super.onDestroy();
 		}
 
 		/**
@@ -337,11 +357,20 @@ public class WidgetProvider extends AppWidgetProvider {
 
 			@Override
 			public void completed() throws RemoteException {
-				if (mServiceConnection != null)
-					unbindService(mServiceConnection);
+				synchronized (mService) {
+					if (mService != null) {
+						try {
+							unbindService(mServiceConnection);
+						} catch (IllegalArgumentException e) {
+							// The service is unbind before binding
+						}
+						mService = null;
+					}
+				}
 				isComplete = true;
-				if (isWorking)
+				if (!isWorking)
 					stop();
+
 			}
 		}
 	}
