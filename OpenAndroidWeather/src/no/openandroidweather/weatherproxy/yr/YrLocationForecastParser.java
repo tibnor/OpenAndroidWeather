@@ -40,7 +40,6 @@ public class YrLocationForecastParser extends DefaultHandler {
 	private static final String TAG = "YrLocationForecastParser";
 	public final static String NO_NEW_DATA_EXCEPTION = "no new data!";
 
-
 	ContentResolver contentResolver;
 	Uri contentUri;
 	boolean isInMeta = false;
@@ -48,7 +47,7 @@ public class YrLocationForecastParser extends DefaultHandler {
 	boolean locationIsSet = false;
 	long from;
 	long to;
-	long nextForecastTime = 0;
+	long nextForecastTime = Long.MAX_VALUE;
 	long forecastGenerated = 0;
 	final long lastGenerated;
 	List<ContentValues> values = new ArrayList<ContentValues>();
@@ -101,7 +100,7 @@ public class YrLocationForecastParser extends DefaultHandler {
 			forecastGenerated = runendedI;
 
 		long nextRunI = getTime(attributes, "nextrun");
-		if (nextRunI > nextForecastTime)
+		if (nextRunI < nextForecastTime)
 			nextForecastTime = nextRunI;
 	}
 
@@ -110,7 +109,7 @@ public class YrLocationForecastParser extends DefaultHandler {
 	 * @param key
 	 * @return time in ms since 01.01.1970
 	 */
-	private static long getTime(Attributes attributes, String key){
+	private static long getTime(Attributes attributes, String key) {
 		String timeS = attributes.getValue(attributes.getIndex(key));
 		Time time = new Time("UTC");
 		time.parse3339(timeS);
@@ -131,6 +130,8 @@ public class YrLocationForecastParser extends DefaultHandler {
 			ContentValues values = new ContentValues();
 			values.put(WeatherContentProvider.META_NEXT_FORECAST,
 					nextForecastTime);
+			values.put(WeatherContentProvider.META_LOADED,
+					System.currentTimeMillis());
 			String where = WeatherContentProvider.META_PROVIDER + "='"
 					+ YrProxy.PROVIDER + "'";
 			contentResolver.update(WeatherContentProvider.CONTENT_URI, values,
@@ -146,6 +147,8 @@ public class YrLocationForecastParser extends DefaultHandler {
 			values.put(WeatherContentProvider.META_LONGITUDE, longtitude);
 			values.put(WeatherContentProvider.META_NEXT_FORECAST,
 					nextForecastTime);
+			values.put(WeatherContentProvider.META_LOADED,
+					System.currentTimeMillis());
 			values.put(WeatherContentProvider.META_PROVIDER, YrProxy.PROVIDER);
 			contentUri = contentResolver.insert(
 					WeatherContentProvider.CONTENT_URI, values);

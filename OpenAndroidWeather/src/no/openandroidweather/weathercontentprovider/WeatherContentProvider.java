@@ -74,16 +74,21 @@ public class WeatherContentProvider extends ContentProvider {
 	 */
 	public static final String META_NEXT_FORECAST = "new_forecast";
 	/**
-	 * Time for when a the forecast was generated, Integer Unix time in
+	 * Time for when the forecast was generated at the server, Integer Unix time in
 	 * milliseconds, for meta data
 	 */
 	public static final String META_GENERATED = "generated";
+	/**
+	 * Time for when the forecast was loaded to the client. (Downloaded from server), Integer Unix time in
+	 * milliseconds, for meta data
+	 */
+	public static final String META_LOADED = "loaded";
 	/** Provider of the forecast */
 	public static final String META_PROVIDER = "provider";
 	static final String META_CREATE_TABLE = "CREATE TABLE " + META_TABLE_NAME
 			+ " (" + META_ID + " INTEGER PRIMARY KEY," + META_ALTITUDE
 			+ " REAL," + META_NEXT_FORECAST + " INTEGER," + META_GENERATED
-			+ " INTEGER," + META_LATITUDE + " REAL," + META_LONGITUDE
+			+ " INTEGER," + META_LATITUDE + " REAL," + META_LOADED + " INTEGER," + META_LONGITUDE
 			+ " REAL," + META_PLACE_NAME + " TEXT," + META_PROVIDER + " TEXT)";
 
 	/**

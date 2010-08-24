@@ -84,6 +84,7 @@ public class WeatherProxyDatabaseOpenHelperTest extends AndroidTestCase {
 				c.getString(c.getColumnIndex(WeatherContentProvider.META_PLACE_NAME)));
 		assertEquals("yr.no",
 				c.getString(c.getColumnIndex(WeatherContentProvider.META_PROVIDER)));
+		assertEquals(123456, c.getInt(c.getColumnIndexOrThrow(WeatherContentProvider.META_LOADED)));
 	}
 
 	/**
@@ -129,6 +130,7 @@ public class WeatherProxyDatabaseOpenHelperTest extends AndroidTestCase {
 	 */
 	static ContentValues metaTestContentValues() {
 		ContentValues metaTest = new ContentValues();
+		metaTest.put(WeatherContentProvider.META_LOADED, 123456);
 		metaTest.put(WeatherContentProvider.META_ALTITUDE, 123.4);
 		metaTest.put(WeatherContentProvider.META_NEXT_FORECAST, 10000000);
 		metaTest.put(WeatherContentProvider.META_GENERATED, 10000001);

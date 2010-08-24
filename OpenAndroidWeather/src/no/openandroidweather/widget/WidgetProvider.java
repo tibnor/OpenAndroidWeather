@@ -20,6 +20,7 @@
 package no.openandroidweather.widget;
 
 import java.util.Calendar;
+import java.util.Date;
 
 import no.openandroidweather.R;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
@@ -39,9 +40,9 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Debug;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.Toast;
@@ -52,13 +53,11 @@ public class WidgetProvider extends AppWidgetProvider {
 			"fre", "lør", "søn" };
 
 	private static final String TAG = "no.openAndroidWeahter.WidgetProvider";
-	private static boolean isWorking = true;
 
 	@Override
 	public void onUpdate(Context context, AppWidgetManager appWidgetManager,
 			int[] appWidgetIds) {
 		super.onUpdate(context, appWidgetManager, appWidgetIds);
-		Debug.waitForDebugger();
 		Intent intent = new Intent(context, UpdateService.class);
 		context.startService(intent);
 	}
@@ -66,11 +65,12 @@ public class WidgetProvider extends AppWidgetProvider {
 	public static class UpdateService extends Service {
 		private ForecastListener forcastListener;
 		private IWeatherService mService;
-
+		private boolean isWorking = true;
 		private ServiceConnection mServiceConnection = new ServiceConnection() {
 
 			@Override
 			public void onServiceConnected(ComponentName name, IBinder service) {
+				// Debug.waitForDebugger();
 				mService = IWeatherService.Stub.asInterface(service);
 				// Sets up a call for new forecast
 				try {
@@ -91,7 +91,6 @@ public class WidgetProvider extends AppWidgetProvider {
 		@Override
 		public void onStart(Intent intent, int startId) {
 			// Bind to service
-			Debug.waitForDebugger();
 			Log.i(TAG, "Updating weather widget");
 			forcastListener = new ForecastListener();
 
@@ -111,13 +110,43 @@ public class WidgetProvider extends AppWidgetProvider {
 		}
 
 		private void updateWidget(Uri contentUri) {
-			contentUri = Uri.withAppendedPath(contentUri,
-					WeatherContentProvider.FORECAST_CONTENT_DIRECTORY);
+
 			Context context = getApplicationContext();
 			RemoteViews view = new RemoteViews(context.getPackageName(),
 					R.layout.widget);
 			ContentResolver cr = getContentResolver();
 
+			String projection[] = { WeatherContentProvider.META_NEXT_FORECAST,
+					WeatherContentProvider.META_LOADED };
+			Cursor c = cr.query(contentUri, projection, null, null, null);
+			c.moveToFirst();
+
+			java.text.DateFormat df = DateFormat.getTimeFormat(context);
+
+			String nextForecast = "Next: ";
+			long nextForecastI = c
+					.getLong(c
+							.getColumnIndexOrThrow(WeatherContentProvider.META_NEXT_FORECAST));
+			nextForecast += df.format(new Date(nextForecastI));
+			view.setTextViewText(R.id.widget_next_forecast, nextForecast);
+
+			String loaded = "Downloaded: ";
+			long loadedL = c.getLong(c
+					.getColumnIndexOrThrow(WeatherContentProvider.META_LOADED));
+
+			loaded += df.format(new Date(loadedL));
+			view.setTextViewText(R.id.widget_updated, loaded);
+			c.close();
+
+			// Add onClick intent for updating:
+			PendingIntent pendingIntent = PendingIntent.getService(context, 0,
+					new Intent(context, UpdateService.class),
+					PendingIntent.FLAG_UPDATE_CURRENT);
+			view.setOnClickPendingIntent(R.id.widget_background, pendingIntent);
+
+			// Adding weather data
+			contentUri = Uri.withAppendedPath(contentUri,
+					WeatherContentProvider.FORECAST_CONTENT_DIRECTORY);
 			long timeStart = System.currentTimeMillis();
 			Log.d(TAG, "System time" + timeStart);
 			// Rounds down to last hour
@@ -165,14 +194,15 @@ public class WidgetProvider extends AppWidgetProvider {
 			PendingIntent pendingIntent = PendingIntent.getService(context, 0,
 					new Intent(context, UpdateService.class),
 					PendingIntent.FLAG_ONE_SHOT);
-			AlarmManager alarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-			//Set time to next hour:
+			AlarmManager alarm = (AlarmManager) context
+					.getSystemService(Context.ALARM_SERVICE);
+			// Set time to next hour:
 			long triggerAtTime = System.currentTimeMillis();
 			// Mid step set to last hour:
 			triggerAtTime -= triggerAtTime % 3600000;
 			triggerAtTime += 3600000;
-			
-			alarm.set(AlarmManager.RTC, triggerAtTime , pendingIntent);
+
+			alarm.set(AlarmManager.RTC, triggerAtTime, pendingIntent);
 			stopSelf();
 		}
 
@@ -307,7 +337,8 @@ public class WidgetProvider extends AppWidgetProvider {
 
 			@Override
 			public void completed() throws RemoteException {
-				unbindService(mServiceConnection);
+				if (mServiceConnection != null)
+					unbindService(mServiceConnection);
 				isComplete = true;
 				if (isWorking)
 					stop();

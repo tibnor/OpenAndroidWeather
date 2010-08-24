@@ -28,7 +28,7 @@ import android.util.Log;
 class WeatherContentProviderDatabaseOpenHelper extends SQLiteOpenHelper {
 	private static final String TAG = "WeatherProxyDatabaseOpenHelper"; 
 	private static final String DATABASE_FILE = "weather.db";
-	static final int DATABASE_VERSION = 4;
+	static final int DATABASE_VERSION = 5;
 
 	public WeatherContentProviderDatabaseOpenHelper(Context context, String name,
 			CursorFactory factory, int version) {

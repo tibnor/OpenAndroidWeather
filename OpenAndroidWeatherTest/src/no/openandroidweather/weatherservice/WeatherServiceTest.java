@@ -145,6 +145,12 @@ public class WeatherServiceTest extends ServiceTestCase<WeatherService> {
 			return uri;
 		}
 
+		@Override
+		public void completed() throws RemoteException {
+			// TODO Auto-generated method stub
+			
+		}
+
 	}
 
 }
