@@ -50,139 +50,53 @@ public class WeatherService extends Service {
 	public final static int ERROR_UNKNOWN_ERROR = 2;
 	public static final int ERROR_NO_KNOWN_POSITION = 3;
 	public static final String TAG = "WeatherService";
-	private Queue<GetForecast> mDbCheckQueue = new ConcurrentLinkedQueue<GetForecast>();
-	private Queue<GetForecast> mDownloadQueue = new ConcurrentLinkedQueue<GetForecast>();
+	private final Queue<GetForecast> mDbCheckQueue = new ConcurrentLinkedQueue<GetForecast>();
+	private final Queue<GetForecast> mDownloadQueue = new ConcurrentLinkedQueue<GetForecast>();
 	private Boolean isWorking = false;
-
-	@Override
-	public IBinder onBind(Intent intent) {
-		if (IWeatherService.class.getName().equals(intent.getAction()))
-			return mBind;
-
-		return mBind;
-	}
 
 	private final IWeatherService.Stub mBind = new IWeatherService.Stub() {
 		@Override
-		public void getForecast(IForecastEventListener listener,
-				double latitude, double longitude, double altitude,
-				double toleranceRadius, double toleranceVerticalDistance)
-				throws RemoteException {
-			Location loc = new Location("");
+		public void getForecast(final IForecastEventListener listener,
+				final double latitude, final double longitude,
+				final double altitude, final double toleranceRadius,
+				final double toleranceVerticalDistance) throws RemoteException {
+			final Location loc = new Location("");
 			loc.setLatitude(latitude);
 			loc.setLongitude(longitude);
-			if (altitude != 0) {
+			if (altitude != 0)
 				loc.setAltitude(altitude);
-			}
 			mDbCheckQueue.add(new GetForecast(listener, loc, toleranceRadius,
 					toleranceVerticalDistance));
 			work();
 		}
 
 		@Override
-		public void getNearestForecast(IForecastEventListener listener,
-				double toleranceRadius, double toleranceVerticalDistance)
-				throws RemoteException {
-			LocationManager locationManager = (LocationManager) WeatherService.this
+		public void getNearestForecast(final IForecastEventListener listener,
+				final double toleranceRadius,
+				final double toleranceVerticalDistance) throws RemoteException {
+			final LocationManager locationManager = (LocationManager) WeatherService.this
 					.getApplicationContext().getSystemService(
 							Context.LOCATION_SERVICE);
-			Criteria criteria = new Criteria();
+			final Criteria criteria = new Criteria();
 			criteria.setAccuracy(Criteria.ACCURACY_COARSE);
-			String provider = locationManager.getBestProvider(criteria, true);
-			if(provider==null){
+			final String provider = locationManager.getBestProvider(criteria,
+					true);
+			if (provider == null) {
 				listener.exceptionOccurred(ERROR_NO_KNOWN_POSITION);
 				return;
 			}
-			
-			Location loc = locationManager.getLastKnownLocation(provider);
+
+			final Location loc = locationManager.getLastKnownLocation(provider);
 			if (loc == null) {
 				listener.exceptionOccurred(ERROR_NO_KNOWN_POSITION);
 				return;
 			}
-			GetForecast getForecast = new GetForecast(listener, loc,
+			final GetForecast getForecast = new GetForecast(listener, loc,
 					toleranceRadius, toleranceVerticalDistance);
 			mDbCheckQueue.add(getForecast);
 			work();
 		}
 	};
-	
-	public void onDestroy() {
-		super.onDestroy();
-	};
-
-	/**
-	 * Gets forecast needs to be started from the UI thread.
-	 */
-	private class WorkAsync extends AsyncTask<Void, Float, Void> {
-		@Override
-		protected Void doInBackground(Void... params) {
-			// Check db
-			Log.d(TAG, "Checking database, " + mDbCheckQueue.size()
-					+ " in queue");
-			while (!mDbCheckQueue.isEmpty()) {
-				checkInDb(mDbCheckQueue.poll());
-
-			}
-			// Download from Internet
-			Log.d(TAG, "Downloading, " + mDownloadQueue.size() + " in queue");
-			while (!mDownloadQueue.isEmpty()) {
-				downloadForcast(mDownloadQueue.poll());
-			}
-
-			// Delete all old forecasts:
-			deleteOldForecasts();
-
-			return null;
-		}
-
-		@Override
-		protected void onPostExecute(Void result) {
-			super.onPostExecute(result);
-			//synchronized (isWorking) {
-				if (mDownloadQueue.isEmpty() && mDbCheckQueue.isEmpty()) {
-					isWorking = false;
-					stopSelf();
-				} else
-					new WorkAsync().execute(null);
-		//	}
-
-		}
-
-	}
-
-	protected void work() {
-		//synchronized (isWorking) {
-			if (!isWorking) {
-				isWorking = true;
-				new WorkAsync().execute(null);
-			}
-		//}
-	}
-
-	public void deleteOldForecasts() {
-		ContentResolver cr = getContentResolver();
-		// Check what is the latest forecast:
-
-		String[] projection = { WeatherContentProvider.META_GENERATED };
-		String selection = WeatherContentProvider.META_PROVIDER + "='"
-				+ YrProxy.PROVIDER + "'";
-		String sortOrder = WeatherContentProvider.META_GENERATED + " DESC";
-		Cursor c = cr.query(WeatherContentProvider.CONTENT_URI, projection,
-				selection, null, sortOrder);
-
-		// Check that there is forecasts in the table
-		if (c.getCount() == 0)
-			return;
-		c.moveToFirst();
-		long latestGeneratedForecast = c.getLong(c
-				.getColumnIndexOrThrow(WeatherContentProvider.META_GENERATED));
-		c.close();
-
-		// Deletes all old forecasts:
-		String where = WeatherContentProvider.META_GENERATED + "<"
-				+ latestGeneratedForecast + " AND " + selection;
-		cr.delete(WeatherContentProvider.CONTENT_URI, where, null);
-	}
 
 	/**
 	 * Check if there are any forecasts in database, and calls the event
@@ -193,23 +107,23 @@ public class WeatherService extends Service {
 	 *            to check
 	 * @throws RemoteException
 	 */
-	public void checkInDb(GetForecast getForecast) {
-		ContentResolver cr = getContentResolver();
+	public void checkInDb(final GetForecast getForecast) {
+		final ContentResolver cr = getContentResolver();
 		// Gets all forecasts
-		Cursor c = cr.query(WeatherContentProvider.CONTENT_URI, null, null,
-				null, null);
+		final Cursor c = cr.query(WeatherContentProvider.CONTENT_URI, null,
+				null, null, null);
 
 		// Gets columns
-		int latCol = c
+		final int latCol = c
 				.getColumnIndexOrThrow(WeatherContentProvider.META_LATITUDE);
-		int lonCol = c
+		final int lonCol = c
 				.getColumnIndexOrThrow(WeatherContentProvider.META_LONGITUDE);
-		int altCol = c
+		final int altCol = c
 				.getColumnIndexOrThrow(WeatherContentProvider.META_ALTITUDE);
 		double lat, lon, alt;
 
 		// Goes thru all forecasts
-		int length = c.getCount();
+		final int length = c.getCount();
 		for (int i = 0; i < length; i++) {
 			c.moveToPosition(i);
 			lat = c.getDouble(latCol);
@@ -217,10 +131,10 @@ public class WeatherService extends Service {
 			alt = c.getDouble(altCol);
 			if (getForecast.isInTargetZone(lat, lon, alt)) {
 				// Sends a message to listener
-				Integer id = c.getInt(c
+				final Integer id = c.getInt(c
 						.getColumnIndexOrThrow(WeatherContentProvider.META_ID));
 
-				long generated = c.getLong(c
+				final long generated = c.getLong(c
 						.getColumnIndex(WeatherContentProvider.META_GENERATED));
 
 				getForecast.newForecast(
@@ -228,24 +142,23 @@ public class WeatherService extends Service {
 								WeatherContentProvider.CONTENT_URI,
 								id.toString()).toString(), generated);
 				// Notify that there is a new forecast
-				//synchronized (getForecast.getListener()) {
-				//	getForecast.getListener().notifyAll();
-				//}
+				// synchronized (getForecast.getListener()) {
+				// getForecast.getListener().notifyAll();
+				// }
 
 				// Check if it is expected a new forecast:
-				long expectedNextForecast = c
+				final long expectedNextForecast = c
 						.getLong(c
 								.getColumnIndexOrThrow(WeatherContentProvider.META_NEXT_FORECAST));
-				long now = System.currentTimeMillis();
+				final long now = System.currentTimeMillis();
 				if (now > expectedNextForecast) {
-					long lastGeneratedForecast = c
+					final long lastGeneratedForecast = c
 							.getLong(c
 									.getColumnIndexOrThrow(WeatherContentProvider.META_GENERATED));
 					getForecast.setLastGeneratedForecast(lastGeneratedForecast);
 					mDownloadQueue.add(getForecast);
-				} else {
+				} else
 					getForecast.completed();
-				}
 
 				c.close();
 				return;
@@ -254,8 +167,33 @@ public class WeatherService extends Service {
 		c.close();
 		mDownloadQueue.add(getForecast);
 
-
 	}
+
+	public void deleteOldForecasts() {
+		final ContentResolver cr = getContentResolver();
+		// Check what is the latest forecast:
+
+		final String[] projection = { WeatherContentProvider.META_GENERATED };
+		final String selection = WeatherContentProvider.META_PROVIDER + "='"
+				+ YrProxy.PROVIDER + "'";
+		final String sortOrder = WeatherContentProvider.META_GENERATED
+				+ " DESC";
+		final Cursor c = cr.query(WeatherContentProvider.CONTENT_URI,
+				projection, selection, null, sortOrder);
+
+		// Check that there is forecasts in the table
+		if (c.getCount() == 0)
+			return;
+		c.moveToFirst();
+		final long latestGeneratedForecast = c.getLong(c
+				.getColumnIndexOrThrow(WeatherContentProvider.META_GENERATED));
+		c.close();
+
+		// Deletes all old forecasts:
+		final String where = WeatherContentProvider.META_GENERATED + "<"
+				+ latestGeneratedForecast + " AND " + selection;
+		cr.delete(WeatherContentProvider.CONTENT_URI, where, null);
+	};
 
 	/**
 	 * Downloads forecast from Internet, and calls the event listener when
@@ -265,31 +203,31 @@ public class WeatherService extends Service {
 	 *            to check
 	 * @throws RemoteException
 	 */
-	void downloadForcast(GetForecast getForecast) {
-		WeatherProxy proxy = new YrProxy(getContentResolver());
+	void downloadForcast(final GetForecast getForecast) {
+		final WeatherProxy proxy = new YrProxy(getContentResolver());
 		Uri uri = null;
 		try {
 			uri = proxy.getWeatherForecast(getForecast.getLocation(),
 					getForecast.getLastGeneratedForecast());
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			getForecast.exceptionOccured(ERROR_NETWORK_ERROR);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			getForecast.exceptionOccured(ERROR_UNKNOWN_ERROR);
 		}
 
 		// If no new forecast send status update and delete downloads
 		// queue.
 		if (uri == null) {
-			for (GetForecast l : mDownloadQueue) {
+			for (final GetForecast l : mDownloadQueue)
 				l.newExpectedTime();
-			}
 			mDownloadQueue.clear();
 		} else {
-			String uriS = uri.toString();
+			final String uriS = uri.toString();
 
-			Cursor c = getContentResolver().query(uri, null, null, null, null);
+			final Cursor c = getContentResolver().query(uri, null, null, null,
+					null);
 			c.moveToFirst();
-			long generated = c.getLong(c
+			final long generated = c.getLong(c
 					.getColumnIndex(WeatherContentProvider.META_GENERATED));
 			c.close();
 
@@ -297,16 +235,48 @@ public class WeatherService extends Service {
 		}
 
 		// Notify that there is a new forecast
-		//synchronized (getForecast.getListener()) {
-		//	getForecast.getListener().notifyAll();
-		//}
+		// synchronized (getForecast.getListener()) {
+		// getForecast.getListener().notifyAll();
+		// }
 		getForecast.completed();
 
 	}
 
+	@Override
+	public IBinder onBind(final Intent intent) {
+		if (IWeatherService.class.getName().equals(intent.getAction()))
+			return mBind;
+
+		return mBind;
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+	}
+
+	protected void work() {
+		// synchronized (isWorking) {
+		if (!isWorking) {
+			isWorking = true;
+			new WorkAsync().execute(null);
+		}
+		// }
+	}
+
 	class GetForecast {
-		public GetForecast(IForecastEventListener listener, Location location,
-				double toleranceRadius, double toleranceVertical) {
+		final private IForecastEventListener listener;
+
+		final private Location location;
+
+		final private double toleranceRadius;
+
+		final private double toleranceVertical;
+		private long lastGeneratedForecast;
+
+		public GetForecast(final IForecastEventListener listener,
+				final Location location, final double toleranceRadius,
+				final double toleranceVertical) {
 			super();
 			this.listener = listener;
 			this.location = location;
@@ -317,35 +287,16 @@ public class WeatherService extends Service {
 		public void completed() {
 			try {
 				listener.completed();
-			} catch (RemoteException e) {
+			} catch (final RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
 
-		public Location getLocation() {
-			return location;
-		}
-
-		final private IForecastEventListener listener;
-		final private Location location;
-		final private double toleranceRadius;
-		final private double toleranceVertical;
-		private long lastGeneratedForecast;
-
-		public void newExpectedTime() {
-			try {
-				listener.newExpectedTime();
-			} catch (RemoteException e) {
-				// If message is not received do nothing
-				Log.e(TAG, "newExpectedTime" + e.getMessage());
-			}
-		}
-
-		public void exceptionOccured(int errorcode) {
+		public void exceptionOccured(final int errorcode) {
 			try {
 				listener.exceptionOccurred(errorcode);
-			} catch (RemoteException e) {
+			} catch (final RemoteException e) {
 				// If message is not received do nothing
 				Log.e(TAG, "newExpectedTime" + e.getMessage());
 			}
@@ -355,33 +306,12 @@ public class WeatherService extends Service {
 			return lastGeneratedForecast;
 		}
 
-		public void newForecast(String uri, long generated) {
-			try {
-				listener.newForecast(uri, generated);
-			} catch (RemoteException e) {
-				// If message is not received do nothing
-				Log.e(TAG, "newExpectedTime" + e.getMessage());
-			}
-		}
-
-		public boolean isInTargetZone(double lat, double lon, double alt) {
-			if (location.hasAltitude()
-					&& (Math.abs(alt - location.getAltitude()) > toleranceVertical))
-				return false;
-			float dist[] = new float[3];
-			Location.distanceBetween(lat, lon, location.getLatitude(),
-					location.getLongitude(), dist);
-			if (dist[0] > toleranceRadius)
-				return false;
-			return true;
-		}
-
 		public IForecastEventListener getListener() {
 			return listener;
 		}
 
-		public void setLastGeneratedForecast(long lastGeneratedForecast) {
-			this.lastGeneratedForecast = lastGeneratedForecast;
+		public Location getLocation() {
+			return location;
 		}
 
 		public double getToleranceRadius() {
@@ -391,6 +321,78 @@ public class WeatherService extends Service {
 		public double getToleranceVertical() {
 			return toleranceVertical;
 		}
+
+		public boolean isInTargetZone(final double lat, final double lon,
+				final double alt) {
+			if (location.hasAltitude()
+					&& (Math.abs(alt - location.getAltitude()) > toleranceVertical))
+				return false;
+			final float dist[] = new float[3];
+			Location.distanceBetween(lat, lon, location.getLatitude(),
+					location.getLongitude(), dist);
+			if (dist[0] > toleranceRadius)
+				return false;
+			return true;
+		}
+
+		public void newExpectedTime() {
+			try {
+				listener.newExpectedTime();
+			} catch (final RemoteException e) {
+				// If message is not received do nothing
+				Log.e(TAG, "newExpectedTime" + e.getMessage());
+			}
+		}
+
+		public void newForecast(final String uri, final long generated) {
+			try {
+				listener.newForecast(uri, generated);
+			} catch (final RemoteException e) {
+				// If message is not received do nothing
+				Log.e(TAG, "newExpectedTime" + e.getMessage());
+			}
+		}
+
+		public void setLastGeneratedForecast(final long lastGeneratedForecast) {
+			this.lastGeneratedForecast = lastGeneratedForecast;
+		}
+	}
+
+	/**
+	 * Gets forecast needs to be started from the UI thread.
+	 */
+	private class WorkAsync extends AsyncTask<Void, Float, Void> {
+		@Override
+		protected Void doInBackground(final Void... params) {
+			// Check db
+			Log.d(TAG, "Checking database, " + mDbCheckQueue.size()
+					+ " in queue");
+			while (!mDbCheckQueue.isEmpty())
+				checkInDb(mDbCheckQueue.poll());
+			// Download from Internet
+			Log.d(TAG, "Downloading, " + mDownloadQueue.size() + " in queue");
+			while (!mDownloadQueue.isEmpty())
+				downloadForcast(mDownloadQueue.poll());
+
+			// Delete all old forecasts:
+			deleteOldForecasts();
+
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(final Void result) {
+			super.onPostExecute(result);
+			// synchronized (isWorking) {
+			if (mDownloadQueue.isEmpty() && mDbCheckQueue.isEmpty()) {
+				isWorking = false;
+				stopSelf();
+			} else
+				new WorkAsync().execute(null);
+			// }
+
+		}
+
 	}
 
 }

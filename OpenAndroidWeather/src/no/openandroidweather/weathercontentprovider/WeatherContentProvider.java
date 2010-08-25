@@ -37,21 +37,13 @@ import android.util.Log;
  * 
  */
 public class WeatherContentProvider extends ContentProvider {
-	public WeatherContentProvider() {
-		super();
-
-	}
-
-	public WeatherContentProvider(Context context) {
-		super();
-		openHelper = new WeatherContentProviderDatabaseOpenHelper(context);
-	}
-
 	private static final String TAG = "WeatherContentProvider";
 
 	public static final Uri CONTENT_URI = Uri
 			.parse("content://no.openandroidweather.weathercontentprovider");
+
 	public static final String FORECAST_CONTENT_DIRECTORY = "forecast";
+
 	/**
 	 * Table for meta data From each weather forecast there are some meta data,
 	 * they are grouped in this table and is referred back with FORECAST_META
@@ -74,13 +66,13 @@ public class WeatherContentProvider extends ContentProvider {
 	 */
 	public static final String META_NEXT_FORECAST = "new_forecast";
 	/**
-	 * Time for when the forecast was generated at the server, Integer Unix time in
-	 * milliseconds, for meta data
+	 * Time for when the forecast was generated at the server, Integer Unix time
+	 * in milliseconds, for meta data
 	 */
 	public static final String META_GENERATED = "generated";
 	/**
-	 * Time for when the forecast was loaded to the client. (Downloaded from server), Integer Unix time in
-	 * milliseconds, for meta data
+	 * Time for when the forecast was loaded to the client. (Downloaded from
+	 * server), Integer Unix time in milliseconds, for meta data
 	 */
 	public static final String META_LOADED = "loaded";
 	/** Provider of the forecast */
@@ -88,9 +80,9 @@ public class WeatherContentProvider extends ContentProvider {
 	static final String META_CREATE_TABLE = "CREATE TABLE " + META_TABLE_NAME
 			+ " (" + META_ID + " INTEGER PRIMARY KEY," + META_ALTITUDE
 			+ " REAL," + META_NEXT_FORECAST + " INTEGER," + META_GENERATED
-			+ " INTEGER," + META_LATITUDE + " REAL," + META_LOADED + " INTEGER," + META_LONGITUDE
-			+ " REAL," + META_PLACE_NAME + " TEXT," + META_PROVIDER + " TEXT)";
-
+			+ " INTEGER," + META_LATITUDE + " REAL," + META_LOADED
+			+ " INTEGER," + META_LONGITUDE + " REAL," + META_PLACE_NAME
+			+ " TEXT," + META_PROVIDER + " TEXT)";
 	/**
 	 * Table for forecast data: This tables have each data point and the meta
 	 * data is in the META_TABLE_NAME
@@ -104,15 +96,16 @@ public class WeatherContentProvider extends ContentProvider {
 	 * milliseconds for forecast data
 	 */
 	public static final String FORECAST_FROM = "fromTime";
-
 	/**
 	 * null if the data is a only valid at a specific time or the time when the
 	 * valid period for the forecast ends, Integer Unix time in milliseconds for
 	 * forecast data
 	 */
 	public static final String FORECAST_TO = "toTime";
+
 	/** Weather type of forecast data, Integer from WeatherTypes */
 	public static final String FORECAST_TYPE = "type";
+
 	/** Value of forecast data, Text */
 	public static final String FORECAST_VALUE = "value";
 	/** _id in META table for forecast data, integer */
@@ -122,48 +115,56 @@ public class WeatherContentProvider extends ContentProvider {
 			+ " INTEGER PRIMARY KEY, " + FORECAST_FROM + " INTEGER, "
 			+ FORECAST_META + " INTEGER, " + FORECAST_TO + " INTEGER, "
 			+ FORECAST_TYPE + " INTEGER, " + FORECAST_VALUE + " TEXT )";
-	
-
-//	/**
-//	 * Table for adding favorites. When a row is added WeatherService will
-//	 * update forecasts after the permissions.
-//	 * 
-//	 */
-	
-//	public static class favorite {
-//		/**
-//		 * Id of the favorite, used when asking WeatherService to get a
-//		 * forecast. Integer
-//		 */
-//		public static final String ID = "_id";
-//
-//		/**
-//		 * A unique TEXT to identify an app in the favorite table
-//		 */
-//		public static final String APPID = "appid";
-//		public static final String LATITUDE = "latitude";
-//		public static final String LONGITUDE = "longitude";
-//		public static final String ALTITUDE = "altitude";
-//		public static final String GET_NEAREST = "get_nearest";
-//		static final String TABLE_NAME = "favorite";
-//		static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ("
-//				+ ID + "INTEGER PRIMARY KEY, " + ALTITUDE + " REAL, " + APPID
-//				+ " TEXT," + GET_NEAREST + " INTEGER, " + LATITUDE + " REAL, "
-//				+ LONGITUDE + " REAL)";
-//	}
-
-
 	// UriMatcher
 	private static final int sMETA = 1;
 	private static final int sMETA_ID = 2;
+
+	// /**
+	// * Table for adding favorites. When a row is added WeatherService will
+	// * update forecasts after the permissions.
+	// *
+	// */
+
+	// public static class favorite {
+	// /**
+	// * Id of the favorite, used when asking WeatherService to get a
+	// * forecast. Integer
+	// */
+	// public static final String ID = "_id";
+	//
+	// /**
+	// * A unique TEXT to identify an app in the favorite table
+	// */
+	// public static final String APPID = "appid";
+	// public static final String LATITUDE = "latitude";
+	// public static final String LONGITUDE = "longitude";
+	// public static final String ALTITUDE = "altitude";
+	// public static final String GET_NEAREST = "get_nearest";
+	// static final String TABLE_NAME = "favorite";
+	// static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ("
+	// + ID + "INTEGER PRIMARY KEY, " + ALTITUDE + " REAL, " + APPID
+	// + " TEXT," + GET_NEAREST + " INTEGER, " + LATITUDE + " REAL, "
+	// + LONGITUDE + " REAL)";
+	// }
+
 	private static final int sFORECAST = 3;
 	private static final int sFORECAST_ID = 4;
 	private static final int sID_FORECAST = 5;
 	private static final int sID_FORECAST_ID = 6;
 	private static final UriMatcher sURIMatcher = new UriMatcher(sMETA);
 
+	public WeatherContentProvider() {
+		super();
+
+	}
+
+	public WeatherContentProvider(final Context context) {
+		super();
+		openHelper = new WeatherContentProviderDatabaseOpenHelper(context);
+	}
+
 	static {
-		String autority = CONTENT_URI.getAuthority();
+		final String autority = CONTENT_URI.getAuthority();
 		sURIMatcher.addURI(autority, "", sMETA);
 		sURIMatcher.addURI(autority, "#", sMETA_ID);
 		sURIMatcher.addURI(autority, FORECAST_CONTENT_DIRECTORY, sFORECAST);
@@ -177,38 +178,8 @@ public class WeatherContentProvider extends ContentProvider {
 
 	private WeatherContentProviderDatabaseOpenHelper openHelper;
 
-	/*
-	 * @see android.content.ContentProvider#delete(android.net.Uri,
-	 * java.lang.String, java.lang.String[]) If the URI is for the root level
-	 * with a id, all elements connected to this id is also deleted
-	 */
 	@Override
-	public int delete(Uri uri, String selection, String[] selectionArgs) {
-		int uriMatch = sURIMatcher.match(uri);
-		// TODO: Handle this bug better:
-		if (uri.equals(CONTENT_URI))
-			uriMatch = 1;
-
-		String table = getTable(uri, uriMatch);
-		String newSelection = getNewSelection(uri, selection, uriMatch);
-
-		if (uriMatch == sMETA_ID) {
-			uri = Uri.withAppendedPath(uri, FORECAST_CONTENT_DIRECTORY);
-			delete(uri, selection, selectionArgs);
-		}
-
-		return openHelper.getWritableDatabase().delete(table, newSelection,
-				selectionArgs);
-	}
-
-	@Override
-	public String getType(Uri uri) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Not implemented!");
-	}
-
-	@Override
-	public int bulkInsert(Uri uri, ContentValues[] values) {
+	public int bulkInsert(final Uri uri, final ContentValues[] values) {
 		int uriMatch = sURIMatcher.match(uri);
 		// TODO: Handle this bug better:
 		if (uri.equals(CONTENT_URI))
@@ -230,76 +201,43 @@ public class WeatherContentProvider extends ContentProvider {
 			break;
 		}
 
-		if (id >= 0) {
-			for (ContentValues contentValues : values) {
+		if (id >= 0)
+			for (final ContentValues contentValues : values)
 				contentValues.put(FORECAST_META, id);
-			}
-		}
 
 		int insertedRows = 0;
-		SQLiteDatabase db = openHelper.getWritableDatabase();
-		for (ContentValues contentValues : values) {
+		final SQLiteDatabase db = openHelper.getWritableDatabase();
+		for (final ContentValues contentValues : values)
 			if (db.insertOrThrow(table, null, contentValues) != -1)
 				insertedRows++;
-		}
 		db.close();
 		return insertedRows;
 
 	}
 
+	/*
+	 * @see android.content.ContentProvider#delete(android.net.Uri,
+	 * java.lang.String, java.lang.String[]) If the URI is for the root level
+	 * with a id, all elements connected to this id is also deleted
+	 */
 	@Override
-	public Uri insert(Uri uri, ContentValues values) {
-		String path = uri.getPath();
-		String table = null;
-		if (path == null || path.equals("")) {
-			// Is meta data:
-			table = META_TABLE_NAME;
-		} else if (path.contains(FORECAST_CONTENT_DIRECTORY)) {
-			// is forecast:
-			table = FORECAST_TABLE_NAME;
-
-			// gets id:
-			String split[] = path.split("/");
-
-			// Checks that the second split is a integer
-			if (!split[1].matches("^-{0,1}[0-9]+$"))
-				throw new UnsupportedOperationException(
-						"Path was not recognized in insert:" + path);
-			values.put(FORECAST_META, split[1]);
-
-		} else {
-			Log.e(TAG, "Path was not recognized in insert:" + path);
-			throw new UnsupportedOperationException(
-					"Path was not recognized in insert:" + path);
-		}
-
-		SQLiteDatabase db = openHelper.getWritableDatabase();
-		Long id = db.insert(table, null, values);
-		db.close();
-		return Uri.withAppendedPath(uri, id.toString());
-	}
-
-	@Override
-	public boolean onCreate() {
-		openHelper = new WeatherContentProviderDatabaseOpenHelper(getContext());
-		return true;
-	}
-
-	@Override
-	public Cursor query(Uri uri, String[] projection, String selection,
-			String[] selectionArgs, String sortOrder) {
+	public int delete(Uri uri, final String selection,
+			final String[] selectionArgs) {
 		int uriMatch = sURIMatcher.match(uri);
 		// TODO: Handle this bug better:
 		if (uri.equals(CONTENT_URI))
 			uriMatch = 1;
 
-		String table = getTable(uri, uriMatch);
+		final String table = getTable(uri, uriMatch);
+		final String newSelection = getNewSelection(uri, selection, uriMatch);
 
-		String newSelection = getNewSelection(uri, selection, uriMatch);
+		if (uriMatch == sMETA_ID) {
+			uri = Uri.withAppendedPath(uri, FORECAST_CONTENT_DIRECTORY);
+			delete(uri, selection, selectionArgs);
+		}
 
-		return openHelper.getReadableDatabase().query(table, projection,
-				newSelection, selectionArgs, null, null, sortOrder);
-
+		return openHelper.getWritableDatabase().delete(table, newSelection,
+				selectionArgs);
 	}
 
 	/**
@@ -308,8 +246,9 @@ public class WeatherContentProvider extends ContentProvider {
 	 * @param uriMatch
 	 * @return
 	 */
-	private String getNewSelection(Uri uri, String selection, int uriMatch) {
-		List<String> where = new LinkedList<String>();
+	private String getNewSelection(final Uri uri, final String selection,
+			final int uriMatch) {
+		final List<String> where = new LinkedList<String>();
 		if (selection != null)
 			where.add(selection);
 		// Find id in meta table
@@ -334,9 +273,8 @@ public class WeatherContentProvider extends ContentProvider {
 		String newSelection = null;
 		if (where.size() > 0) {
 			newSelection = where.get(0);
-			for (int i = 1; i < where.size(); i++) {
+			for (int i = 1; i < where.size(); i++)
 				newSelection += " AND " + where.get(i);
-			}
 		}
 		return newSelection;
 	}
@@ -346,7 +284,7 @@ public class WeatherContentProvider extends ContentProvider {
 	 * @param uriMatch
 	 * @return
 	 */
-	private String getTable(Uri uri, int uriMatch) {
+	private String getTable(final Uri uri, final int uriMatch) {
 		String table = null;
 		switch (uriMatch) {
 		case sMETA:
@@ -368,15 +306,77 @@ public class WeatherContentProvider extends ContentProvider {
 	}
 
 	@Override
-	public int update(Uri uri, ContentValues values, String selection,
-			String[] selectionArgs) {
+	public String getType(final Uri uri) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Not implemented!");
+	}
+
+	@Override
+	public Uri insert(final Uri uri, final ContentValues values) {
+		final String path = uri.getPath();
+		String table = null;
+		if (path == null || path.equals(""))
+			// Is meta data:
+			table = META_TABLE_NAME;
+		else if (path.contains(FORECAST_CONTENT_DIRECTORY)) {
+			// is forecast:
+			table = FORECAST_TABLE_NAME;
+
+			// gets id:
+			final String split[] = path.split("/");
+
+			// Checks that the second split is a integer
+			if (!split[1].matches("^-{0,1}[0-9]+$"))
+				throw new UnsupportedOperationException(
+						"Path was not recognized in insert:" + path);
+			values.put(FORECAST_META, split[1]);
+
+		} else {
+			Log.e(TAG, "Path was not recognized in insert:" + path);
+			throw new UnsupportedOperationException(
+					"Path was not recognized in insert:" + path);
+		}
+
+		final SQLiteDatabase db = openHelper.getWritableDatabase();
+		final Long id = db.insert(table, null, values);
+		db.close();
+		return Uri.withAppendedPath(uri, id.toString());
+	}
+
+	@Override
+	public boolean onCreate() {
+		openHelper = new WeatherContentProviderDatabaseOpenHelper(getContext());
+		return true;
+	}
+
+	@Override
+	public Cursor query(final Uri uri, final String[] projection,
+			final String selection, final String[] selectionArgs,
+			final String sortOrder) {
 		int uriMatch = sURIMatcher.match(uri);
 		// TODO: Handle this bug better:
 		if (uri.equals(CONTENT_URI))
 			uriMatch = 1;
 
-		String table = getTable(uri, uriMatch);
-		String newSelection = getNewSelection(uri, selection, uriMatch);
+		final String table = getTable(uri, uriMatch);
+
+		final String newSelection = getNewSelection(uri, selection, uriMatch);
+
+		return openHelper.getReadableDatabase().query(table, projection,
+				newSelection, selectionArgs, null, null, sortOrder);
+
+	}
+
+	@Override
+	public int update(final Uri uri, final ContentValues values,
+			final String selection, final String[] selectionArgs) {
+		int uriMatch = sURIMatcher.match(uri);
+		// TODO: Handle this bug better:
+		if (uri.equals(CONTENT_URI))
+			uriMatch = 1;
+
+		final String table = getTable(uri, uriMatch);
+		final String newSelection = getNewSelection(uri, selection, uriMatch);
 		return openHelper.getWritableDatabase().update(table, values,
 				newSelection, selectionArgs);
 	}

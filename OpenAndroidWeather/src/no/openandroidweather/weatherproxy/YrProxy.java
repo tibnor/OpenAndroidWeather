@@ -51,9 +51,9 @@ import android.util.Log;
 public class YrProxy implements WeatherProxy {
 	private static final String TAG = "YrProxy";
 	public static final String PROVIDER = "met.no";
-	private ContentResolver mContentResolver;
+	private final ContentResolver mContentResolver;
 
-	public YrProxy(ContentResolver contentResolver) {
+	public YrProxy(final ContentResolver contentResolver) {
 		super();
 		mContentResolver = contentResolver;
 	}
@@ -66,11 +66,10 @@ public class YrProxy implements WeatherProxy {
 	 * .location.Location, long)
 	 */
 	@Override
-	public Uri getWeatherForecast(Location location, long lastForecastGenerated)
-			throws IOException, Exception {
+	public Uri getWeatherForecast(final Location location,
+			final long lastForecastGenerated) throws IOException, Exception {
 		return locationForecast(location, lastForecastGenerated);
 	}
-
 
 	/**
 	 * See http://api.met.no/weatherapi/locationforecast/1.8/documentation for
@@ -88,50 +87,51 @@ public class YrProxy implements WeatherProxy {
 	 * @throws IOException
 	 *             Internet trouble
 	 */
-	private Uri locationForecast(Location location, long lastForecastGenerated)
-			throws UnknownHostException, IOException,
-			ParserConfigurationException, SAXException {
+	private Uri locationForecast(final Location location,
+			final long lastForecastGenerated) throws UnknownHostException,
+			IOException, ParserConfigurationException, SAXException {
 		// Makes the uri
-		Uri.Builder uri = new Uri.Builder();
+		final Uri.Builder uri = new Uri.Builder();
 		uri.authority("api.met.no");
 		uri.path("/weatherapi/locationforecast/1.8/");
 		uri.scheme("http");
-		String lat = new Double(location.getLatitude()).toString();
-		String lon = new Double(location.getLongitude()).toString();
+		final String lat = new Double(location.getLatitude()).toString();
+		final String lon = new Double(location.getLongitude()).toString();
 		uri.appendQueryParameter("lat", lat);
 		uri.appendQueryParameter("lon", lon);
 		if (location.hasAltitude()) {
-			Double altD = location.getAltitude();
-			String alt = Integer.toString(altD.intValue());
+			final Double altD = location.getAltitude();
+			final String alt = Integer.toString(altD.intValue());
 			uri.appendQueryParameter("msl", alt);
 		}
 		Log.d(TAG, uri.toString());
 
-		HttpRequest httpRequest = new HttpGet(uri.toString());
+		final HttpRequest httpRequest = new HttpGet(uri.toString());
 		httpRequest.addHeader("Accept-Encoding", "gzip");
 
-		HttpClient httpClient = new DefaultHttpClient();
-		HttpHost httpHost = new HttpHost("api.met.no");
+		final HttpClient httpClient = new DefaultHttpClient();
+		final HttpHost httpHost = new HttpHost("api.met.no");
 		HttpResponse httpResponse = null;
 		httpResponse = httpClient.execute(httpHost, httpRequest);
 
 		if (httpResponse.getStatusLine().getStatusCode() != 200) {
-			int responseCode = httpResponse.getStatusLine().getStatusCode();
+			final int responseCode = httpResponse.getStatusLine()
+					.getStatusCode();
 			throw new HttpResponseException(responseCode,
 					"Trouble with response from api.yr.no: Response code: "
 							+ responseCode);
 		}
 
-		InputStream inputStream = httpResponse.getEntity().getContent();
-		SAXParserFactory spf = SAXParserFactory.newInstance();
-		SAXParser parser = spf.newSAXParser();
+		final InputStream inputStream = httpResponse.getEntity().getContent();
+		final SAXParserFactory spf = SAXParserFactory.newInstance();
+		final SAXParser parser = spf.newSAXParser();
 
 		// Parse it
-		YrLocationForecastParser yrLocationForecastParser = new YrLocationForecastParser(
+		final YrLocationForecastParser yrLocationForecastParser = new YrLocationForecastParser(
 				mContentResolver, lastForecastGenerated);
 		try {
 			parser.parse(inputStream, yrLocationForecastParser);
-		} catch (SAXException e) {
+		} catch (final SAXException e) {
 			if (e.getMessage().equals(
 					YrLocationForecastParser.NO_NEW_DATA_EXCEPTION)) {
 				updateExpectedNewTime(yrLocationForecastParser
@@ -144,12 +144,12 @@ public class YrProxy implements WeatherProxy {
 		return yrLocationForecastParser.getContentUri();
 	}
 
-	private void updateExpectedNewTime(long nextExcpectedTime) {
-		Uri uri = WeatherContentProvider.CONTENT_URI;
-		ContentValues values = new ContentValues();
+	private void updateExpectedNewTime(final long nextExcpectedTime) {
+		final Uri uri = WeatherContentProvider.CONTENT_URI;
+		final ContentValues values = new ContentValues();
 		values.put(WeatherContentProvider.META_NEXT_FORECAST, nextExcpectedTime);
-		String where = WeatherContentProvider.META_PROVIDER + "='" + PROVIDER
-				+ "'";
+		final String where = WeatherContentProvider.META_PROVIDER + "='"
+				+ PROVIDER + "'";
 		mContentResolver.update(uri, values, where, null);
 	}
 

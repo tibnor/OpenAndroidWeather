@@ -23,7 +23,10 @@ public class WeatherType {
 	public static final int symbol = 0;
 	public static final int precipitation = 1;
 	public static final int temperature = 2;
-	public class symbol{
+	public static final int windSpeed = 3;
+	public static final int windDirection = 4;
+
+	public class symbol {
 		public static final int SUN = 1;
 		public static final int LIGHTCLOUD = 2;
 		public static final int PARTLYCLOUD = 3;

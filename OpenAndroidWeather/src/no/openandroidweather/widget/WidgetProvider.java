@@ -55,10 +55,46 @@ public class WidgetProvider extends AppWidgetProvider {
 	private static final String TAG = "no.openAndroidWeahter.WidgetProvider";
 
 	@Override
-	public void onUpdate(Context context, AppWidgetManager appWidgetManager,
-			int[] appWidgetIds) {
+	public void onDisabled(final Context context) {
+		super.onDisabled(context);
+		Log.i(TAG, "Last widget removed.");
+
+		// Remove alarm
+		final PendingIntent pendingIntent = PendingIntent.getService(context,
+				0, new Intent(context, UpdateService.class),
+				PendingIntent.FLAG_UPDATE_CURRENT);
+		final AlarmManager alarm = (AlarmManager) context
+				.getSystemService(Context.ALARM_SERVICE);
+		alarm.cancel(pendingIntent);
+
+	}
+
+	@Override
+	public void onEnabled(final Context context) {
+		super.onEnabled(context);
+
+		Log.i(TAG, "First widget added.");
+
+		// Set alarm
+		final PendingIntent pendingIntent = PendingIntent.getService(context,
+				0, new Intent(context, UpdateService.class),
+				PendingIntent.FLAG_UPDATE_CURRENT);
+		final AlarmManager alarm = (AlarmManager) context
+				.getSystemService(Context.ALARM_SERVICE);
+		// Set time to next hour plus 5 minutes:
+		long triggerAtTime = System.currentTimeMillis();
+		// Mid step set to last hour:
+		triggerAtTime -= triggerAtTime % 3600000;
+		triggerAtTime += 65 * 60 * 1000;
+		alarm.setInexactRepeating(AlarmManager.RTC, triggerAtTime,
+				AlarmManager.INTERVAL_HOUR, pendingIntent);
+	}
+
+	@Override
+	public void onUpdate(final Context context,
+			final AppWidgetManager appWidgetManager, final int[] appWidgetIds) {
 		super.onUpdate(context, appWidgetManager, appWidgetIds);
-		Intent intent = new Intent(context, UpdateService.class);
+		final Intent intent = new Intent(context, UpdateService.class);
 		context.startService(intent);
 	}
 
@@ -72,16 +108,17 @@ public class WidgetProvider extends AppWidgetProvider {
 		 * completed
 		 */
 		private boolean isWorking = false;
-		private ServiceConnection mServiceConnection = new ServiceConnection() {
+		private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
 			@Override
-			public void onServiceConnected(ComponentName name, IBinder service) {
+			public void onServiceConnected(final ComponentName name,
+					final IBinder service) {
 				mService = IWeatherService.Stub.asInterface(service);
 				synchronized (mService) {
 					// Sets up a call for new forecast
 					try {
 						mService.getNearestForecast(forcastListener, 2000, 100);
-					} catch (RemoteException e) {
+					} catch (final RemoteException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
@@ -90,19 +127,100 @@ public class WidgetProvider extends AppWidgetProvider {
 			}
 
 			@Override
-			public void onServiceDisconnected(ComponentName name) {
-				if (mService != null) {
+			public void onServiceDisconnected(final ComponentName name) {
+				if (mService != null)
 					synchronized (mService) {
 						mService = null;
 					}
-				}
 
 			}
 
 		};
 
+		/**
+		 * @param contentUri
+		 * @param view
+		 * @param cr
+		 * @param timeStart
+		 * @param timeStop
+		 * @param i
+		 */
+		private void getAndInsertData(final Uri contentUri,
+				final RemoteViews view, final ContentResolver cr,
+				final long timeStart, final long timeStop, final int i) {
+			// Set time:
+			final Calendar cal = Calendar.getInstance();
+			cal.setTimeInMillis(timeStart);
+			int dayOfWeek = cal.get(Calendar.DAY_OF_WEEK) - 2;
+			if (dayOfWeek < 0)
+				dayOfWeek += 7;
+			String time = WEEK_DAYS[dayOfWeek] + "";
+			time += " " + cal.get(Calendar.HOUR_OF_DAY);
+			view.setTextViewText(Q.time[i], time);
+
+			// Gets symbol and precipitation
+			String selection = WeatherContentProvider.FORECAST_FROM + "="
+					+ timeStart + " AND " + WeatherContentProvider.FORECAST_TO
+					+ "=" + timeStop;
+			final String[] projection = { WeatherContentProvider.FORECAST_TYPE,
+					WeatherContentProvider.FORECAST_VALUE };
+			Cursor c = cr.query(contentUri, projection, selection, null, null);
+			c.moveToFirst();
+			int length = c.getCount();
+			int typeCol = c
+					.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_TYPE);
+			int valueCol = c
+					.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_VALUE);
+			int type;
+			String value;
+			for (int j = 0; j < length; j++) {
+				type = c.getInt(typeCol);
+				value = c.getString(valueCol);
+				switch (type) {
+				case WeatherType.precipitation:
+					view.setTextViewText(Q.pert[i], value);
+					break;
+				case WeatherType.symbol:
+					final Integer weatherType = new Integer(value);
+					Log.d(TAG, "Time: " + time + "symbol:" + weatherType);
+					view.setImageViewResource(Q.image[i], Q.symbol[weatherType]);
+					break;
+				}
+				c.moveToNext();
+			}
+			c.close();
+
+			selection = WeatherContentProvider.FORECAST_FROM + "=" + timeStart
+					+ " AND " + WeatherContentProvider.FORECAST_TO + "="
+					+ timeStart;
+			c = cr.query(contentUri, projection, selection, null, null);
+			c.moveToFirst();
+			length = c.getCount();
+			typeCol = c
+					.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_TYPE);
+			valueCol = c
+					.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_VALUE);
+			for (int j = 0; j < length; j++) {
+				type = c.getInt(typeCol);
+				value = c.getString(valueCol);
+				switch (type) {
+				case WeatherType.temperature:
+					view.setTextViewText(Q.temp[i], value);
+					break;
+				}
+				c.moveToNext();
+			}
+			c.close();
+
+		}
+
 		@Override
-		public void onStart(Intent intent, int startId) {
+		public IBinder onBind(final Intent intent) {
+			return null;
+		}
+
+		@Override
+		public void onStart(final Intent intent, final int startId) {
 			// Bind to service
 			if (isAlreadyRunning) {
 				Log.i(TAG, "Updating is ongoing, new update ignored");
@@ -117,44 +235,51 @@ public class WidgetProvider extends AppWidgetProvider {
 					bindService(new Intent(getApplicationContext(),
 							WeatherService.class), mServiceConnection,
 							BIND_AUTO_CREATE);
-				} else {
+				} else
 					synchronized (mService) {
 						try {
 							mService.getNearestForecast(forcastListener, 2000,
 									100);
-						} catch (RemoteException e) {
+						} catch (final RemoteException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 					}
-				}
 			}
 
 		}
 
+		public void stop() {
+			Log.i(TAG, "stopping");
+			isAlreadyRunning = false;
+
+			stopSelf();
+		}
+
 		private void updateWidget(Uri contentUri) {
 			Log.i(TAG, "Rendering widget");
-			Context context = getApplicationContext();
-			RemoteViews view = new RemoteViews(context.getPackageName(),
+			final Context context = getApplicationContext();
+			final RemoteViews view = new RemoteViews(context.getPackageName(),
 					R.layout.widget);
-			ContentResolver cr = getContentResolver();
+			final ContentResolver cr = getContentResolver();
 
-			String projection[] = { WeatherContentProvider.META_NEXT_FORECAST,
+			final String projection[] = {
+					WeatherContentProvider.META_NEXT_FORECAST,
 					WeatherContentProvider.META_LOADED };
-			Cursor c = cr.query(contentUri, projection, null, null, null);
+			final Cursor c = cr.query(contentUri, projection, null, null, null);
 			c.moveToFirst();
 
-			java.text.DateFormat df = DateFormat.getTimeFormat(context);
+			final java.text.DateFormat df = DateFormat.getTimeFormat(context);
 
 			String nextForecast = "Next: ";
-			long nextForecastI = c
+			final long nextForecastI = c
 					.getLong(c
 							.getColumnIndexOrThrow(WeatherContentProvider.META_NEXT_FORECAST));
 			nextForecast += df.format(new Date(nextForecastI));
 			view.setTextViewText(R.id.widget_next_forecast, nextForecast);
 
 			String loaded = "Downloaded: ";
-			long loadedL = c.getLong(c
+			final long loadedL = c.getLong(c
 					.getColumnIndexOrThrow(WeatherContentProvider.META_LOADED));
 
 			loaded += df.format(new Date(loadedL));
@@ -162,8 +287,8 @@ public class WidgetProvider extends AppWidgetProvider {
 			c.close();
 
 			// Add onClick intent for updating:
-			PendingIntent pendingIntent = PendingIntent.getService(context, 0,
-					new Intent(context, UpdateService.class),
+			final PendingIntent pendingIntent = PendingIntent.getService(
+					context, 0, new Intent(context, UpdateService.class),
 					PendingIntent.FLAG_UPDATE_CURRENT);
 			view.setOnClickPendingIntent(R.id.widget_background, pendingIntent);
 
@@ -200,141 +325,40 @@ public class WidgetProvider extends AppWidgetProvider {
 			}
 
 			// Push update for this widget to the home screen
-			ComponentName thisWidget = new ComponentName(this,
+			final ComponentName thisWidget = new ComponentName(this,
 					WidgetProvider.class);
-			AppWidgetManager manager = AppWidgetManager.getInstance(this);
+			final AppWidgetManager manager = AppWidgetManager.getInstance(this);
 
 			manager.updateAppWidget(thisWidget, view);
 			isWorking = false;
-			if (forcastListener.isComplete()) {
+			if (forcastListener.isComplete())
 				stop();
-			}
-		}
-
-		public void stop() {
-			Log.i(TAG, "stopping");
-			isAlreadyRunning = false;
-			// Make an alarm for next update
-			Context context = getApplicationContext();
-			PendingIntent pendingIntent = PendingIntent.getService(context, 0,
-					new Intent(context, UpdateService.class),
-					PendingIntent.FLAG_ONE_SHOT);
-			AlarmManager alarm = (AlarmManager) context
-					.getSystemService(Context.ALARM_SERVICE);
-			// Set time to next hour:
-			long triggerAtTime = System.currentTimeMillis();
-			// Mid step set to last hour:
-			triggerAtTime -= triggerAtTime % 3600000;
-			triggerAtTime += 3600000;
-
-			alarm.set(AlarmManager.RTC, triggerAtTime, pendingIntent);
-			stopSelf();
-		}
-
-		/**
-		 * @param contentUri
-		 * @param view
-		 * @param cr
-		 * @param timeStart
-		 * @param timeStop
-		 * @param i
-		 */
-		private void getAndInsertData(Uri contentUri, RemoteViews view,
-				ContentResolver cr, long timeStart, long timeStop, int i) {
-			// Set time:
-			Calendar cal = Calendar.getInstance();
-			cal.setTimeInMillis(timeStart);
-			int dayOfWeek = cal.get(Calendar.DAY_OF_WEEK) - 2;
-			if (dayOfWeek < 0) {
-				dayOfWeek += 7;
-			}
-			String time = WEEK_DAYS[dayOfWeek] + "";
-			time += " " + cal.get(Calendar.HOUR_OF_DAY);
-			view.setTextViewText(Q.time[i], time);
-
-			// Gets symbol and precipitation
-			String selection = WeatherContentProvider.FORECAST_FROM + "="
-					+ timeStart + " AND " + WeatherContentProvider.FORECAST_TO
-					+ "=" + timeStop;
-			String[] projection = { WeatherContentProvider.FORECAST_TYPE,
-					WeatherContentProvider.FORECAST_VALUE };
-			Cursor c = cr.query(contentUri, projection, selection, null, null);
-			c.moveToFirst();
-			int length = c.getCount();
-			int typeCol = c
-					.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_TYPE);
-			int valueCol = c
-					.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_VALUE);
-			int type;
-			String value;
-			for (int j = 0; j < length; j++) {
-				type = c.getInt(typeCol);
-				value = c.getString(valueCol);
-				switch (type) {
-				case WeatherType.precipitation:
-					view.setTextViewText(Q.pert[i], value);
-					break;
-				case WeatherType.symbol:
-					Integer weatherType = new Integer(value);
-					Log.d(TAG, "Time: " + time + "symbol:" + weatherType);
-					view.setImageViewResource(Q.image[i], Q.icon[weatherType]);
-					break;
-				}
-				c.moveToNext();
-			}
-			c.close();
-
-			selection = WeatherContentProvider.FORECAST_FROM + "=" + timeStart
-					+ " AND " + WeatherContentProvider.FORECAST_TO + "="
-					+ timeStart;
-			c = cr.query(contentUri, projection, selection, null, null);
-			c.moveToFirst();
-			length = c.getCount();
-			typeCol = c
-					.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_TYPE);
-			valueCol = c
-					.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_VALUE);
-			for (int j = 0; j < length; j++) {
-				type = c.getInt(typeCol);
-				value = c.getString(valueCol);
-				switch (type) {
-				case WeatherType.temperature:
-					view.setTextViewText(Q.temp[i], value);
-					break;
-				}
-				c.moveToNext();
-			}
-			c.close();
-
-		}
-
-		@Override
-		public IBinder onBind(Intent intent) {
-			return null;
 		}
 
 		private class ForecastListener extends IForecastEventListener.Stub {
 			private boolean isComplete;
 
 			@Override
-			public void newForecast(String uri, long forecastGenerated)
+			public void completed() throws RemoteException {
+				synchronized (mService) {
+					if (mService != null) {
+						try {
+							unbindService(mServiceConnection);
+						} catch (final IllegalArgumentException e) {
+							// The service is unbind before binding
+						}
+						mService = null;
+					}
+				}
+				isComplete = true;
+				if (!isWorking)
+					stop();
+
+			}
+
+			@Override
+			public void exceptionOccurred(final int errorcode)
 					throws RemoteException {
-				updateWidget(Uri.parse(uri));
-				isComplete = false;
-			}
-
-			@Override
-			public void progress(double progress) throws RemoteException {
-				// TODO Show progress?
-			}
-
-			@Override
-			public void newExpectedTime() throws RemoteException {
-				// TODO Show expected?
-			}
-
-			@Override
-			public void exceptionOccurred(int errorcode) throws RemoteException {
 				String text;
 				switch (errorcode) {
 				case (WeatherService.ERROR_NETWORK_ERROR):
@@ -356,21 +380,20 @@ public class WidgetProvider extends AppWidgetProvider {
 			}
 
 			@Override
-			public void completed() throws RemoteException {
-				synchronized (mService) {
-					if (mService != null) {
-						try {
-							unbindService(mServiceConnection);
-						} catch (IllegalArgumentException e) {
-							// The service is unbind before binding
-						}
-						mService = null;
-					}
-				}
-				isComplete = true;
-				if (!isWorking)
-					stop();
+			public void newExpectedTime() throws RemoteException {
+				// TODO Show expected?
+			}
 
+			@Override
+			public void newForecast(final String uri,
+					final long forecastGenerated) throws RemoteException {
+				updateWidget(Uri.parse(uri));
+				isComplete = false;
+			}
+
+			@Override
+			public void progress(final double progress) throws RemoteException {
+				// TODO Show progress?
 			}
 		}
 	}

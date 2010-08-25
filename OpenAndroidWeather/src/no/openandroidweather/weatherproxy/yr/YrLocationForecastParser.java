@@ -52,11 +52,42 @@ public class YrLocationForecastParser extends DefaultHandler {
 	final long lastGenerated;
 	List<ContentValues> values = new ArrayList<ContentValues>();
 
-	public YrLocationForecastParser(ContentResolver contentResolver,
-			long lastGeneratedForecastTime) {
+	public YrLocationForecastParser(final ContentResolver contentResolver,
+			final long lastGeneratedForecastTime) {
 		super();
-		this.lastGenerated = lastGeneratedForecastTime;
+		lastGenerated = lastGeneratedForecastTime;
 		this.contentResolver = contentResolver;
+	}
+
+	/**
+	 * @param attributes
+	 * @param key
+	 * @return time in ms since 01.01.1970
+	 */
+	private static long getTime(final Attributes attributes, final String key) {
+		final String timeS = attributes.getValue(attributes.getIndex(key));
+		final Time time = new Time("UTC");
+		time.parse3339(timeS);
+
+		return time.toMillis(false);
+	}
+
+	@Override
+	public void endDocument() throws SAXException {
+		super.endDocument();
+		ContentValues valueArray[] = new ContentValues[1];
+		valueArray = values.toArray(valueArray);
+		contentResolver.bulkInsert(Uri.withAppendedPath(contentUri,
+				WeatherContentProvider.FORECAST_CONTENT_DIRECTORY), valueArray);
+	}
+
+	@Override
+	public void endElement(final String uri, final String localName,
+			final String qName) throws SAXException {
+		if (localName.equals("time"))
+			isInTime = false;
+		else if (localName.equals("meta"))
+			isInMeta = false;
 	}
 
 	/**
@@ -67,72 +98,35 @@ public class YrLocationForecastParser extends DefaultHandler {
 		return contentUri;
 	}
 
-	@Override
-	public void startElement(String uri, String localName, String qName,
-			Attributes attributes) throws SAXException {
-		super.startElement(uri, localName, qName, attributes);
-		if (localName.equals("time"))
-			parseTime(attributes);
-		else if (localName.equals("symbol"))
-			parseSymbol(attributes);
-		else if (localName.equals("precipitation"))
-			parsePrecipitation(attributes);
-		else if (localName.equals("temperature"))
-			parseTemperature(attributes);
-		else if (localName.equals("meta"))
-			isInMeta = true;
-		else if (!locationIsSet && localName.equals("location"))
-			parseLocation(attributes);
-		else if (isInMeta && localName.equals("model"))
-			parseModel(attributes);
+	public long getNextExcpectedTime() {
+		return nextForecastTime;
 	}
 
-	private void parseTime(Attributes attributes) {
-		isInTime = true;
-		from = getTime(attributes, "from");
-		to = getTime(attributes, "to");
-
+	private void insertValue(final int type, final String value) {
+		final ContentValues v = new ContentValues();
+		v.put(WeatherContentProvider.FORECAST_FROM, from);
+		v.put(WeatherContentProvider.FORECAST_TO, to);
+		v.put(WeatherContentProvider.FORECAST_TYPE, type);
+		v.put(WeatherContentProvider.FORECAST_VALUE, value);
+		values.add(v);
 	}
 
-	private void parseModel(Attributes attributes) {
-		long runendedI = getTime(attributes, "runended");
-		if (runendedI > forecastGenerated)
-			forecastGenerated = runendedI;
+	private void parseLocation(final Attributes attributes) throws SAXException {
 
-		long nextRunI = getTime(attributes, "nextrun");
-		if (nextRunI < nextForecastTime)
-			nextForecastTime = nextRunI;
-	}
-
-	/**
-	 * @param attributes
-	 * @param key
-	 * @return time in ms since 01.01.1970
-	 */
-	private static long getTime(Attributes attributes, String key) {
-		String timeS = attributes.getValue(attributes.getIndex(key));
-		Time time = new Time("UTC");
-		time.parse3339(timeS);
-
-		return time.toMillis(false);
-	}
-
-	private void parseLocation(Attributes attributes) throws SAXException {
-
-		double longtitude = new Double(attributes.getValue(attributes
+		final double longtitude = new Double(attributes.getValue(attributes
 				.getIndex("longitude")));
-		double latitude = new Double(attributes.getValue(attributes
+		final double latitude = new Double(attributes.getValue(attributes
 				.getIndex("latitude")));
-		double altitude = new Double(attributes.getValue(attributes
+		final double altitude = new Double(attributes.getValue(attributes
 				.getIndex("altitude")));
 
 		if (lastGenerated >= forecastGenerated) {
-			ContentValues values = new ContentValues();
+			final ContentValues values = new ContentValues();
 			values.put(WeatherContentProvider.META_NEXT_FORECAST,
 					nextForecastTime);
 			values.put(WeatherContentProvider.META_LOADED,
 					System.currentTimeMillis());
-			String where = WeatherContentProvider.META_PROVIDER + "='"
+			final String where = WeatherContentProvider.META_PROVIDER + "='"
 					+ YrProxy.PROVIDER + "'";
 			contentResolver.update(WeatherContentProvider.CONTENT_URI, values,
 					where, null);
@@ -140,7 +134,7 @@ public class YrLocationForecastParser extends DefaultHandler {
 			// Stops parsing:
 			fatalError(new SAXParseException(NO_NEW_DATA_EXCEPTION, null));
 		} else {
-			ContentValues values = new ContentValues();
+			final ContentValues values = new ContentValues();
 			values.put(WeatherContentProvider.META_ALTITUDE, altitude);
 			values.put(WeatherContentProvider.META_GENERATED, forecastGenerated);
 			values.put(WeatherContentProvider.META_LATITUDE, latitude);
@@ -156,49 +150,71 @@ public class YrLocationForecastParser extends DefaultHandler {
 		}
 	}
 
-	private void parseTemperature(Attributes attributes) {
-		String value = attributes.getValue(attributes.getIndex("value"));
-		insertValue(WeatherType.temperature, value);
+	private void parseModel(final Attributes attributes) {
+		final long runendedI = getTime(attributes, "runended");
+		if (runendedI > forecastGenerated)
+			forecastGenerated = runendedI;
+
+		final long nextRunI = getTime(attributes, "nextrun");
+		if (nextRunI < nextForecastTime)
+			nextForecastTime = nextRunI;
 	}
 
-	private void parsePrecipitation(Attributes attributes) {
-		String value = attributes.getValue(attributes.getIndex("value"));
+	private void parsePrecipitation(final Attributes attributes) {
+		final String value = attributes.getValue(attributes.getIndex("value"));
 		insertValue(WeatherType.precipitation, value);
 	}
 
-	private void parseSymbol(Attributes attributes) {
-		String value = attributes.getValue(attributes.getIndex("number"));
+	private void parseSymbol(final Attributes attributes) {
+		final String value = attributes.getValue(attributes.getIndex("number"));
 		insertValue(WeatherType.symbol, value);
 	}
 
-	private void insertValue(int type, String value) {
-		ContentValues v = new ContentValues();
-		v.put(WeatherContentProvider.FORECAST_FROM, from);
-		v.put(WeatherContentProvider.FORECAST_TO, to);
-		v.put(WeatherContentProvider.FORECAST_TYPE, type);
-		v.put(WeatherContentProvider.FORECAST_VALUE, value);
-		values.add(v);
+	private void parseTemperature(final Attributes attributes) {
+		final String value = attributes.getValue(attributes.getIndex("value"));
+		insertValue(WeatherType.temperature, value);
+	}
+
+	private void parseTime(final Attributes attributes) {
+		isInTime = true;
+		from = getTime(attributes, "from");
+		to = getTime(attributes, "to");
+
+	}
+
+	private void parseWindDirection(final Attributes attributes) {
+		final String value = attributes.getValue(attributes.getIndex("deg"));
+		insertValue(WeatherType.windDirection, value);
+	}
+
+	private void parseWindSpeed(final Attributes attributes) {
+		final String value = attributes.getValue(attributes.getIndex("mps"));
+		insertValue(WeatherType.windSpeed, value);
 	}
 
 	@Override
-	public void endElement(String uri, String localName, String qName)
+	public void startElement(final String uri, final String localName,
+			final String qName, final Attributes attributes)
 			throws SAXException {
+		super.startElement(uri, localName, qName, attributes);
 		if (localName.equals("time"))
-			isInTime = false;
+			parseTime(attributes);
+		else if (localName.equals("symbol"))
+			parseSymbol(attributes);
+		else if (localName.equals("precipitation"))
+			parsePrecipitation(attributes);
+		else if (localName.equals("temperature"))
+			parseTemperature(attributes);
+		else if (localName.equals("windSpeed"))
+			parseWindSpeed(attributes);
+		else if (localName.equals("windDirection"))
+			parseWindDirection(attributes);
 		else if (localName.equals("meta"))
-			isInMeta = false;
+			isInMeta = true;
+		else if (!locationIsSet && localName.equals("location"))
+			parseLocation(attributes);
+		else if (isInMeta && localName.equals("model"))
+			parseModel(attributes);
 	}
 
-	@Override
-	public void endDocument() throws SAXException {
-		super.endDocument();
-		ContentValues valueArray[] = new ContentValues[1];
-		valueArray = values.toArray(valueArray);
-		contentResolver.bulkInsert(Uri.withAppendedPath(contentUri,
-				WeatherContentProvider.FORECAST_CONTENT_DIRECTORY), valueArray);
-	}
-
-	public long getNextExcpectedTime() {
-		return nextForecastTime;
-	}
 }

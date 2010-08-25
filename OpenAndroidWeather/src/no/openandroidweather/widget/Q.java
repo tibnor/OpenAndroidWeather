@@ -41,9 +41,9 @@ public final class Q {
 			id.time10, id.time11, id.time12, id.time13, id.time14, id.time15,
 			id.time16, id.time17 };
 
-	public static final int icon[] = { drawable.s1, drawable.s1, drawable.s2, drawable.s3,
-			drawable.s4, drawable.s5, drawable.s6, drawable.s7, drawable.s8,
-			drawable.s9, drawable.s10, drawable.s11, drawable.s12,
+	public static final int symbol[] = { drawable.s1, drawable.s1, drawable.s2,
+			drawable.s3, drawable.s4, drawable.s5, drawable.s6, drawable.s7,
+			drawable.s8, drawable.s9, drawable.s10, drawable.s11, drawable.s12,
 			drawable.s13, drawable.s14, drawable.s15 };
 
 }

@@ -26,39 +26,43 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 class WeatherContentProviderDatabaseOpenHelper extends SQLiteOpenHelper {
-	private static final String TAG = "WeatherProxyDatabaseOpenHelper"; 
+	private static final String TAG = "WeatherProxyDatabaseOpenHelper";
 	private static final String DATABASE_FILE = "weather.db";
 	static final int DATABASE_VERSION = 5;
 
-	public WeatherContentProviderDatabaseOpenHelper(Context context, String name,
-			CursorFactory factory, int version) {
-		super(context, name, factory, version);
-	}
-
-	public WeatherContentProviderDatabaseOpenHelper(Context context) {
+	public WeatherContentProviderDatabaseOpenHelper(final Context context) {
 		super(context, DATABASE_FILE, null, DATABASE_VERSION);
 	}
 
+	public WeatherContentProviderDatabaseOpenHelper(final Context context,
+			final String name, final CursorFactory factory, final int version) {
+		super(context, name, factory, version);
+	}
+
+	void deleteDatabase(final SQLiteDatabase db) {
+		db.execSQL("DROP TABLE IF EXISTS "
+				+ WeatherContentProvider.FORECAST_TABLE_NAME);
+		db.execSQL("DROP TABLE IF EXISTS "
+				+ WeatherContentProvider.META_TABLE_NAME);
+	}
+
 	@Override
-	public void onCreate(SQLiteDatabase db) {
-		Log.v(TAG, WeatherContentProvider.META_CREATE_TABLE + WeatherContentProvider.FORECAST_CREATE_TABLE);
+	public void onCreate(final SQLiteDatabase db) {
+		Log.v(TAG, WeatherContentProvider.META_CREATE_TABLE
+				+ WeatherContentProvider.FORECAST_CREATE_TABLE);
 		db.execSQL(WeatherContentProvider.META_CREATE_TABLE);
 		db.execSQL(WeatherContentProvider.FORECAST_CREATE_TABLE);
-		
+
 	}
 
 	@Override
-	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		if(oldVersion==DATABASE_VERSION)
+	public void onUpgrade(final SQLiteDatabase db, final int oldVersion,
+			final int newVersion) {
+		if (oldVersion == DATABASE_VERSION)
 			return;
-			
+
 		deleteDatabase(db);
 		onCreate(db);
-	}
-
-	void deleteDatabase(SQLiteDatabase db) {
-		db.execSQL("DROP TABLE IF EXISTS "+WeatherContentProvider.FORECAST_TABLE_NAME);
-		db.execSQL("DROP TABLE IF EXISTS "+WeatherContentProvider.META_TABLE_NAME);
 	}
 
 }
