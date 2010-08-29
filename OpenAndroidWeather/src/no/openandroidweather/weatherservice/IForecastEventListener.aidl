@@ -30,9 +30,9 @@ interface IForecastEventListener{
 	/**
 	 * When there is a new progress in getting the forecast
 	 * 
-	 * @param progress new progress, between 0 and 1, where 1 is completed.
+	 * @param progress new progress, between 0 and 1000, where 1000 is completed.
 	 */
-	void progress(double progress);
+	void progress(int progress);
 
 	/**
 	 * New expected time for the next forecast, check database.

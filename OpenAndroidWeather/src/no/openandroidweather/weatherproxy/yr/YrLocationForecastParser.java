@@ -22,8 +22,10 @@ package no.openandroidweather.weatherproxy.yr;
 import java.util.ArrayList;
 import java.util.List;
 
+import no.openandroidweather.misc.IProgressItem;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import no.openandroidweather.weathercontentprovider.WeatherType;
+import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Forecast;
 import no.openandroidweather.weatherproxy.YrProxy;
 
 import org.xml.sax.Attributes;
@@ -51,12 +53,14 @@ public class YrLocationForecastParser extends DefaultHandler {
 	long forecastGenerated = 0;
 	final long lastGenerated;
 	List<ContentValues> values = new ArrayList<ContentValues>();
+	IProgressItem progressItem;
 
 	public YrLocationForecastParser(final ContentResolver contentResolver,
-			final long lastGeneratedForecastTime) {
+			final long lastGeneratedForecastTime, IProgressItem progressItem) {
 		super();
 		lastGenerated = lastGeneratedForecastTime;
 		this.contentResolver = contentResolver;
+		this.progressItem = progressItem;
 	}
 
 	/**
@@ -75,10 +79,11 @@ public class YrLocationForecastParser extends DefaultHandler {
 	@Override
 	public void endDocument() throws SAXException {
 		super.endDocument();
+		progressItem.progress(500 + YrProxy.AFTER_DOWNLOAD_PROGRESS / 2);
 		ContentValues valueArray[] = new ContentValues[1];
 		valueArray = values.toArray(valueArray);
 		contentResolver.bulkInsert(Uri.withAppendedPath(contentUri,
-				WeatherContentProvider.FORECAST_CONTENT_DIRECTORY), valueArray);
+				WeatherContentProvider.Forecast.CONTENT_DIRECTORY), valueArray);
 	}
 
 	@Override
@@ -104,10 +109,10 @@ public class YrLocationForecastParser extends DefaultHandler {
 
 	private void insertValue(final int type, final String value) {
 		final ContentValues v = new ContentValues();
-		v.put(WeatherContentProvider.FORECAST_FROM, from);
-		v.put(WeatherContentProvider.FORECAST_TO, to);
-		v.put(WeatherContentProvider.FORECAST_TYPE, type);
-		v.put(WeatherContentProvider.FORECAST_VALUE, value);
+		v.put(WeatherContentProvider.Forecast.FROM, from);
+		v.put(WeatherContentProvider.Forecast.TO, to);
+		v.put(WeatherContentProvider.Forecast.TYPE, type);
+		v.put(WeatherContentProvider.Forecast.VALUE, value);
 		values.add(v);
 	}
 
@@ -122,11 +127,11 @@ public class YrLocationForecastParser extends DefaultHandler {
 
 		if (lastGenerated >= forecastGenerated) {
 			final ContentValues values = new ContentValues();
-			values.put(WeatherContentProvider.META_NEXT_FORECAST,
+			values.put(WeatherContentProvider.Meta.NEXT_FORECAST,
 					nextForecastTime);
-			values.put(WeatherContentProvider.META_LOADED,
+			values.put(WeatherContentProvider.Meta.LOADED,
 					System.currentTimeMillis());
-			final String where = WeatherContentProvider.META_PROVIDER + "='"
+			final String where = WeatherContentProvider.Meta.PROVIDER + "='"
 					+ YrProxy.PROVIDER + "'";
 			contentResolver.update(WeatherContentProvider.CONTENT_URI, values,
 					where, null);
@@ -135,15 +140,15 @@ public class YrLocationForecastParser extends DefaultHandler {
 			fatalError(new SAXParseException(NO_NEW_DATA_EXCEPTION, null));
 		} else {
 			final ContentValues values = new ContentValues();
-			values.put(WeatherContentProvider.META_ALTITUDE, altitude);
-			values.put(WeatherContentProvider.META_GENERATED, forecastGenerated);
-			values.put(WeatherContentProvider.META_LATITUDE, latitude);
-			values.put(WeatherContentProvider.META_LONGITUDE, longtitude);
-			values.put(WeatherContentProvider.META_NEXT_FORECAST,
+			values.put(WeatherContentProvider.Meta.ALTITUDE, altitude);
+			values.put(WeatherContentProvider.Meta.GENERATED, forecastGenerated);
+			values.put(WeatherContentProvider.Meta.LATITUDE, latitude);
+			values.put(WeatherContentProvider.Meta.LONGITUDE, longtitude);
+			values.put(WeatherContentProvider.Meta.NEXT_FORECAST,
 					nextForecastTime);
-			values.put(WeatherContentProvider.META_LOADED,
+			values.put(WeatherContentProvider.Meta.LOADED,
 					System.currentTimeMillis());
-			values.put(WeatherContentProvider.META_PROVIDER, YrProxy.PROVIDER);
+			values.put(WeatherContentProvider.Meta.PROVIDER, YrProxy.PROVIDER);
 			contentUri = contentResolver.insert(
 					WeatherContentProvider.CONTENT_URI, values);
 			locationIsSet = true;

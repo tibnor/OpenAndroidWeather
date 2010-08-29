@@ -29,6 +29,7 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.sax.StartElementListener;
 import android.util.Log;
 
 /**
@@ -42,115 +43,91 @@ public class WeatherContentProvider extends ContentProvider {
 	public static final Uri CONTENT_URI = Uri
 			.parse("content://no.openandroidweather.weathercontentprovider");
 
-	public static final String FORECAST_CONTENT_DIRECTORY = "forecast";
-
 	/**
 	 * Table for meta data From each weather forecast there are some meta data,
 	 * they are grouped in this table and is referred back with FORECAST_META
 	 * which is the row id (META_ID) in this table
 	 */
-	public static final String META_TABLE_NAME = "meta";
-	/** Row id, integer, for meta data */
-	public static final String META_ID = "_id";
-	/** Longitude, real, for meta data */
-	public static final String META_LONGITUDE = "longtitude";
-	/** Latitude, real, for meta data */
-	public static final String META_LATITUDE = "latitude";
-	/** Altitude, real in meter, for meta data */
-	public static final String META_ALTITUDE = "altitude";
-	/** Name of the place for the forecast, Text, for meta data */
-	public static final String META_PLACE_NAME = "place";
-	/**
-	 * Time for when a new forecast is expected, Integer Unix time in
-	 * milliseconds, for meta data
-	 */
-	public static final String META_NEXT_FORECAST = "new_forecast";
-	/**
-	 * Time for when the forecast was generated at the server, Integer Unix time
-	 * in milliseconds, for meta data
-	 */
-	public static final String META_GENERATED = "generated";
-	/**
-	 * Time for when the forecast was loaded to the client. (Downloaded from
-	 * server), Integer Unix time in milliseconds, for meta data
-	 */
-	public static final String META_LOADED = "loaded";
-	/** Provider of the forecast */
-	public static final String META_PROVIDER = "provider";
-	static final String META_CREATE_TABLE = "CREATE TABLE " + META_TABLE_NAME
-			+ " (" + META_ID + " INTEGER PRIMARY KEY," + META_ALTITUDE
-			+ " REAL," + META_NEXT_FORECAST + " INTEGER," + META_GENERATED
-			+ " INTEGER," + META_LATITUDE + " REAL," + META_LOADED
-			+ " INTEGER," + META_LONGITUDE + " REAL," + META_PLACE_NAME
-			+ " TEXT," + META_PROVIDER + " TEXT)";
+	public static class Meta {
+		public static final String TABLE_NAME = "meta";
+		/** Row id, integer, for meta data */
+		public static final String _ID = "_id";
+		/** Longitude, real, for meta data */
+		public static final String LONGITUDE = "longtitude";
+		/** Latitude, real, for meta data */
+		public static final String LATITUDE = "latitude";
+		/** Altitude, real in meter, for meta data */
+		public static final String ALTITUDE = "altitude";
+		/** Name of the place for the forecast, Text, for meta data */
+		public static final String PLACE_NAME = "place";
+		/**
+		 * Time for when a new forecast is expected, Integer Unix time in
+		 * milliseconds, for meta data
+		 */
+		public static final String NEXT_FORECAST = "new_forecast";
+		/**
+		 * Time for when the forecast was generated at the server, Integer Unix
+		 * time in milliseconds, for meta data
+		 */
+		public static final String GENERATED = "generated";
+		/**
+		 * Time for when the forecast was loaded to the client. (Downloaded from
+		 * server), Integer Unix time in milliseconds, for meta data
+		 */
+		public static final String LOADED = "loaded";
+		/** Provider of the forecast */
+		public static final String PROVIDER = "provider";
+		static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ("
+				+ _ID + " INTEGER PRIMARY KEY," + ALTITUDE + " REAL,"
+				+ NEXT_FORECAST + " INTEGER," + GENERATED + " INTEGER,"
+				+ LATITUDE + " REAL," + LOADED + " INTEGER," + LONGITUDE
+				+ " REAL," + PLACE_NAME + " TEXT," + PROVIDER + " TEXT)";
+	}
+
 	/**
 	 * Table for forecast data: This tables have each data point and the meta
 	 * data is in the META_TABLE_NAME
 	 */
-	public static final String FORECAST_TABLE_NAME = "forecast";
-	/** Row id in the forecast data table */
-	public static final String FORECAST_ID = "_id";
+	public static class Forecast {
+		public static final String CONTENT_DIRECTORY = "forecast";
+		public static final String TABLE_NAME = "forecast";
+		/** Row id in the forecast data table */
+		public static final String _ID = "_id";
 
-	/**
-	 * Time when the valid period for the forecast starts, Integer Unix time in
-	 * milliseconds for forecast data
-	 */
-	public static final String FORECAST_FROM = "fromTime";
-	/**
-	 * null if the data is a only valid at a specific time or the time when the
-	 * valid period for the forecast ends, Integer Unix time in milliseconds for
-	 * forecast data
-	 */
-	public static final String FORECAST_TO = "toTime";
+		/**
+		 * Time when the valid period for the forecast starts, Integer Unix time
+		 * in milliseconds for forecast data
+		 */
+		public static final String FROM = "fromTime";
+		/**
+		 * null if the data is a only valid at a specific time or the time when
+		 * the valid period for the forecast ends, Integer Unix time in
+		 * milliseconds for forecast data
+		 */
+		public static final String TO = "toTime";
 
-	/** Weather type of forecast data, Integer from WeatherTypes */
-	public static final String FORECAST_TYPE = "type";
+		/** Weather type of forecast data, Integer from WeatherTypes */
+		public static final String TYPE = "type";
 
-	/** Value of forecast data, Text */
-	public static final String FORECAST_VALUE = "value";
-	/** _id in META table for forecast data, integer */
-	static final String FORECAST_META = "meta";
-	static final String FORECAST_CREATE_TABLE = "CREATE TABLE "
-			+ FORECAST_TABLE_NAME + " (" + FORECAST_ID
-			+ " INTEGER PRIMARY KEY, " + FORECAST_FROM + " INTEGER, "
-			+ FORECAST_META + " INTEGER, " + FORECAST_TO + " INTEGER, "
-			+ FORECAST_TYPE + " INTEGER, " + FORECAST_VALUE + " TEXT )";
+		/** Value of forecast data, Text */
+		public static final String VALUE = "value";
+		/** _id in META table for forecast data, integer */
+		static final String META = "meta";
+		static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ("
+				+ _ID + " INTEGER PRIMARY KEY, " + FROM + " INTEGER, " + META
+				+ " INTEGER, " + TO + " INTEGER, " + TYPE + " INTEGER, "
+				+ VALUE + " TEXT )";
+	}
+
 	// UriMatcher
 	private static final int sMETA = 1;
 	private static final int sMETA_ID = 2;
-
-	// /**
-	// * Table for adding favorites. When a row is added WeatherService will
-	// * update forecasts after the permissions.
-	// *
-	// */
-
-	// public static class favorite {
-	// /**
-	// * Id of the favorite, used when asking WeatherService to get a
-	// * forecast. Integer
-	// */
-	// public static final String ID = "_id";
-	//
-	// /**
-	// * A unique TEXT to identify an app in the favorite table
-	// */
-	// public static final String APPID = "appid";
-	// public static final String LATITUDE = "latitude";
-	// public static final String LONGITUDE = "longitude";
-	// public static final String ALTITUDE = "altitude";
-	// public static final String GET_NEAREST = "get_nearest";
-	// static final String TABLE_NAME = "favorite";
-	// static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ("
-	// + ID + "INTEGER PRIMARY KEY, " + ALTITUDE + " REAL, " + APPID
-	// + " TEXT," + GET_NEAREST + " INTEGER, " + LATITUDE + " REAL, "
-	// + LONGITUDE + " REAL)";
-	// }
-
 	private static final int sFORECAST = 3;
 	private static final int sFORECAST_ID = 4;
 	private static final int sID_FORECAST = 5;
 	private static final int sID_FORECAST_ID = 6;
+	private static final int sID_FORECAST_LIST_VIEW = 7;
+	private static final int sID_FORECAST_LIST_VIEW_ID = 8;
 	private static final UriMatcher sURIMatcher = new UriMatcher(sMETA);
 
 	public WeatherContentProvider() {
@@ -167,43 +144,29 @@ public class WeatherContentProvider extends ContentProvider {
 		final String autority = CONTENT_URI.getAuthority();
 		sURIMatcher.addURI(autority, "", sMETA);
 		sURIMatcher.addURI(autority, "#", sMETA_ID);
-		sURIMatcher.addURI(autority, FORECAST_CONTENT_DIRECTORY, sFORECAST);
-		sURIMatcher.addURI(autority, FORECAST_CONTENT_DIRECTORY + "/#",
+		sURIMatcher.addURI(autority, Forecast.CONTENT_DIRECTORY, sFORECAST);
+		sURIMatcher.addURI(autority, Forecast.CONTENT_DIRECTORY + "/#",
 				sFORECAST_ID);
-		sURIMatcher.addURI(autority, "#/" + FORECAST_CONTENT_DIRECTORY,
+		sURIMatcher.addURI(autority, "#/" + Forecast.CONTENT_DIRECTORY,
 				sID_FORECAST);
-		sURIMatcher.addURI(autority, "#/" + FORECAST_CONTENT_DIRECTORY + "/#",
+		sURIMatcher.addURI(autority, "#/" + Forecast.CONTENT_DIRECTORY + "/#",
 				sID_FORECAST_ID);
+		sURIMatcher.addURI(autority, "#/" + ForecastListView.CONTENT_PATH,
+				sID_FORECAST_LIST_VIEW);
+		sURIMatcher.addURI(autority, "#/" + ForecastListView.CONTENT_PATH
+				+ "/#", sID_FORECAST_LIST_VIEW_ID);
 	}
 
 	private WeatherContentProviderDatabaseOpenHelper openHelper;
 
 	@Override
 	public int bulkInsert(final Uri uri, final ContentValues[] values) {
-		int uriMatch = sURIMatcher.match(uri);
-		// TODO: Handle this bug better:
-		if (uri.equals(CONTENT_URI))
-			uriMatch = 1;
+		int uriMatch = getUriMatch(uri);
 
-		String table = FORECAST_TABLE_NAME;
-		int id = -1;
-		switch (uriMatch) {
-		case sMETA:
-			table = META_TABLE_NAME;
-			break;
-		case sMETA_ID:
-		case sFORECAST_ID:
-		case sID_FORECAST_ID:
-			throw new UnsupportedOperationException(
-					"An insert can not end with an id");
-		case sID_FORECAST:
-			id = new Integer(uri.getPathSegments().get(0));
-			break;
-		}
+		String table = getTable(uri, uriMatch);
 
-		if (id >= 0)
-			for (final ContentValues contentValues : values)
-				contentValues.put(FORECAST_META, id);
+		for (ContentValues contentValues : values)
+			contentValues = addIdToContentValues(contentValues, uriMatch, uri);
 
 		int insertedRows = 0;
 		final SQLiteDatabase db = openHelper.getWritableDatabase();
@@ -223,17 +186,19 @@ public class WeatherContentProvider extends ContentProvider {
 	@Override
 	public int delete(Uri uri, final String selection,
 			final String[] selectionArgs) {
-		int uriMatch = sURIMatcher.match(uri);
-		// TODO: Handle this bug better:
-		if (uri.equals(CONTENT_URI))
-			uriMatch = 1;
+		int uriMatch = getUriMatch(uri);
 
 		final String table = getTable(uri, uriMatch);
 		final String newSelection = getNewSelection(uri, selection, uriMatch);
 
 		if (uriMatch == sMETA_ID) {
-			uri = Uri.withAppendedPath(uri, FORECAST_CONTENT_DIRECTORY);
-			delete(uri, selection, selectionArgs);
+			Uri forecastUri = Uri.withAppendedPath(uri,
+					Forecast.CONTENT_DIRECTORY);
+			delete(forecastUri, selection, selectionArgs);
+			Uri listViewUri = uri.withAppendedPath(uri,
+					ForecastListView.CONTENT_PATH);
+			delete(listViewUri, selection, selectionArgs);
+
 		}
 
 		return openHelper.getWritableDatabase().delete(table, newSelection,
@@ -254,20 +219,24 @@ public class WeatherContentProvider extends ContentProvider {
 		// Find id in meta table
 		switch (uriMatch) {
 		case sMETA_ID:
-			where.add(META_ID + "=" + uri.getLastPathSegment());
+			where.add(Meta._ID + "=" + uri.getLastPathSegment());
 			break;
 		case sID_FORECAST:
 		case sID_FORECAST_ID:
-			where.add(FORECAST_META + "=" + uri.getPathSegments().get(0));
-
+			where.add(Forecast.META + "=" + uri.getPathSegments().get(0));
 			break;
+		case sID_FORECAST_LIST_VIEW_ID:
+			where.add(ForecastListView._id + "=" + uri.getLastPathSegment());
+		case sID_FORECAST_LIST_VIEW:
+			where.add(ForecastListView.metaId + "="
+					+ uri.getPathSegments().get(0));
 		}
 
 		// Find id in forecast table
 		switch (uriMatch) {
 		case sFORECAST_ID:
 		case sID_FORECAST_ID:
-			where.add(FORECAST_ID + "=" + uri.getLastPathSegment());
+			where.add(Forecast._ID + "=" + uri.getLastPathSegment());
 		}
 
 		String newSelection = null;
@@ -289,13 +258,17 @@ public class WeatherContentProvider extends ContentProvider {
 		switch (uriMatch) {
 		case sMETA:
 		case sMETA_ID:
-			table = META_TABLE_NAME;
+			table = Meta.TABLE_NAME;
 			break;
 		case sFORECAST:
 		case sFORECAST_ID:
 		case sID_FORECAST:
 		case sID_FORECAST_ID:
-			table = FORECAST_TABLE_NAME;
+			table = Forecast.TABLE_NAME;
+			break;
+		case sID_FORECAST_LIST_VIEW_ID:
+		case sID_FORECAST_LIST_VIEW:
+			table = ForecastListView.tableName;
 			break;
 		default:
 			throw new UnsupportedOperationException(
@@ -314,33 +287,42 @@ public class WeatherContentProvider extends ContentProvider {
 	@Override
 	public Uri insert(final Uri uri, final ContentValues values) {
 		final String path = uri.getPath();
-		String table = null;
-		if (path == null || path.equals(""))
-			// Is meta data:
-			table = META_TABLE_NAME;
-		else if (path.contains(FORECAST_CONTENT_DIRECTORY)) {
-			// is forecast:
-			table = FORECAST_TABLE_NAME;
-
-			// gets id:
-			final String split[] = path.split("/");
-
-			// Checks that the second split is a integer
-			if (!split[1].matches("^-{0,1}[0-9]+$"))
-				throw new UnsupportedOperationException(
-						"Path was not recognized in insert:" + path);
-			values.put(FORECAST_META, split[1]);
-
-		} else {
-			Log.e(TAG, "Path was not recognized in insert:" + path);
-			throw new UnsupportedOperationException(
-					"Path was not recognized in insert:" + path);
-		}
+		int uriMatch = getUriMatch(uri);
+		String table = getTable(uri, uriMatch);
+		addIdToContentValues(values, uriMatch, uri);
 
 		final SQLiteDatabase db = openHelper.getWritableDatabase();
 		final Long id = db.insert(table, null, values);
 		db.close();
 		return Uri.withAppendedPath(uri, id.toString());
+	}
+
+	/**
+	 * @param values
+	 * @param path
+	 */
+	private ContentValues addIdToContentValues(final ContentValues values,
+			int uriMatch, Uri uri) {
+		switch (uriMatch) {
+		case sMETA:
+		case sFORECAST:
+			break;
+		case sID_FORECAST:
+			values.put(Forecast.META, uri.getPathSegments().get(0));
+			break;
+		case sID_FORECAST_LIST_VIEW:
+			values.put(ForecastListView.metaId, uri.getPathSegments().get(0));
+			break;
+		case sMETA_ID:
+		case sFORECAST_ID:
+		case sID_FORECAST_ID:
+		case sID_FORECAST_LIST_VIEW_ID:
+			throw new UnsupportedOperationException("Can not insert into a row");
+		default:
+			throw new UnsupportedOperationException(
+					"Path was not recognized in insert:");
+		}
+		return values;
 	}
 
 	@Override
@@ -353,13 +335,9 @@ public class WeatherContentProvider extends ContentProvider {
 	public Cursor query(final Uri uri, final String[] projection,
 			final String selection, final String[] selectionArgs,
 			final String sortOrder) {
-		int uriMatch = sURIMatcher.match(uri);
-		// TODO: Handle this bug better:
-		if (uri.equals(CONTENT_URI))
-			uriMatch = 1;
+		int uriMatch = getUriMatch(uri);
 
 		final String table = getTable(uri, uriMatch);
-
 		final String newSelection = getNewSelection(uri, selection, uriMatch);
 
 		return openHelper.getReadableDatabase().query(table, projection,
@@ -367,13 +345,22 @@ public class WeatherContentProvider extends ContentProvider {
 
 	}
 
-	@Override
-	public int update(final Uri uri, final ContentValues values,
-			final String selection, final String[] selectionArgs) {
+	/**
+	 * @param uri
+	 * @return
+	 */
+	private int getUriMatch(final Uri uri) {
 		int uriMatch = sURIMatcher.match(uri);
 		// TODO: Handle this bug better:
 		if (uri.equals(CONTENT_URI))
 			uriMatch = 1;
+		return uriMatch;
+	}
+
+	@Override
+	public int update(final Uri uri, final ContentValues values,
+			final String selection, final String[] selectionArgs) {
+		int uriMatch = getUriMatch(uri);
 
 		final String table = getTable(uri, uriMatch);
 		final String newSelection = getNewSelection(uri, selection, uriMatch);
@@ -381,4 +368,51 @@ public class WeatherContentProvider extends ContentProvider {
 				newSelection, selectionArgs);
 	}
 
+	/**
+	 * Table for data for list view
+	 */
+	public static class ForecastListView {
+		static final String tableName = "forecastListView";
+		static final String metaId = "metaId";
+		public final static String CONTENT_PATH = "forecastListView";
+		/**
+		 * Row id, integer
+		 */
+		public static final String _id = "_id";
+		/**
+		 * Start time of the forecast, integer in ms since Unix epoch time
+		 */
+		public static final String fromTime = "fromTime";
+		/**
+		 * End time of the forecast, integer in ms since Unix epoch time
+		 */
+		public static final String toTime = "toTime";
+		/**
+		 * Temperature at the start time in degree of Celcius
+		 */
+		public static final String temperature = "temperature";
+		/**
+		 * Weather symbol thru out the time span
+		 */
+		public static final String symbol = "symbol";
+		/**
+		 * Precipitation during the time span in mm
+		 */
+		public static final String percipitation = "percipitation";
+		/**
+		 * Wind speed at start time in m/s
+		 */
+		public static final String windSpeed = "windSpeed";
+		/**
+		 * Wind direction at start time in degrees (360)
+		 */
+		public static final String windDirection = "windDirection";
+
+		static final String createTable = "CREATE TABLE " + tableName + " ("
+				+ _id + " INTEGER PRIMARY KEY, " + metaId + " INTEGER, "
+				+ fromTime + " INTEGER, " + toTime + " INTEGER, " + temperature
+				+ " REAL," + symbol + " INTEGER," + percipitation + " REAL, "
+				+ windSpeed + " REAL," + windDirection + " REAL)";
+
+	}
 }

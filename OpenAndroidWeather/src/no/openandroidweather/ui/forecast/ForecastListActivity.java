@@ -96,6 +96,7 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 	}
 
 	private class ForecastListener extends IForecastEventListener.Stub {
+		boolean hasGotForecast = false;
 
 		@Override
 		public void completed() throws RemoteException {
@@ -157,12 +158,14 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 		public void newForecast(final String uri, final long forecastGenerated)
 				throws RemoteException {
 			ForecastListActivity.this.progress(500);
+			hasGotForecast = true;
 			new RenderContentTask().execute(Uri.parse(uri));
 		}
 
 		@Override
-		public void progress(final double progress) throws RemoteException {
-			ForecastListActivity.this.progress((int) (progress * 500));
+		public void progress(final int progress) throws RemoteException {
+			if(!hasGotForecast)
+				ForecastListActivity.this.progress(progress / 2);
 		}
 
 	}

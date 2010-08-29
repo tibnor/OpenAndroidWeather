@@ -28,7 +28,7 @@ import android.util.Log;
 class WeatherContentProviderDatabaseOpenHelper extends SQLiteOpenHelper {
 	private static final String TAG = "WeatherProxyDatabaseOpenHelper";
 	private static final String DATABASE_FILE = "weather.db";
-	static final int DATABASE_VERSION = 5;
+	static final int DATABASE_VERSION = 6;
 
 	public WeatherContentProviderDatabaseOpenHelper(final Context context) {
 		super(context, DATABASE_FILE, null, DATABASE_VERSION);
@@ -41,17 +41,20 @@ class WeatherContentProviderDatabaseOpenHelper extends SQLiteOpenHelper {
 
 	void deleteDatabase(final SQLiteDatabase db) {
 		db.execSQL("DROP TABLE IF EXISTS "
-				+ WeatherContentProvider.FORECAST_TABLE_NAME);
+				+ WeatherContentProvider.Forecast.TABLE_NAME);
 		db.execSQL("DROP TABLE IF EXISTS "
-				+ WeatherContentProvider.META_TABLE_NAME);
+				+ WeatherContentProvider.Meta.TABLE_NAME);
+		db.execSQL("DROP TABLE IF EXISTS "
+				+ WeatherContentProvider.ForecastListView.tableName);
 	}
 
 	@Override
 	public void onCreate(final SQLiteDatabase db) {
-		Log.v(TAG, WeatherContentProvider.META_CREATE_TABLE
-				+ WeatherContentProvider.FORECAST_CREATE_TABLE);
-		db.execSQL(WeatherContentProvider.META_CREATE_TABLE);
-		db.execSQL(WeatherContentProvider.FORECAST_CREATE_TABLE);
+		Log.v(TAG, WeatherContentProvider.Meta.CREATE_TABLE
+				+ WeatherContentProvider.Forecast.CREATE_TABLE);
+		db.execSQL(WeatherContentProvider.Meta.CREATE_TABLE);
+		db.execSQL(WeatherContentProvider.Forecast.CREATE_TABLE);
+		db.execSQL(WeatherContentProvider.ForecastListView.createTable);
 
 	}
 

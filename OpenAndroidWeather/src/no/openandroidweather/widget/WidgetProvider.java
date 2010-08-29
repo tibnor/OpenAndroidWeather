@@ -25,6 +25,7 @@ import java.util.Date;
 import no.openandroidweather.R;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import no.openandroidweather.weathercontentprovider.WeatherType;
+import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Forecast;
 import no.openandroidweather.weatherservice.IForecastEventListener;
 import no.openandroidweather.weatherservice.IWeatherService;
 import no.openandroidweather.weatherservice.WeatherService;
@@ -159,18 +160,18 @@ public class WidgetProvider extends AppWidgetProvider {
 			view.setTextViewText(Q.time[i], time);
 
 			// Gets symbol and precipitation
-			String selection = WeatherContentProvider.FORECAST_FROM + "="
-					+ timeStart + " AND " + WeatherContentProvider.FORECAST_TO
+			String selection = WeatherContentProvider.Forecast.FROM + "="
+					+ timeStart + " AND " + WeatherContentProvider.Forecast.TO
 					+ "=" + timeStop;
-			final String[] projection = { WeatherContentProvider.FORECAST_TYPE,
-					WeatherContentProvider.FORECAST_VALUE };
+			final String[] projection = { WeatherContentProvider.Forecast.TYPE,
+					WeatherContentProvider.Forecast.VALUE };
 			Cursor c = cr.query(contentUri, projection, selection, null, null);
 			c.moveToFirst();
 			int length = c.getCount();
 			int typeCol = c
-					.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_TYPE);
+					.getColumnIndexOrThrow(WeatherContentProvider.Forecast.TYPE);
 			int valueCol = c
-					.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_VALUE);
+					.getColumnIndexOrThrow(WeatherContentProvider.Forecast.VALUE);
 			int type;
 			String value;
 			for (int j = 0; j < length; j++) {
@@ -190,16 +191,16 @@ public class WidgetProvider extends AppWidgetProvider {
 			}
 			c.close();
 
-			selection = WeatherContentProvider.FORECAST_FROM + "=" + timeStart
-					+ " AND " + WeatherContentProvider.FORECAST_TO + "="
+			selection = WeatherContentProvider.Forecast.FROM + "=" + timeStart
+					+ " AND " + WeatherContentProvider.Forecast.TO + "="
 					+ timeStart;
 			c = cr.query(contentUri, projection, selection, null, null);
 			c.moveToFirst();
 			length = c.getCount();
 			typeCol = c
-					.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_TYPE);
+					.getColumnIndexOrThrow(WeatherContentProvider.Forecast.TYPE);
 			valueCol = c
-					.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_VALUE);
+					.getColumnIndexOrThrow(WeatherContentProvider.Forecast.VALUE);
 			for (int j = 0; j < length; j++) {
 				type = c.getInt(typeCol);
 				value = c.getString(valueCol);
@@ -264,8 +265,8 @@ public class WidgetProvider extends AppWidgetProvider {
 			final ContentResolver cr = getContentResolver();
 
 			final String projection[] = {
-					WeatherContentProvider.META_NEXT_FORECAST,
-					WeatherContentProvider.META_LOADED };
+					WeatherContentProvider.Meta.NEXT_FORECAST,
+					WeatherContentProvider.Meta.LOADED };
 			final Cursor c = cr.query(contentUri, projection, null, null, null);
 			c.moveToFirst();
 
@@ -274,13 +275,13 @@ public class WidgetProvider extends AppWidgetProvider {
 			String nextForecast = "Next: ";
 			final long nextForecastI = c
 					.getLong(c
-							.getColumnIndexOrThrow(WeatherContentProvider.META_NEXT_FORECAST));
+							.getColumnIndexOrThrow(WeatherContentProvider.Meta.NEXT_FORECAST));
 			nextForecast += df.format(new Date(nextForecastI));
 			view.setTextViewText(R.id.widget_next_forecast, nextForecast);
 
 			String loaded = "Downloaded: ";
 			final long loadedL = c.getLong(c
-					.getColumnIndexOrThrow(WeatherContentProvider.META_LOADED));
+					.getColumnIndexOrThrow(WeatherContentProvider.Meta.LOADED));
 
 			loaded += df.format(new Date(loadedL));
 			view.setTextViewText(R.id.widget_updated, loaded);
@@ -294,7 +295,7 @@ public class WidgetProvider extends AppWidgetProvider {
 
 			// Adding weather data
 			contentUri = Uri.withAppendedPath(contentUri,
-					WeatherContentProvider.FORECAST_CONTENT_DIRECTORY);
+					WeatherContentProvider.Forecast.CONTENT_DIRECTORY);
 			long timeStart = System.currentTimeMillis();
 			// Rounds down to last hour
 			timeStart -= timeStart % 3600000;
@@ -392,7 +393,7 @@ public class WidgetProvider extends AppWidgetProvider {
 			}
 
 			@Override
-			public void progress(final double progress) throws RemoteException {
+			public void progress(final int progress) throws RemoteException {
 				// TODO Show progress?
 			}
 		}

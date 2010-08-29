@@ -49,7 +49,7 @@ public class WeatherContentProviderTest extends ProviderTestCase2<WeatherContent
 		values = WeatherProxyDatabaseOpenHelperTest
 				.forecastTestContentValues();
 		uri = Uri.withAppendedPath(uri,
-				WeatherContentProvider.FORECAST_CONTENT_DIRECTORY);
+				WeatherContentProvider.Forecast.CONTENT_DIRECTORY);
 		
 		//Returns the uri to the forecast without the meta directory
 		uri = mProvider.insert(uri, values);
@@ -80,7 +80,7 @@ public class WeatherContentProviderTest extends ProviderTestCase2<WeatherContent
 		values = WeatherProxyDatabaseOpenHelperTest
 				.forecastTestContentValues();
 		uri = Uri.withAppendedPath(uriId,
-				WeatherContentProvider.FORECAST_CONTENT_DIRECTORY);
+				WeatherContentProvider.Forecast.CONTENT_DIRECTORY);
 		
 		//Returns the uri to the forecast with the forecast directory and id for the forecast
 		uri = mProvider.insert(uri, values);
@@ -102,7 +102,7 @@ public class WeatherContentProviderTest extends ProviderTestCase2<WeatherContent
 		c.close();	
 		
 		//Check that there is no forecast data left:
-		uri = Uri.withAppendedPath(uriId, WeatherContentProvider.FORECAST_CONTENT_DIRECTORY);
+		uri = Uri.withAppendedPath(uriId, WeatherContentProvider.Forecast.CONTENT_DIRECTORY);
 		c = mProvider.query(uri, null,null,null,null);
 		
 		assertEquals(0, c.getCount());

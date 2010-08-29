@@ -2,6 +2,8 @@ package no.openandroidweather.weatherproxy;
 
 import java.io.IOException;
 
+import no.openandroidweather.misc.IProgressItem;
+
 import android.location.Location;
 import android.net.Uri;
 
@@ -26,7 +28,7 @@ public interface WeatherProxy {
 	 * @throws Exception
 	 *             Something else went wrong: parsing, etc.
 	 */
-	Uri getWeatherForecast(Location location, long lastForecastGenerated)
+	Uri getWeatherForecast(Location location, long lastForecastGenerated, IProgressItem progressItem)
 			throws IOException, Exception;
 
 }

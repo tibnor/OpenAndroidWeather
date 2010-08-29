@@ -26,6 +26,9 @@ import java.util.List;
 import no.openandroidweather.misc.IProgressItem;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import no.openandroidweather.weathercontentprovider.WeatherType;
+import no.openandroidweather.weathercontentprovider.WeatherContentProvider.ForecastListView;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -33,8 +36,9 @@ import android.view.LayoutInflater;
 
 public class ForecastListParser {
 	private final Context context;
-
-	private long startTime = Long.MIN_VALUE;
+	private Uri mUri;
+	private long fromTime = Long.MIN_VALUE;
+	private long toTime = Long.MIN_VALUE;
 	private boolean hasAll = false;
 	private int symbol = -1;
 	private double percipitation = -1;
@@ -42,24 +46,34 @@ public class ForecastListParser {
 	private double temperature = uknownTemperature;
 	private double windSpeed = -1.;
 	private double windDirection = -1;
-	private ArrayList<IListRow> rows;
 	private IProgressItem progressItem;
+	private final ContentResolver mContentResolver;
+	private LayoutInflater inflater;
 
 	public ForecastListParser(final Context context, IProgressItem progressItem) {
 		super();
 		this.context = context;
 		this.progressItem = progressItem;
+		mContentResolver = context.getContentResolver();
+		inflater = (LayoutInflater) context
+				.getSystemService(context.LAYOUT_INFLATER_SERVICE);
 	}
 
 	/**
 	 * Insert a new row to rows
 	 */
 	private void addRow() {
-		final LayoutInflater inflater = (LayoutInflater) context
-				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		final ForecastRow row = new ForecastRow(symbol, temperature,
-				percipitation, windSpeed, windDirection, inflater, startTime);
-		rows.add(row);
+		ContentValues values = new ContentValues();
+		values.put(ForecastListView.fromTime, fromTime);
+		values.put(ForecastListView.toTime, toTime);
+		values.put(ForecastListView.percipitation, percipitation);
+		values.put(ForecastListView.symbol, symbol);
+		values.put(ForecastListView.temperature, temperature);
+		values.put(ForecastListView.windDirection, windDirection);
+		values.put(ForecastListView.windSpeed, windSpeed);
+		Uri uri = Uri.withAppendedPath(mUri,
+				WeatherContentProvider.ForecastListView.CONTENT_PATH);
+		mContentResolver.insert(uri, values);
 	}
 
 	private boolean checkHasAll() {
@@ -67,76 +81,127 @@ public class ForecastListParser {
 				|| temperature == uknownTemperature || windSpeed < 0 || windDirection < 0);
 	}
 
-	/**
-	 * Check if it is a new day, if so it insert a DateRow
-	 * 
-	 * @param oldFrom
-	 * @param newFrom
-	 */
-	private void checkNewDate(final long oldFrom, final long newFrom) {
-		final Calendar cal = Calendar.getInstance();
-		cal.setTimeInMillis(oldFrom);
-		final int oldDate = cal.get(Calendar.DATE);
-		cal.setTimeInMillis(newFrom);
-		final int newDate = cal.get(Calendar.DATE);
-		if (oldDate != newDate) {
-			final DateRow row = new DateRow(context, newFrom);
-			rows.add(row);
+	public List<IListRow> parseData(Uri uri) {
+		mUri = uri;
+		uri = Uri.withAppendedPath(mUri, ForecastListView.CONTENT_PATH);
+		// Set start time to the beginning of this hour
+		long lastHour = System.currentTimeMillis();
+		lastHour -= lastHour % 3600000;
+		
+		String selection = ForecastListView.fromTime + ">"
+				+ lastHour;
+		Cursor c = mContentResolver.query(uri, null, selection, null, null);
+		
+		if (c == null || c.getCount() == 0) {
+			convertForecastToForecastListView();
+			return parseData(mUri);
 		}
+		
+		List<IListRow> rows = new ArrayList<IListRow>();
+		int fromCol = c.getColumnIndexOrThrow(ForecastListView.fromTime);
+		int toCol = c.getColumnIndexOrThrow(ForecastListView.toTime);
+		int percipitationCol = c
+				.getColumnIndexOrThrow(ForecastListView.percipitation);
+		int symbolCol = c.getColumnIndexOrThrow(ForecastListView.symbol);
+		int temperatureCol = c
+				.getColumnIndexOrThrow(ForecastListView.temperature);
+		int windDirectionCol = c
+				.getColumnIndexOrThrow(ForecastListView.windDirection);
+		int windSpeedCol = c.getColumnIndexOrThrow(ForecastListView.windSpeed);
+
+		c.moveToFirst();
+		long from = c.getLong(fromCol), to;
+		int symbol;
+		double percipitation, temperature, windDirection, windSpeed;
+		rows.add(new DateRow(context, from));
+		for (int i = 0; i < c.getCount(); i++) {
+			from = c.getLong(fromCol);
+			to = c.getLong(toCol);
+			symbol = c.getInt(symbolCol);
+			percipitation = c.getDouble(percipitationCol);
+			temperature = c.getDouble(temperatureCol);
+			windDirection = c.getDouble(windDirectionCol);
+			windSpeed = c.getDouble(windSpeedCol);
+			rows.add(new ForecastRow(symbol, temperature, percipitation,
+					windSpeed, windDirection, inflater, from));
+			DateRow date = checkDate(from, to);
+			if (date != null)
+				rows.add(date);
+			c.moveToNext();
+
+		}
+
+		return rows;
 	}
 
-	public List<IListRow> parseData(Uri uri) {
-		uri = Uri.withAppendedPath(uri,
-				WeatherContentProvider.FORECAST_CONTENT_DIRECTORY);
-		final String[] projection = { WeatherContentProvider.FORECAST_FROM,
-				WeatherContentProvider.FORECAST_TO,
-				WeatherContentProvider.FORECAST_VALUE,
-				WeatherContentProvider.FORECAST_TYPE };
-		final String sortOrder = WeatherContentProvider.FORECAST_FROM + ", "
-				+ WeatherContentProvider.FORECAST_TO + " ASC";
+	private DateRow checkDate(long from, long to) {
+		final Calendar cal = Calendar.getInstance();
+		cal.setTimeInMillis(from);
+		final int oldDate = cal.get(Calendar.DATE);
+		cal.setTimeInMillis(to);
+		final int newDate = cal.get(Calendar.DATE);
+		if (oldDate != newDate) {
+			return new DateRow(context, to);
+		} else
+			return null;
+	}
+
+	/**
+	 * 
+	 */
+	private void convertForecastToForecastListView() {
+		Uri uri;
+		String selection;
+		Cursor c;
+		uri = Uri.withAppendedPath(mUri,
+				WeatherContentProvider.Forecast.CONTENT_DIRECTORY);
+		final String[] projection = { WeatherContentProvider.Forecast.FROM,
+				WeatherContentProvider.Forecast.TO,
+				WeatherContentProvider.Forecast.VALUE,
+				WeatherContentProvider.Forecast.TYPE };
+		final String sortOrder = WeatherContentProvider.Forecast.FROM + ", "
+				+ WeatherContentProvider.Forecast.TO + " ASC";
 
 		// Set start time to the beginning of this hour
-		startTime = System.currentTimeMillis();
-		startTime -= startTime % 3600000;
+		fromTime = System.currentTimeMillis();
+		fromTime -= fromTime % 3600000;
 
 		// Include only forecast from the beginning of this hour
-		final String selection = WeatherContentProvider.FORECAST_FROM + ">="
-				+ startTime;
+		selection = WeatherContentProvider.Forecast.FROM + ">=" + fromTime;
 		// Gets data
-		final Cursor c = context.getContentResolver().query(uri, projection,
-				selection, null, sortOrder);
-		rows = new ArrayList<IListRow>();
+		c = context.getContentResolver().query(uri, projection, selection,
+				null, sortOrder);
 
-		final int startTimeCol = c
-				.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_FROM);
-		final int stopTimeCol = c
-				.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_TO);
+		final int fromTimeCol = c
+				.getColumnIndexOrThrow(WeatherContentProvider.Forecast.FROM);
+		final int toTimeCol = c
+				.getColumnIndexOrThrow(WeatherContentProvider.Forecast.TO);
 		final int valueCol = c
-				.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_VALUE);
+				.getColumnIndexOrThrow(WeatherContentProvider.Forecast.VALUE);
 		final int typeCol = c
-				.getColumnIndexOrThrow(WeatherContentProvider.FORECAST_TYPE);
+				.getColumnIndexOrThrow(WeatherContentProvider.Forecast.TYPE);
 		c.moveToFirst();
 
 		reset();
 		final int length = c.getCount();
 		for (int i = 0; i < length; i++) {
-			if(progressItem != null){
-				progressItem.progress(500+(500*i)/length);
+			if (progressItem != null) {
+				progressItem.progress(500 + (500 * i) / length);
 			}
-			
-			// Gets data
-			final long from = c.getLong(startTimeCol);
-			// Not needed?
-			// long to = c.getLong(stopTimeCol);
 
-			if (startTime < from) {
-				// for one point there is no forecast for all values it is ignored.
+			// Gets data
+			final long from = c.getLong(fromTimeCol);
+			// Not needed?
+			toTime = c.getLong(toTimeCol);
+
+			if (fromTime < from) {
+				// for one point there is no forecast for all values it is
+				// ignored.
 				if (hasAll) {
 					addRow();
 				}
 				reset();
-				checkNewDate(startTime, from);
-				startTime = from;
+				fromTime = from;
 			}
 
 			if (!hasAll) {
@@ -167,8 +232,6 @@ public class ForecastListParser {
 			c.moveToNext();
 		}
 		c.close();
-
-		return rows;
 	}
 
 	private void reset() {

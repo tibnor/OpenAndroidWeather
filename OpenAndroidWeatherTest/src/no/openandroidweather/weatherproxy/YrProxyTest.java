@@ -36,7 +36,7 @@ public class YrProxyTest extends ProviderTestCase2<WeatherContentProvider> {
 	protected void setUp() throws Exception {
 		super.setUp();
 		content = getContext().getContentResolver();
-		yr = new YrProxy(content);
+		yr = new YrProxy(content, null);
 
 	}
 
@@ -50,24 +50,24 @@ public class YrProxyTest extends ProviderTestCase2<WeatherContentProvider> {
 		loc.setAltitude(alt);
 
 		Uri uri = null;
-		uri = yr.getWeatherForecast(loc, 0);
+		uri = yr.getWeatherForecast(loc, 0, null);
 
 		Cursor c = content.query(uri, null, null, null, null);
 		assertEquals(1, c.getCount());
 
 		c.moveToFirst();
 		assertEquals(lat, c.getDouble(c
-				.getColumnIndex(WeatherContentProvider.META_LATITUDE)), 0.005);
+				.getColumnIndex(WeatherContentProvider.Meta.LATITUDE)), 0.005);
 		assertEquals(lon, c.getDouble(c
-				.getColumnIndex(WeatherContentProvider.META_LONGITUDE)), 0.005);
+				.getColumnIndex(WeatherContentProvider.Meta.LONGITUDE)), 0.005);
 		assertEquals(alt, c.getDouble(c
-				.getColumnIndex(WeatherContentProvider.META_ALTITUDE)), 1);
+				.getColumnIndex(WeatherContentProvider.Meta.ALTITUDE)), 1);
 		assertEquals(YrProxy.PROVIDER, c.getString(c
-				.getColumnIndex(WeatherContentProvider.META_PROVIDER)));
+				.getColumnIndex(WeatherContentProvider.Meta.PROVIDER)));
 		c.close();
 
 		c = content.query(Uri.withAppendedPath(uri,
-				WeatherContentProvider.FORECAST_CONTENT_DIRECTORY), null, null,
+				WeatherContentProvider.Forecast.CONTENT_DIRECTORY), null, null,
 				null, null);
 		assertTrue(500 < c.getCount());
 		c.close();
@@ -81,7 +81,7 @@ public class YrProxyTest extends ProviderTestCase2<WeatherContentProvider> {
 		loc.setLongitude(lon);
 		loc.setAltitude(alt);
 
-		assertNull(yr.getWeatherForecast(loc, System.currentTimeMillis()));
+		assertNull(yr.getWeatherForecast(loc, System.currentTimeMillis(), null));
 
 	}
 

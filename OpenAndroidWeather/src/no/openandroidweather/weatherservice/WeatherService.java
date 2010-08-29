@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import no.openandroidweather.misc.IProgressItem;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import no.openandroidweather.weatherproxy.WeatherProxy;
 import no.openandroidweather.weatherproxy.YrProxy;
@@ -45,14 +46,23 @@ import android.util.Log;
  */
 // Tricks from this guide:
 // http://developer.android.com/guide/developing/tools/aidl.html#exposingtheinterface
-public class WeatherService extends Service {
+public class WeatherService extends Service implements IProgressItem {
 	public final static int ERROR_NETWORK_ERROR = 1;
 	public final static int ERROR_UNKNOWN_ERROR = 2;
 	public static final int ERROR_NO_KNOWN_POSITION = 3;
 	public static final String TAG = "WeatherService";
+	private GetForecast inProgress;
 	private final Queue<GetForecast> mDbCheckQueue = new ConcurrentLinkedQueue<GetForecast>();
 	private final Queue<GetForecast> mDownloadQueue = new ConcurrentLinkedQueue<GetForecast>();
 	private Boolean isWorking = false;
+
+	/**
+	 * Used in progress, for each GetForecast in mDbCheckQueue there is 2 jobs
+	 * (db check and download). for each GetForecast in mDownloadQueue there is
+	 * 1 job. Is calculated at beginning of a new async job
+	 */
+	private int numberOfJobsStarted = 0;
+	private int numberOfJobsCompleted = 0;
 
 	private final IWeatherService.Stub mBind = new IWeatherService.Stub() {
 		@Override
@@ -108,6 +118,7 @@ public class WeatherService extends Service {
 	 * @throws RemoteException
 	 */
 	public void checkInDb(final GetForecast getForecast) {
+		inProgress = getForecast;
 		final ContentResolver cr = getContentResolver();
 		// Gets all forecasts
 		final Cursor c = cr.query(WeatherContentProvider.CONTENT_URI, null,
@@ -115,11 +126,11 @@ public class WeatherService extends Service {
 
 		// Gets columns
 		final int latCol = c
-				.getColumnIndexOrThrow(WeatherContentProvider.META_LATITUDE);
+				.getColumnIndexOrThrow(WeatherContentProvider.Meta.LATITUDE);
 		final int lonCol = c
-				.getColumnIndexOrThrow(WeatherContentProvider.META_LONGITUDE);
+				.getColumnIndexOrThrow(WeatherContentProvider.Meta.LONGITUDE);
 		final int altCol = c
-				.getColumnIndexOrThrow(WeatherContentProvider.META_ALTITUDE);
+				.getColumnIndexOrThrow(WeatherContentProvider.Meta.ALTITUDE);
 		double lat, lon, alt;
 
 		// Goes thru all forecasts
@@ -131,11 +142,12 @@ public class WeatherService extends Service {
 			alt = c.getDouble(altCol);
 			if (getForecast.isInTargetZone(lat, lon, alt)) {
 				// Sends a message to listener
-				final Integer id = c.getInt(c
-						.getColumnIndexOrThrow(WeatherContentProvider.META_ID));
+				final Integer id = c
+						.getInt(c
+								.getColumnIndexOrThrow(WeatherContentProvider.Meta._ID));
 
 				final long generated = c.getLong(c
-						.getColumnIndex(WeatherContentProvider.META_GENERATED));
+						.getColumnIndex(WeatherContentProvider.Meta.GENERATED));
 
 				getForecast.newForecast(
 						Uri.withAppendedPath(
@@ -149,34 +161,44 @@ public class WeatherService extends Service {
 				// Check if it is expected a new forecast:
 				final long expectedNextForecast = c
 						.getLong(c
-								.getColumnIndexOrThrow(WeatherContentProvider.META_NEXT_FORECAST));
+								.getColumnIndexOrThrow(WeatherContentProvider.Meta.NEXT_FORECAST));
 				final long now = System.currentTimeMillis();
 				if (now > expectedNextForecast) {
 					final long lastGeneratedForecast = c
 							.getLong(c
-									.getColumnIndexOrThrow(WeatherContentProvider.META_GENERATED));
+									.getColumnIndexOrThrow(WeatherContentProvider.Meta.GENERATED));
 					getForecast.setLastGeneratedForecast(lastGeneratedForecast);
 					mDownloadQueue.add(getForecast);
-				} else
+				} else {
 					getForecast.completed();
-
+					jobCompleted();
+				}
 				c.close();
 				return;
 			}
 		}
 		c.close();
 		mDownloadQueue.add(getForecast);
+		jobCompleted();
 
+	}
+
+	/**
+	 * 
+	 */
+	private void jobCompleted() {
+		numberOfJobsCompleted++;
+		progress(0);
 	}
 
 	public void deleteOldForecasts() {
 		final ContentResolver cr = getContentResolver();
 		// Check what is the latest forecast:
 
-		final String[] projection = { WeatherContentProvider.META_GENERATED };
-		final String selection = WeatherContentProvider.META_PROVIDER + "='"
+		final String[] projection = { WeatherContentProvider.Meta.GENERATED };
+		final String selection = WeatherContentProvider.Meta.PROVIDER + "='"
 				+ YrProxy.PROVIDER + "'";
-		final String sortOrder = WeatherContentProvider.META_GENERATED
+		final String sortOrder = WeatherContentProvider.Meta.GENERATED
 				+ " DESC";
 		final Cursor c = cr.query(WeatherContentProvider.CONTENT_URI,
 				projection, selection, null, sortOrder);
@@ -186,11 +208,11 @@ public class WeatherService extends Service {
 			return;
 		c.moveToFirst();
 		final long latestGeneratedForecast = c.getLong(c
-				.getColumnIndexOrThrow(WeatherContentProvider.META_GENERATED));
+				.getColumnIndexOrThrow(WeatherContentProvider.Meta.GENERATED));
 		c.close();
 
 		// Deletes all old forecasts:
-		final String where = WeatherContentProvider.META_GENERATED + "<"
+		final String where = WeatherContentProvider.Meta.GENERATED + "<"
 				+ latestGeneratedForecast + " AND " + selection;
 		cr.delete(WeatherContentProvider.CONTENT_URI, where, null);
 	};
@@ -204,11 +226,12 @@ public class WeatherService extends Service {
 	 * @throws RemoteException
 	 */
 	void downloadForcast(final GetForecast getForecast) {
-		final WeatherProxy proxy = new YrProxy(getContentResolver());
+		inProgress = getForecast;
+		final WeatherProxy proxy = new YrProxy(getContentResolver(),this);
 		Uri uri = null;
 		try {
 			uri = proxy.getWeatherForecast(getForecast.getLocation(),
-					getForecast.getLastGeneratedForecast());
+					getForecast.getLastGeneratedForecast(), this);
 		} catch (final IOException e) {
 			getForecast.exceptionOccured(ERROR_NETWORK_ERROR);
 		} catch (final Exception e) {
@@ -228,7 +251,7 @@ public class WeatherService extends Service {
 					null);
 			c.moveToFirst();
 			final long generated = c.getLong(c
-					.getColumnIndex(WeatherContentProvider.META_GENERATED));
+					.getColumnIndex(WeatherContentProvider.Meta.GENERATED));
 			c.close();
 
 			getForecast.newForecast(uriS, generated);
@@ -239,7 +262,7 @@ public class WeatherService extends Service {
 		// getForecast.getListener().notifyAll();
 		// }
 		getForecast.completed();
-
+		jobCompleted();
 	}
 
 	@Override
@@ -356,6 +379,14 @@ public class WeatherService extends Service {
 		public void setLastGeneratedForecast(final long lastGeneratedForecast) {
 			this.lastGeneratedForecast = lastGeneratedForecast;
 		}
+
+		public void progress(int progress) {
+			try {
+				this.listener.progress(progress);
+			} catch (RemoteException e) {
+				Log.e(TAG, "newExpectedTime" + e.getMessage());
+			}
+		}
 	}
 
 	/**
@@ -364,6 +395,9 @@ public class WeatherService extends Service {
 	private class WorkAsync extends AsyncTask<Void, Float, Void> {
 		@Override
 		protected Void doInBackground(final Void... params) {
+			numberOfJobsStarted = mDbCheckQueue.size() * 2
+					+ mDownloadQueue.size();
+			numberOfJobsCompleted = 0;
 			// Check db
 			Log.d(TAG, "Checking database, " + mDbCheckQueue.size()
 					+ " in queue");
@@ -386,6 +420,8 @@ public class WeatherService extends Service {
 			// synchronized (isWorking) {
 			if (mDownloadQueue.isEmpty() && mDbCheckQueue.isEmpty()) {
 				isWorking = false;
+				numberOfJobsCompleted = numberOfJobsStarted;
+				progress(0);
 				stopSelf();
 			} else
 				new WorkAsync().execute(null);
@@ -395,4 +431,21 @@ public class WeatherService extends Service {
 
 	}
 
+	@Override
+	public void progress(int progress) {
+		progress += numberOfJobsCompleted * 1000;
+		progress /= numberOfJobsStarted;
+
+		for (GetForecast i : mDbCheckQueue) {
+			i.progress(progress);
+		}
+
+		for (GetForecast i : mDownloadQueue) {
+			i.progress(progress);
+		}
+		
+		if(inProgress != null)
+			inProgress.progress(progress);
+
+	}
 }

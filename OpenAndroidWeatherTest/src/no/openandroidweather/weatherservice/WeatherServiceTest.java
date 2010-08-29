@@ -120,7 +120,7 @@ public class WeatherServiceTest extends ServiceTestCase<WeatherService> {
 		}
 
 		@Override
-		public void progress(double progress) throws RemoteException {
+		public void progress(int progress) throws RemoteException {
 			Log.i(TAG, "new progree");
 
 		}
