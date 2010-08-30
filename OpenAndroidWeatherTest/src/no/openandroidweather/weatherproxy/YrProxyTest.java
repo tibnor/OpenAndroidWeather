@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
+import no.openandroidweather.misc.IProgressItem;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import android.content.ContentResolver;
 import android.database.Cursor;
@@ -16,8 +17,11 @@ import android.location.Location;
 import android.net.Uri;
 import android.test.ProviderTestCase2;
 import android.text.format.Time;
+import android.util.Log;
 
-public class YrProxyTest extends ProviderTestCase2<WeatherContentProvider> {
+public class YrProxyTest extends ProviderTestCase2<WeatherContentProvider> implements IProgressItem{
+	private static final String TAG = "YrProxyTest";
+
 	public YrProxyTest() {
 		super(WeatherContentProvider.class, WeatherContentProvider.CONTENT_URI
 				.getAuthority());
@@ -36,7 +40,7 @@ public class YrProxyTest extends ProviderTestCase2<WeatherContentProvider> {
 	protected void setUp() throws Exception {
 		super.setUp();
 		content = getContext().getContentResolver();
-		yr = new YrProxy(content, null);
+		yr = new YrProxy(getContext(), this);
 
 	}
 
@@ -50,7 +54,7 @@ public class YrProxyTest extends ProviderTestCase2<WeatherContentProvider> {
 		loc.setAltitude(alt);
 
 		Uri uri = null;
-		uri = yr.getWeatherForecast(loc, 0, null);
+		uri = yr.getWeatherForecast(loc, 0, this);
 
 		Cursor c = content.query(uri, null, null, null, null);
 		assertEquals(1, c.getCount());
@@ -81,7 +85,7 @@ public class YrProxyTest extends ProviderTestCase2<WeatherContentProvider> {
 		loc.setLongitude(lon);
 		loc.setAltitude(alt);
 
-		assertNull(yr.getWeatherForecast(loc, System.currentTimeMillis(), null));
+		assertNull(yr.getWeatherForecast(loc, System.currentTimeMillis(), this));
 
 	}
 
@@ -89,11 +93,6 @@ public class YrProxyTest extends ProviderTestCase2<WeatherContentProvider> {
 		fail("Not implemented!");
 	}
 
-	public void testSimpleDateFormat() throws ParseException {
-		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss'Z'");
-		df.setTimeZone(TimeZone.getTimeZone("GMT"));
-		assertEquals(1282651200000l, df.parse("2010-08-24T12:00:00Z").getTime());
-	}
 	
 	public void testNewSimpleDateFormat() throws ParseException {
 		String timeS = "2010-08-24T12:00:00Z";
@@ -102,6 +101,12 @@ public class YrProxyTest extends ProviderTestCase2<WeatherContentProvider> {
 		
 		//date.setTimeZone(TimeZone.getTimeZone("UTC"));
 		assertEquals(1282651200000l, time.toMillis(false));
+	}
+
+	@Override
+	public void progress(int progress) {
+		Log.d(TAG, "Progress: " + progress);
+		
 	}
 	
 	

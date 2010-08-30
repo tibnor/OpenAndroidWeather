@@ -227,7 +227,7 @@ public class WeatherService extends Service implements IProgressItem {
 	 */
 	void downloadForcast(final GetForecast getForecast) {
 		inProgress = getForecast;
-		final WeatherProxy proxy = new YrProxy(getContentResolver(),this);
+		final WeatherProxy proxy = new YrProxy(getApplicationContext(),this);
 		Uri uri = null;
 		try {
 			uri = proxy.getWeatherForecast(getForecast.getLocation(),

@@ -30,6 +30,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import no.openandroidweather.misc.GeonamesFindNearbyPlaceNameAsync;
 import no.openandroidweather.misc.IProgressItem;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import no.openandroidweather.weatherproxy.yr.YrLocationForecastParser;
@@ -45,6 +46,7 @@ import org.xml.sax.SAXException;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.location.Location;
 import android.net.Uri;
 import android.util.Log;
@@ -55,10 +57,14 @@ public class YrProxy implements WeatherProxy {
 	public static final int AFTER_DOWNLOAD_PROGRESS = 100;
 	private final ContentResolver mContentResolver;
 	private IProgressItem mProgressItem;
+	private String mPlace = null;
+	private Context mContext;
 
-	public YrProxy(final ContentResolver contentResolver, IProgressItem progressItem) {
+	public YrProxy(final Context context,
+			IProgressItem progressItem) {
 		super();
-		mContentResolver = contentResolver;
+		mContentResolver = context.getContentResolver();
+		mContext = context;
 		mProgressItem = progressItem;
 	}
 
@@ -71,7 +77,8 @@ public class YrProxy implements WeatherProxy {
 	 */
 	@Override
 	public Uri getWeatherForecast(final Location location,
-			final long lastForecastGenerated, IProgressItem progressItem) throws IOException, Exception {
+			final long lastForecastGenerated, IProgressItem progressItem)
+			throws IOException, Exception {
 		mProgressItem = progressItem;
 		return locationForecast(location, lastForecastGenerated);
 	}
@@ -95,6 +102,10 @@ public class YrProxy implements WeatherProxy {
 	private Uri locationForecast(final Location location,
 			final long lastForecastGenerated) throws UnknownHostException,
 			IOException, ParserConfigurationException, SAXException {
+		// Get place:
+		GeonamesFindNearbyPlaceNameAsync placeTask = new GeonamesFindNearbyPlaceNameAsync(mContext);
+		placeTask.execute(location);
+
 		// Set progress:
 		mProgressItem.progress(1);
 		// Makes the uri
@@ -120,7 +131,7 @@ public class YrProxy implements WeatherProxy {
 		final HttpHost httpHost = new HttpHost("api.met.no");
 		HttpResponse httpResponse = null;
 		httpResponse = httpClient.execute(httpHost, httpRequest);
-		
+
 		// Set progress to 10%
 		mProgressItem.progress(AFTER_DOWNLOAD_PROGRESS);
 
@@ -131,8 +142,7 @@ public class YrProxy implements WeatherProxy {
 					"Trouble with response from api.yr.no: Response code: "
 							+ responseCode);
 		}
-		
-		
+
 		final InputStream inputStream = httpResponse.getEntity().getContent();
 		final SAXParserFactory spf = SAXParserFactory.newInstance();
 		final SAXParser parser = spf.newSAXParser();
@@ -153,7 +163,24 @@ public class YrProxy implements WeatherProxy {
 		}
 		mProgressItem.progress(1000);
 
-		return yrLocationForecastParser.getContentUri();
+		Uri contentUri = yrLocationForecastParser.getContentUri();
+
+		//Wait for geonames
+		synchronized (placeTask) {
+			if (!placeTask.isDone())
+				try {
+					placeTask.wait();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+		}
+		ContentValues values = new ContentValues();
+		values.put(WeatherContentProvider.Meta.PLACE_NAME, placeTask.getPlace());
+		mContentResolver.update(contentUri, values, null, null);
+		
+
+		return contentUri;
 	}
 
 	private void updateExpectedNewTime(final long nextExcpectedTime) {
@@ -164,7 +191,5 @@ public class YrProxy implements WeatherProxy {
 				+ PROVIDER + "'";
 		mContentResolver.update(uri, values, where, null);
 	}
-	
-	
 
 }
