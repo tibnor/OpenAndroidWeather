@@ -1,0 +1,6 @@
+0.0.4
+Added place name in ListView
+Better handling of no Internet connection.
+
+0.0.3
+Widget and a ListView is implemented.

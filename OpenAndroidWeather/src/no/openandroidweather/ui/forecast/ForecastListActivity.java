@@ -20,6 +20,7 @@
 package no.openandroidweather.ui.forecast;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import no.openandroidweather.R;
@@ -38,16 +39,23 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.text.style.BulletSpan;
+import android.util.Log;
+import android.widget.HeaderViewListAdapter;
 import android.widget.ListAdapter;
+import android.widget.ListView;
+import android.widget.Toast;
+import android.widget.ListView.FixedViewInfo;
 import android.widget.ProgressBar;
 
-public class ForecastListActivity extends ListActivity implements IProgressItem  {
+public class ForecastListActivity extends ListActivity implements IProgressItem {
 	private final String TAG = "ForecastListActivity";
 	private final IForecastEventListener forcastListener = new ForecastListener();
 	private ProgressBar progressBar;
-
+	private Handler mHandler = new Handler();
 	private IWeatherService mService;
 
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -89,7 +97,8 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 	}
 
 	/**
-	 * @param Between 1 and 1000
+	 * @param Between
+	 *            1 and 1000
 	 */
 	public void progress(final int progress) {
 		progressBar.setProgress(progress);
@@ -105,8 +114,9 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 		@Override
 		public void exceptionOccurred(final int errorcode)
 				throws RemoteException {
+			Log.e(TAG, "error occured during downloading of forecast, errorcode:"+errorcode);
 			final AlertDialog.Builder builder = new AlertDialog.Builder(
-					getApplicationContext());
+					ForecastListActivity.this);
 			switch (errorcode) {
 			case WeatherService.ERROR_NETWORK_ERROR:
 				builder.setMessage(getResources().getString(
@@ -138,20 +148,30 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 							dialog.cancel();
 						}
 					});
-			builder.setPositiveButton(getResources().getString(R.string.no),
+			builder.setNegativeButton(getResources().getString(R.string.no),
 					new DialogInterface.OnClickListener() {
 
 						@Override
 						public void onClick(final DialogInterface dialog,
 								final int which) {
 							dialog.cancel();
+							if(!hasGotForecast)
+								ForecastListActivity.this.finish();
 						}
 					});
+			Thread ShowErrorThread = new Thread() {
+				public void run() {
+					builder.show();
+				};
+			};
+			mHandler.post(ShowErrorThread);
+			
+
 		}
 
 		@Override
 		public void newExpectedTime() throws RemoteException {
-			// TODO Auto-generated method stub
+			// TODO update data
 		}
 
 		@Override
@@ -164,7 +184,7 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 
 		@Override
 		public void progress(final int progress) throws RemoteException {
-			if(!hasGotForecast)
+			if (!hasGotForecast)
 				ForecastListActivity.this.progress(progress / 2);
 		}
 
@@ -174,9 +194,14 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 
 		@Override
 		protected ListAdapter doInBackground(final Uri... params) {
-			ForecastListParser parser = new ForecastListParser(getApplicationContext(),ForecastListActivity.this);
+			ForecastListParser parser = new ForecastListParser(
+					getApplicationContext(), ForecastListActivity.this);
 			final List<IListRow> rows = parser.parseData(params[0]);
-			return new ForecastListAdapter(rows);
+			ListView.FixedViewInfo header = getListView().new FixedViewInfo();
+			header.view = parser.getHeaderView(params[0]);
+			ArrayList<FixedViewInfo> headerViewInfos = new ArrayList<ListView.FixedViewInfo>();
+			headerViewInfos.add(header);
+			return new HeaderViewListAdapter(headerViewInfos, null,  new ForecastListAdapter(rows));
 		}
 
 		@Override

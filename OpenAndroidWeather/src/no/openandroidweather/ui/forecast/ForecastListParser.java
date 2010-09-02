@@ -19,20 +19,25 @@
 
 package no.openandroidweather.ui.forecast;
 
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
+import no.openandroidweather.R;
 import no.openandroidweather.misc.IProgressItem;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
-import no.openandroidweather.weathercontentprovider.WeatherType;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider.ForecastListView;
+import no.openandroidweather.weathercontentprovider.WeatherType;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.TextView;
 
 public class ForecastListParser {
 	private final Context context;
@@ -56,7 +61,7 @@ public class ForecastListParser {
 		this.progressItem = progressItem;
 		mContentResolver = context.getContentResolver();
 		inflater = (LayoutInflater) context
-				.getSystemService(context.LAYOUT_INFLATER_SERVICE);
+				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	}
 
 	/**
@@ -86,13 +91,14 @@ public class ForecastListParser {
 		uri = Uri.withAppendedPath(mUri, ForecastListView.CONTENT_PATH);
 		// Set start time to the beginning of this hour
 		long lastHour = System.currentTimeMillis();
-		lastHour -= lastHour % 3600000;
+		lastHour -= 3600000;
 		
 		String selection = ForecastListView.fromTime + ">"
 				+ lastHour;
 		Cursor c = mContentResolver.query(uri, null, selection, null, null);
 		
 		if (c == null || c.getCount() == 0) {
+			c.close();
 			convertForecastToForecastListView();
 			return parseData(mUri);
 		}
@@ -241,5 +247,30 @@ public class ForecastListParser {
 		windDirection = -1.;
 		windSpeed = -1.;
 		percipitation = -1.;
+	}
+
+	public View getHeaderView(Uri uri) {
+		Cursor c = mContentResolver.query(uri, null, null, null, null);
+		c.moveToFirst();
+		
+		View header = inflater.inflate(R.layout.forecast_view_header, null);
+		DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.SHORT);
+		
+		String place = c.getString(c.getColumnIndex(WeatherContentProvider.Meta.PLACE_NAME));
+		TextView placeView = (TextView) header.findViewById(R.id.place);
+		placeView.setText(place);
+		
+		long downloaded = c.getLong(c.getColumnIndex(WeatherContentProvider.Meta.LOADED));
+		((TextView) header.findViewById(R.id.downloaded)).setText(df.format(new Date(downloaded)));
+		
+		long generated = c.getLong(c.getColumnIndexOrThrow(WeatherContentProvider.Meta.GENERATED));
+		((TextView) header.findViewById(R.id.generated)).setText(df.format(new Date(generated)));
+		
+		long nextForecast = c.getLong(c.getColumnIndexOrThrow(WeatherContentProvider.Meta.NEXT_FORECAST));
+		((TextView) header.findViewById(R.id.next_update)).setText(df.format(new Date(nextForecast)));
+		
+		c.close();
+		
+		return header;
 	}
 }

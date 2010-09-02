@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="km_from_">"km from "</string>
-	<string name="hello">Hello World!</string>
-	<string name="app_name">OpenYr</string>
+	<string name="app_name">Firestorm</string>
 	<string name="please_wait_1min">Please wait while downloading weather, this can
 		take some time.</string>
 	<string name="no_internet_connection">Could not connect to internett, please make sure
@@ -11,4 +10,9 @@
 	<string name="no_position">Can not find your position. Try again?</string>
 	<string name="yes">Yes</string>
 	<string name="no">No</string>
+	<string name="Place">Place:</string>
+	<string name="Downloaded">Downloaded:</string>
+	<string name="Generated">Generated:</string>
+	<string name="Next_update">Next update:</string>
+	<string name="Provider">Data from The Norwegian Meteorological Institute</string>
 </resources>

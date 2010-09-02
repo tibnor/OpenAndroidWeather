@@ -41,6 +41,8 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Debug;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.text.format.DateFormat;
@@ -337,12 +339,13 @@ public class WidgetProvider extends AppWidgetProvider {
 		}
 
 		private class ForecastListener extends IForecastEventListener.Stub {
+			private final Handler mHandler = new Handler();
 			private boolean isComplete;
 
 			@Override
 			public void completed() throws RemoteException {
-				synchronized (mService) {
-					if (mService != null) {
+				if (mService != null) {
+					synchronized (mService) {
 						try {
 							unbindService(mServiceConnection);
 						} catch (final IllegalArgumentException e) {
@@ -360,7 +363,7 @@ public class WidgetProvider extends AppWidgetProvider {
 			@Override
 			public void exceptionOccurred(final int errorcode)
 					throws RemoteException {
-				String text;
+				final String text;
 				switch (errorcode) {
 				case (WeatherService.ERROR_NETWORK_ERROR):
 					text = "Check internett connection, can't download forecast!";
@@ -372,8 +375,16 @@ public class WidgetProvider extends AppWidgetProvider {
 				default:
 					text = "Trouble getting forecast, sorry!";
 				}
-				Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG)
-						.show();
+				Thread ShowToastThread = new Thread() {
+					public void run() {
+						Toast.makeText(getApplicationContext(), text,
+								Toast.LENGTH_LONG).show();
+					};
+				};
+				Log.e(TAG, "Error in widgetProvider:" + text);
+				mHandler.post(ShowToastThread);
+				completed();
+
 			}
 
 			public boolean isComplete() {
