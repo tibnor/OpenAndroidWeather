@@ -4,7 +4,7 @@
 	android:orientation="vertical">
 	<TextView android:layout_width="fill_parent"
 		android:layout_height="wrap_content" android:text="@string/Places" />
-	<TextView android:layout_width="fill_parent"
+	<Button android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:text="@string/Add_place" android:id="@+id/add_place"/>
 	<ListView android:id="@+id/android:list"
 		android:layout_width="fill_parent" android:layout_height="fill_parent" />

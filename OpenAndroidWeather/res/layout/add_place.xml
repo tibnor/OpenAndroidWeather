@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="fill_parent"
+	android:orientation="vertical">
+	<TextView android:layout_width="fill_parent" android:id="@+id/place_name_text"
+		android:layout_height="wrap_content" android:text="@string/Place"></TextView>
+	<EditText android:layout_below="@id/place_name_text"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:hint="@string/Place_name" android:id="@+id/place_name" />
+	<Button android:layout_below="@id/place_name" android:text="@string/add_this_position"
+		android:layout_width="wrap_content" android:id="@+id/add_this_position_button"
+		android:layout_height="wrap_content"></Button>
+
+</RelativeLayout>

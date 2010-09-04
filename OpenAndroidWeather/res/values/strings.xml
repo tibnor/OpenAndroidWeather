@@ -18,4 +18,6 @@
 	<string name="Places">Places:</string>
 	<string name="Add_place">Add a place</string>
 	<string name="getting_information">Getting information, please wait.</string>
+	<string name="Place_name">Place name</string>
+	<string name="add_this_position">Add current position</string>
 </resources>
