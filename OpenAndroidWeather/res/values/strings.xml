@@ -2,7 +2,7 @@
 <resources>
     <string name="km_from_">"km from "</string>
 	<string name="app_name">Firestorm</string>
-	<string name="please_wait_1min">Please wait while downloading weather, this can
+	<string name="please_wait_1min">Please wait while downloading forecast, this can
 		take some time.</string>
 	<string name="no_internet_connection">Could not connect to internett, please make sure
 		that you have connection. Try again?"</string>
