@@ -15,4 +15,7 @@
 	<string name="Generated">Generated:</string>
 	<string name="Next_update">Next update:</string>
 	<string name="Provider">Data from The Norwegian Meteorological Institute</string>
+	<string name="Places">Places:</string>
+	<string name="Add_place">Add a place</string>
+	<string name="getting_information">Getting information, please wait.</string>
 </resources>

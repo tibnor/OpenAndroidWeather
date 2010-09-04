@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="fill_parent"
+	android:orientation="vertical">
+	<TextView android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:text="@string/Places" />
+	<TextView android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:text="@string/Add_place" android:id="@+id/add_place"/>
+	<ListView android:id="@+id/android:list"
+		android:layout_width="fill_parent" android:layout_height="fill_parent" />
+	<TextView android:id="@+id/android:empty" android:padding="3dip" android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:text="@string/getting_information" />
+</LinearLayout>
