@@ -81,65 +81,6 @@ public class ForecastListParser {
 		mContentResolver.insert(uri, values);
 	}
 
-	private boolean checkHasAll() {
-		return !(symbol < 0 || percipitation < 0
-				|| temperature == uknownTemperature || windSpeed < 0 || windDirection < 0);
-	}
-
-	public List<IListRow> parseData(Uri uri) {
-		mUri = uri;
-		uri = Uri.withAppendedPath(mUri, ForecastListView.CONTENT_PATH);
-		// Set start time to the beginning of this hour
-		long lastHour = System.currentTimeMillis();
-		lastHour -= 3600000;
-		
-		String selection = ForecastListView.fromTime + ">"
-				+ lastHour;
-		Cursor c = mContentResolver.query(uri, null, selection, null, null);
-		
-		if (c == null || c.getCount() == 0) {
-			c.close();
-			convertForecastToForecastListView();
-			return parseData(mUri);
-		}
-		
-		List<IListRow> rows = new ArrayList<IListRow>();
-		int fromCol = c.getColumnIndexOrThrow(ForecastListView.fromTime);
-		int toCol = c.getColumnIndexOrThrow(ForecastListView.toTime);
-		int percipitationCol = c
-				.getColumnIndexOrThrow(ForecastListView.percipitation);
-		int symbolCol = c.getColumnIndexOrThrow(ForecastListView.symbol);
-		int temperatureCol = c
-				.getColumnIndexOrThrow(ForecastListView.temperature);
-		int windDirectionCol = c
-				.getColumnIndexOrThrow(ForecastListView.windDirection);
-		int windSpeedCol = c.getColumnIndexOrThrow(ForecastListView.windSpeed);
-
-		c.moveToFirst();
-		long from = c.getLong(fromCol), to;
-		int symbol;
-		double percipitation, temperature, windDirection, windSpeed;
-		rows.add(new DateRow(context, from));
-		for (int i = 0; i < c.getCount(); i++) {
-			from = c.getLong(fromCol);
-			to = c.getLong(toCol);
-			symbol = c.getInt(symbolCol);
-			percipitation = c.getDouble(percipitationCol);
-			temperature = c.getDouble(temperatureCol);
-			windDirection = c.getDouble(windDirectionCol);
-			windSpeed = c.getDouble(windSpeedCol);
-			rows.add(new ForecastRow(symbol, temperature, percipitation,
-					windSpeed, windDirection, inflater, from));
-			DateRow date = checkDate(from, to);
-			if (date != null)
-				rows.add(date);
-			c.moveToNext();
-
-		}
-
-		return rows;
-	}
-
 	private DateRow checkDate(long from, long to) {
 		final Calendar cal = Calendar.getInstance();
 		cal.setTimeInMillis(from);
@@ -150,6 +91,11 @@ public class ForecastListParser {
 			return new DateRow(context, to);
 		} else
 			return null;
+	}
+
+	private boolean checkHasAll() {
+		return !(symbol < 0 || percipitation < 0
+				|| temperature == uknownTemperature || windSpeed < 0 || windDirection < 0);
 	}
 
 	/**
@@ -240,15 +186,6 @@ public class ForecastListParser {
 		c.close();
 	}
 
-	private void reset() {
-		hasAll = false;
-		symbol = -1;
-		temperature = uknownTemperature;
-		windDirection = -1.;
-		windSpeed = -1.;
-		percipitation = -1.;
-	}
-
 	public View getHeaderView(Uri uri) {
 		Cursor c = mContentResolver.query(uri, null, null, null, null);
 		c.moveToFirst();
@@ -272,5 +209,68 @@ public class ForecastListParser {
 		c.close();
 		
 		return header;
+	}
+
+	public List<IListRow> parseData(Uri uri) {
+		mUri = uri;
+		uri = Uri.withAppendedPath(mUri, ForecastListView.CONTENT_PATH);
+		// Set start time to the beginning of this hour
+		long lastHour = System.currentTimeMillis();
+		lastHour -= 3600000;
+		
+		String selection = ForecastListView.fromTime + ">"
+				+ lastHour;
+		Cursor c = mContentResolver.query(uri, null, selection, null, null);
+		
+		if (c == null || c.getCount() == 0) {
+			c.close();
+			convertForecastToForecastListView();
+			return parseData(mUri);
+		}
+		
+		List<IListRow> rows = new ArrayList<IListRow>();
+		int fromCol = c.getColumnIndexOrThrow(ForecastListView.fromTime);
+		int toCol = c.getColumnIndexOrThrow(ForecastListView.toTime);
+		int percipitationCol = c
+				.getColumnIndexOrThrow(ForecastListView.percipitation);
+		int symbolCol = c.getColumnIndexOrThrow(ForecastListView.symbol);
+		int temperatureCol = c
+				.getColumnIndexOrThrow(ForecastListView.temperature);
+		int windDirectionCol = c
+				.getColumnIndexOrThrow(ForecastListView.windDirection);
+		int windSpeedCol = c.getColumnIndexOrThrow(ForecastListView.windSpeed);
+
+		c.moveToFirst();
+		long from = c.getLong(fromCol), to;
+		int symbol;
+		double percipitation, temperature, windDirection, windSpeed;
+		rows.add(new DateRow(context, from));
+		for (int i = 0; i < c.getCount(); i++) {
+			from = c.getLong(fromCol);
+			to = c.getLong(toCol);
+			symbol = c.getInt(symbolCol);
+			percipitation = c.getDouble(percipitationCol);
+			temperature = c.getDouble(temperatureCol);
+			windDirection = c.getDouble(windDirectionCol);
+			windSpeed = c.getDouble(windSpeedCol);
+			rows.add(new ForecastRow(symbol, temperature, percipitation,
+					windSpeed, windDirection, inflater, from));
+			DateRow date = checkDate(from, to);
+			if (date != null)
+				rows.add(date);
+			c.moveToNext();
+
+		}
+
+		return rows;
+	}
+
+	private void reset() {
+		hasAll = false;
+		symbol = -1;
+		temperature = uknownTemperature;
+		windDirection = -1.;
+		windSpeed = -1.;
+		percipitation = -1.;
 	}
 }

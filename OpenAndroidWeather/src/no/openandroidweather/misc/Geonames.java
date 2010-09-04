@@ -113,13 +113,16 @@ public class Geonames {
 		private Double distance;
 		
 		@Override
-		public void startElement(String uri, String localName, String qName,
-				Attributes attributes) throws SAXException {
-			super.startElement(uri, localName, qName, attributes);
-			if(qName.equals("name"))
-				isInName = true;
-			else if(qName.equals("distance"))
-				isInDistance  = true;
+		public void characters(char[] ch, int start, int length)
+				throws SAXException {
+			super.characters(ch, start, length);
+			
+			String value = new String(ch,start,length);
+			if(isInName)
+				place = value;
+			else if (isInDistance) {
+				distance = new Double(value);
+			}
 		}
 		
 		@Override
@@ -134,25 +137,22 @@ public class Geonames {
 			
 		}
 		
-		@Override
-		public void characters(char[] ch, int start, int length)
-				throws SAXException {
-			super.characters(ch, start, length);
-			
-			String value = new String(ch,start,length);
-			if(isInName)
-				place = value;
-			else if (isInDistance) {
-				distance = new Double(value);
-			}
-		}
-		
 		public Double getDistance(){
 			return distance;
 		}
 		
 		public String getName(){
 			return place;
+		}
+		
+		@Override
+		public void startElement(String uri, String localName, String qName,
+				Attributes attributes) throws SAXException {
+			super.startElement(uri, localName, qName, attributes);
+			if(qName.equals("name"))
+				isInName = true;
+			else if(qName.equals("distance"))
+				isInDistance  = true;
 		}
 	}
 }

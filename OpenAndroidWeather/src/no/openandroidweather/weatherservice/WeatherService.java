@@ -183,14 +183,6 @@ public class WeatherService extends Service implements IProgressItem {
 
 	}
 
-	/**
-	 * 
-	 */
-	private void jobCompleted() {
-		numberOfJobsCompleted++;
-		progress(0);
-	}
-
 	public void deleteOldForecasts() {
 		final ContentResolver cr = getContentResolver();
 		// Check what is the latest forecast:
@@ -215,7 +207,7 @@ public class WeatherService extends Service implements IProgressItem {
 		final String where = WeatherContentProvider.Meta.GENERATED + "<"
 				+ latestGeneratedForecast + " AND " + selection;
 		cr.delete(WeatherContentProvider.CONTENT_URI, where, null);
-	};
+	}
 
 	/**
 	 * Downloads forecast from Internet, and calls the event listener when
@@ -263,6 +255,14 @@ public class WeatherService extends Service implements IProgressItem {
 		// }
 		getForecast.completed();
 		jobCompleted();
+	};
+
+	/**
+	 * 
+	 */
+	private void jobCompleted() {
+		numberOfJobsCompleted++;
+		progress(0);
 	}
 
 	@Override
@@ -276,6 +276,24 @@ public class WeatherService extends Service implements IProgressItem {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
+	}
+
+	@Override
+	public void progress(int progress) {
+		progress += numberOfJobsCompleted * 1000;
+		progress /= numberOfJobsStarted;
+
+		for (GetForecast i : mDbCheckQueue) {
+			i.progress(progress);
+		}
+
+		for (GetForecast i : mDownloadQueue) {
+			i.progress(progress);
+		}
+		
+		if(inProgress != null)
+			inProgress.progress(progress);
+
 	}
 
 	protected void work() {
@@ -376,16 +394,16 @@ public class WeatherService extends Service implements IProgressItem {
 			}
 		}
 
-		public void setLastGeneratedForecast(final long lastGeneratedForecast) {
-			this.lastGeneratedForecast = lastGeneratedForecast;
-		}
-
 		public void progress(int progress) {
 			try {
 				this.listener.progress(progress);
 			} catch (RemoteException e) {
 				Log.e(TAG, "newExpectedTime" + e.getMessage());
 			}
+		}
+
+		public void setLastGeneratedForecast(final long lastGeneratedForecast) {
+			this.lastGeneratedForecast = lastGeneratedForecast;
 		}
 	}
 
@@ -428,24 +446,6 @@ public class WeatherService extends Service implements IProgressItem {
 			// }
 
 		}
-
-	}
-
-	@Override
-	public void progress(int progress) {
-		progress += numberOfJobsCompleted * 1000;
-		progress /= numberOfJobsStarted;
-
-		for (GetForecast i : mDbCheckQueue) {
-			i.progress(progress);
-		}
-
-		for (GetForecast i : mDownloadQueue) {
-			i.progress(progress);
-		}
-		
-		if(inProgress != null)
-			inProgress.progress(progress);
 
 	}
 }

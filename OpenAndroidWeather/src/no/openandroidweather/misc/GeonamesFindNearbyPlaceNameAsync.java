@@ -41,10 +41,6 @@ public class GeonamesFindNearbyPlaceNameAsync extends
 		mContext = context;
 	}
 
-	public boolean isDone() {
-		return isDone;
-	}
-
 	@Override
 	protected String doInBackground(Location... arg0) {
 		Geonames geonames = new Geonames(mContext);
@@ -70,9 +66,13 @@ public class GeonamesFindNearbyPlaceNameAsync extends
 		}
 		return place;
 	}
-	
+
 	public String getPlace(){
 		return place;
+	}
+	
+	public boolean isDone() {
+		return isDone;
 	}
 
 }
