@@ -261,6 +261,7 @@ public class ForecastListParser {
 			c.moveToNext();
 
 		}
+		c.close();
 
 		return rows;
 	}

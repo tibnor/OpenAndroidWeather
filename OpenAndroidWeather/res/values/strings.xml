@@ -19,5 +19,15 @@
 	<string name="Add_place">Add a place</string>
 	<string name="getting_information">Getting information, please wait.</string>
 	<string name="Place_name">Place name</string>
-	<string name="add_this_position">Add current position</string>
+	<string name="add_this_position">Get current position</string>
+	<string name="get_position_from_map">Get position from map</string>
+	<string name="Longitude:">Longitude:</string>
+	<string name="Latitude:">Latitude:</string>
+	<string name="Altitude:">Altitude:</string>
+	<string name="Degree_hint">dd.dd°</string>
+	<string name="Altitude_hint">Altitude in meter</string>
+	<string name="add_place">Add place</string>
+	<string name="GetPositionMapHint">Press long on the place you want to add.</string>
+	<string name="Add_place_required_format">Altitude, latitude and longitude must be a decimal number (x.x)</string>
+	<string name="Add_place_required_fields">All fields must be filled in.</string>
 </resources>

@@ -96,6 +96,7 @@ public class WeatherContentProvider extends ContentProvider {
 		switch (uriMatch) {
 		case sMETA:
 		case sFORECAST:
+		case sPLACE:
 			break;
 		case sID_FORECAST:
 			values.put(Forecast.META, uri.getPathSegments().get(0));
@@ -103,13 +104,11 @@ public class WeatherContentProvider extends ContentProvider {
 		case sID_FORECAST_LIST_VIEW:
 			values.put(ForecastListView.metaId, uri.getPathSegments().get(0));
 			break;
-		case sPLACE_ID:
-			values.put(Place._ID, uri.getPathSegments().get(0));
-			break;
 		case sMETA_ID:
 		case sFORECAST_ID:
 		case sID_FORECAST_ID:
 		case sID_FORECAST_LIST_VIEW_ID:
+		case sPLACE_ID:
 			throw new UnsupportedOperationException("Can not insert into a row");
 		default:
 			throw new UnsupportedOperationException(
@@ -235,6 +234,7 @@ public class WeatherContentProvider extends ContentProvider {
 		case sPLACE:
 		case sPLACE_ID:
 			table = Place.TABLE_NAME;
+			break;
 		default:
 			throw new UnsupportedOperationException(
 					"Something wrong with the uri!, uriMatch:" + uriMatch

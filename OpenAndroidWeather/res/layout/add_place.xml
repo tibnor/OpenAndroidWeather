@@ -7,8 +7,36 @@
 	<EditText android:layout_below="@id/place_name_text"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
 		android:hint="@string/Place_name" android:id="@+id/place_name" />
-	<Button android:layout_below="@id/place_name" android:text="@string/add_this_position"
+
+	<TextView android:layout_width="fill_parent" android:id="@+id/latitude_label"
+		android:layout_height="wrap_content" android:text="@string/Latitude:"
+		android:layout_below="@id/place_name"></TextView>
+	<EditText android:layout_below="@id/latitude_label"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:hint="@string/Degree_hint" android:id="@+id/latitude" />
+
+	<TextView android:layout_width="fill_parent" android:id="@+id/longitude_label"
+		android:layout_height="wrap_content" android:text="@string/Longitude:"
+		android:layout_below="@id/latitude"></TextView>
+	<EditText android:layout_below="@id/longitude_label"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:hint="@string/Degree_hint" android:id="@+id/longitude" />
+
+	<TextView android:layout_width="fill_parent" android:id="@+id/altitude_label"
+		android:layout_height="wrap_content" android:text="@string/Altitude:"
+		android:layout_below="@id/longitude"></TextView>
+	<EditText android:layout_below="@id/altitude_label"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:id="@+id/altitude" android:hint="@string/Altitude_hint" />
+
+	<Button android:layout_below="@id/altitude" android:text="@string/add_this_position"
 		android:layout_width="wrap_content" android:id="@+id/add_this_position_button"
 		android:layout_height="wrap_content"></Button>
+	<Button android:layout_below="@id/add_this_position_button"
+		android:text="@string/get_position_from_map" android:layout_width="wrap_content"
+		android:id="@+id/get_position_from_map" android:layout_height="wrap_content"></Button>
+	<Button android:layout_below="@id/get_position_from_map"
+		android:text="@string/add_place" android:layout_width="wrap_content"
+		android:id="@+id/add_place" android:layout_height="wrap_content"></Button>
 
 </RelativeLayout>

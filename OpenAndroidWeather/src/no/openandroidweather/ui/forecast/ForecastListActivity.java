@@ -52,11 +52,29 @@ import android.widget.ListView.FixedViewInfo;
 import android.widget.ProgressBar;
 
 public class ForecastListActivity extends ListActivity implements IProgressItem {
+	/**
+	 * Set this in intent extra to show a specific place. Use row id from WeatherContentProvider.Places
+	 */
+	public static final String _ROW_ID = "_rowId";
 	private final String TAG = "ForecastListActivity";
 	private final IForecastEventListener forcastListener = new ForecastListener();
 	private ProgressBar progressBar;
 	private Handler mHandler = new Handler();
 	private IWeatherService mService;
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		if (mService == null)
+			bindService(new Intent(getApplicationContext(),
+					WeatherService.class), mServiceConnection, BIND_AUTO_CREATE);
+	}
+	
+	@Override
+	protected void onPause() {
+		unbindService(mServiceConnection);
+		super.onPause();
+	}
 
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -91,9 +109,6 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 
 		setContentView(R.layout.forecast_view);
 		progressBar = (ProgressBar) findViewById(R.id.progressbar);
-		if (mService == null)
-			bindService(new Intent(getApplicationContext(),
-					WeatherService.class), mServiceConnection, BIND_AUTO_CREATE);
 	}
 
 	/**
@@ -114,6 +129,9 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 		@Override
 		public void exceptionOccurred(final int errorcode)
 				throws RemoteException {
+			if(ForecastListActivity.this == null || ForecastListActivity.this.isFinishing())
+				return;
+			
 			Log.e(TAG, "error occured during downloading of forecast, errorcode:"+errorcode);
 			final AlertDialog.Builder builder = new AlertDialog.Builder(
 					ForecastListActivity.this);
