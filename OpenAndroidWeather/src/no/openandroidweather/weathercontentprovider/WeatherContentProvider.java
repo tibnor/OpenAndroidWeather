@@ -29,8 +29,6 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
-import android.sax.StartElementListener;
-import android.util.Log;
 
 /**
  * The WeatherProxy should call the provider when inserting, the WeatherService
@@ -38,6 +36,7 @@ import android.util.Log;
  * 
  */
 public class WeatherContentProvider extends ContentProvider {
+	@SuppressWarnings("unused")
 	private static final String TAG = "WeatherContentProvider";
 
 	public static final Uri CONTENT_URI = Uri
@@ -92,7 +91,7 @@ public class WeatherContentProvider extends ContentProvider {
 	 * @param path
 	 */
 	private ContentValues addIdToContentValues(final ContentValues values,
-			int uriMatch, Uri uri) {
+			final int uriMatch, final Uri uri) {
 		switch (uriMatch) {
 		case sMETA:
 		case sFORECAST:
@@ -119,9 +118,9 @@ public class WeatherContentProvider extends ContentProvider {
 
 	@Override
 	public int bulkInsert(final Uri uri, final ContentValues[] values) {
-		int uriMatch = getUriMatch(uri);
+		final int uriMatch = getUriMatch(uri);
 
-		String table = getTable(uri, uriMatch);
+		final String table = getTable(uri, uriMatch);
 
 		for (ContentValues contentValues : values)
 			contentValues = addIdToContentValues(contentValues, uriMatch, uri);
@@ -142,18 +141,18 @@ public class WeatherContentProvider extends ContentProvider {
 	 * with a id, all elements connected to this id is also deleted
 	 */
 	@Override
-	public int delete(Uri uri, final String selection,
+	public int delete(final Uri uri, final String selection,
 			final String[] selectionArgs) {
-		int uriMatch = getUriMatch(uri);
+		final int uriMatch = getUriMatch(uri);
 
 		final String table = getTable(uri, uriMatch);
 		final String newSelection = getNewSelection(uri, selection, uriMatch);
 
 		if (uriMatch == sMETA_ID) {
-			Uri forecastUri = Uri.withAppendedPath(uri,
+			final Uri forecastUri = Uri.withAppendedPath(uri,
 					Forecast.CONTENT_DIRECTORY);
 			delete(forecastUri, selection, selectionArgs);
-			Uri listViewUri = uri.withAppendedPath(uri,
+			final Uri listViewUri = Uri.withAppendedPath(uri,
 					ForecastListView.CONTENT_PATH);
 			delete(listViewUri, selection, selectionArgs);
 
@@ -263,8 +262,8 @@ public class WeatherContentProvider extends ContentProvider {
 
 	@Override
 	public Uri insert(final Uri uri, final ContentValues values) {
-		int uriMatch = getUriMatch(uri);
-		String table = getTable(uri, uriMatch);
+		final int uriMatch = getUriMatch(uri);
+		final String table = getTable(uri, uriMatch);
 		addIdToContentValues(values, uriMatch, uri);
 
 		final SQLiteDatabase db = openHelper.getWritableDatabase();
@@ -283,7 +282,7 @@ public class WeatherContentProvider extends ContentProvider {
 	public Cursor query(final Uri uri, final String[] projection,
 			final String selection, final String[] selectionArgs,
 			final String sortOrder) {
-		int uriMatch = getUriMatch(uri);
+		final int uriMatch = getUriMatch(uri);
 
 		final String table = getTable(uri, uriMatch);
 		final String newSelection = getNewSelection(uri, selection, uriMatch);
@@ -296,7 +295,7 @@ public class WeatherContentProvider extends ContentProvider {
 	@Override
 	public int update(final Uri uri, final ContentValues values,
 			final String selection, final String[] selectionArgs) {
-		int uriMatch = getUriMatch(uri);
+		final int uriMatch = getUriMatch(uri);
 
 		final String table = getTable(uri, uriMatch);
 		final String newSelection = getNewSelection(uri, selection, uriMatch);

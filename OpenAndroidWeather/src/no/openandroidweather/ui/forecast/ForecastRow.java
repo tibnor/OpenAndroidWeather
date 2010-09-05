@@ -19,7 +19,6 @@
 
 package no.openandroidweather.ui.forecast;
 
-import java.util.Calendar;
 import java.util.Formatter;
 
 import no.openandroidweather.R;
@@ -53,7 +52,7 @@ public class ForecastRow implements IListRow {
 		this.windSpeed = windSpeed;
 		this.windDirection = windDirection;
 		this.inflater = inflater;
-		Formatter formatter = new Formatter();
+		final Formatter formatter = new Formatter();
 		hour = formatter.format("%tH", startTime).toString();
 	}
 
@@ -66,13 +65,11 @@ public class ForecastRow implements IListRow {
 	public View getView(View convertView) {
 		if (convertView == null)
 			convertView = inflater.inflate(R.layout.forecast_view_item, null);
-		
-		
 
 		// Set hour
 		((TextView) convertView.findViewById(R.id.hour)).setText(hour);
 
-		Log.i(TAG, "Symbol"+symbol);
+		Log.i(TAG, "Symbol" + symbol);
 		// Set symbol
 		((ImageView) convertView.findViewById(R.id.symbol))
 				.setImageResource(Q.symbol[symbol]);

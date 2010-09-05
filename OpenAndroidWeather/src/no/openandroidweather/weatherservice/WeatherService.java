@@ -219,7 +219,7 @@ public class WeatherService extends Service implements IProgressItem {
 	 */
 	void downloadForcast(final GetForecast getForecast) {
 		inProgress = getForecast;
-		final WeatherProxy proxy = new YrProxy(getApplicationContext(),this);
+		final WeatherProxy proxy = new YrProxy(getApplicationContext(), this);
 		Uri uri = null;
 		try {
 			uri = proxy.getWeatherForecast(getForecast.getLocation(),
@@ -283,15 +283,13 @@ public class WeatherService extends Service implements IProgressItem {
 		progress += numberOfJobsCompleted * 1000;
 		progress /= numberOfJobsStarted;
 
-		for (GetForecast i : mDbCheckQueue) {
+		for (final GetForecast i : mDbCheckQueue)
 			i.progress(progress);
-		}
 
-		for (GetForecast i : mDownloadQueue) {
+		for (final GetForecast i : mDownloadQueue)
 			i.progress(progress);
-		}
-		
-		if(inProgress != null)
+
+		if (inProgress != null)
 			inProgress.progress(progress);
 
 	}
@@ -300,7 +298,7 @@ public class WeatherService extends Service implements IProgressItem {
 		// synchronized (isWorking) {
 		if (!isWorking) {
 			isWorking = true;
-			new WorkAsync().execute(null);
+			new WorkAsync().execute(new Void[] {null});
 		}
 		// }
 	}
@@ -394,10 +392,10 @@ public class WeatherService extends Service implements IProgressItem {
 			}
 		}
 
-		public void progress(int progress) {
+		public void progress(final int progress) {
 			try {
-				this.listener.progress(progress);
-			} catch (RemoteException e) {
+				listener.progress(progress);
+			} catch (final RemoteException e) {
 				Log.e(TAG, "newExpectedTime" + e.getMessage());
 			}
 		}
@@ -442,7 +440,7 @@ public class WeatherService extends Service implements IProgressItem {
 				progress(0);
 				stopSelf();
 			} else
-				new WorkAsync().execute(null);
+				new WorkAsync().execute(new Void[] {null});
 			// }
 
 		}

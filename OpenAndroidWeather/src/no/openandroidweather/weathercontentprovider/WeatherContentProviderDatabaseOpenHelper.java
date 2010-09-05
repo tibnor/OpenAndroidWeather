@@ -46,7 +46,8 @@ class WeatherContentProviderDatabaseOpenHelper extends SQLiteOpenHelper {
 				+ WeatherContentProvider.Meta.TABLE_NAME);
 		db.execSQL("DROP TABLE IF EXISTS "
 				+ WeatherContentProvider.ForecastListView.TABLE_NAME);
-		db.execSQL("DROP TABLE IF EXISTS " + WeatherContentProvider.Place.TABLE_NAME);
+		db.execSQL("DROP TABLE IF EXISTS "
+				+ WeatherContentProvider.Place.TABLE_NAME);
 	}
 
 	@Override

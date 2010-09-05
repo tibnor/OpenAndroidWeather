@@ -57,11 +57,9 @@ public class YrProxy implements WeatherProxy {
 	public static final int AFTER_DOWNLOAD_PROGRESS = 100;
 	private final ContentResolver mContentResolver;
 	private IProgressItem mProgressItem;
-	private String mPlace = null;
-	private Context mContext;
+	private final Context mContext;
 
-	public YrProxy(final Context context,
-			IProgressItem progressItem) {
+	public YrProxy(final Context context, final IProgressItem progressItem) {
 		super();
 		mContentResolver = context.getContentResolver();
 		mContext = context;
@@ -77,7 +75,7 @@ public class YrProxy implements WeatherProxy {
 	 */
 	@Override
 	public Uri getWeatherForecast(final Location location,
-			final long lastForecastGenerated, IProgressItem progressItem)
+			final long lastForecastGenerated, final IProgressItem progressItem)
 			throws IOException, Exception {
 		mProgressItem = progressItem;
 		return locationForecast(location, lastForecastGenerated);
@@ -103,7 +101,8 @@ public class YrProxy implements WeatherProxy {
 			final long lastForecastGenerated) throws UnknownHostException,
 			IOException, ParserConfigurationException, SAXException {
 		// Get place:
-		GeonamesFindNearbyPlaceNameAsync placeTask = new GeonamesFindNearbyPlaceNameAsync(mContext);
+		final GeonamesFindNearbyPlaceNameAsync placeTask = new GeonamesFindNearbyPlaceNameAsync(
+				mContext);
 		placeTask.execute(location);
 
 		// Set progress:
@@ -163,22 +162,21 @@ public class YrProxy implements WeatherProxy {
 		}
 		mProgressItem.progress(1000);
 
-		Uri contentUri = yrLocationForecastParser.getContentUri();
+		final Uri contentUri = yrLocationForecastParser.getContentUri();
 
-		//Wait for geonames
+		// Wait for geonames
 		synchronized (placeTask) {
 			if (!placeTask.isDone())
 				try {
 					placeTask.wait();
-				} catch (InterruptedException e) {
+				} catch (final InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 		}
-		ContentValues values = new ContentValues();
+		final ContentValues values = new ContentValues();
 		values.put(WeatherContentProvider.Meta.PLACE_NAME, placeTask.getPlace());
 		mContentResolver.update(contentUri, values, null, null);
-		
 
 		return contentUri;
 	}

@@ -21,7 +21,6 @@ package no.openandroidweather.ui.placepicker;
 
 import no.openandroidweather.R;
 import no.openandroidweather.ui.addplace.AddPlaceActivity;
-import no.openandroidweather.ui.addplace.PlaceAdapter;
 import no.openandroidweather.ui.forecast.ForecastListActivity;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Place;
@@ -35,7 +34,6 @@ import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
-import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 
@@ -44,43 +42,44 @@ public class PlacePicker extends ListActivity {
 	private SimpleCursorAdapter mAdapter;
 
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
+	protected void onCreate(final Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.place_picker);
 
-		Uri uri = Uri.withAppendedPath(WeatherContentProvider.CONTENT_URI,
-				Place.CONTENT_PATH);
-		String[] projection = new String[] { Place._ID, Place.PLACE_NAME };
+		final Uri uri = Uri.withAppendedPath(
+				WeatherContentProvider.CONTENT_URI, Place.CONTENT_PATH);
+		final String[] projection = new String[] { Place._ID, Place.PLACE_NAME };
 		mCursor = managedQuery(uri, projection, null, null, null);
 
 		final Button addPlaceButton = (Button) findViewById(R.id.add_place);
 		addPlaceButton.setOnClickListener(new OnClickListener() {
 
 			@Override
-			public void onClick(View v) {
+			public void onClick(final View v) {
 				startActivity(new Intent(PlacePicker.this,
 						AddPlaceActivity.class));
 			}
 		});
-		String[] from = new String[] { Place.PLACE_NAME };
-		int[] to = new int[] { R.id.place_name };
+		final String[] from = new String[] { Place.PLACE_NAME };
+		final int[] to = new int[] { R.id.place_name };
 		mAdapter = new SimpleCursorAdapter(this, R.layout.place_picker_row,
 				mCursor, from, to);
 		setListAdapter(mAdapter);
-		ListView lv = getListView();
+		final ListView lv = getListView();
 		lv.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
-			public void onItemClick(AdapterView<?> parent, View view,
-					int position, long id) {
-				Intent intent = new Intent(PlacePicker.this,
+			public void onItemClick(final AdapterView<?> parent,
+					final View view, final int position, final long id) {
+				final Intent intent = new Intent(PlacePicker.this,
 						ForecastListActivity.class);
 				intent.putExtra(ForecastListActivity._ROW_ID, id);
 				startActivity(intent);
 			}
 		});
 	}
+
 	@Override
 	protected void onResume() {
 		super.onResume();

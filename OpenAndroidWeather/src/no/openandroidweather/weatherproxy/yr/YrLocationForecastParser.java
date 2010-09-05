@@ -25,7 +25,6 @@ import java.util.List;
 import no.openandroidweather.misc.IProgressItem;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import no.openandroidweather.weathercontentprovider.WeatherType;
-import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Forecast;
 import no.openandroidweather.weatherproxy.YrProxy;
 
 import org.xml.sax.Attributes;
@@ -39,6 +38,7 @@ import android.net.Uri;
 import android.text.format.Time;
 
 public class YrLocationForecastParser extends DefaultHandler {
+	@SuppressWarnings("unused")
 	private static final String TAG = "YrLocationForecastParser";
 	public final static String NO_NEW_DATA_EXCEPTION = "no new data!";
 
@@ -56,7 +56,8 @@ public class YrLocationForecastParser extends DefaultHandler {
 	IProgressItem progressItem;
 
 	public YrLocationForecastParser(final ContentResolver contentResolver,
-			final long lastGeneratedForecastTime, IProgressItem progressItem) {
+			final long lastGeneratedForecastTime,
+			final IProgressItem progressItem) {
 		super();
 		lastGenerated = lastGeneratedForecastTime;
 		this.contentResolver = contentResolver;

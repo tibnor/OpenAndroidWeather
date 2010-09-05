@@ -15,7 +15,7 @@
 
     You should have received a copy of the GNU General Public License
     along with OpenAndroidWeather.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 package no.openandroidweather.misc;
 
@@ -28,6 +28,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import no.openandroidweather.R;
+
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -41,21 +42,21 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.location.Location;
 import android.net.Uri;
-import android.os.DeadObjectException;
 import android.util.Log;
 
 public class Geonames {
 	private static final String TAG = "Geonames";
-	private Context mContext;
-	
-	public Geonames(Context context){
+	private final Context mContext;
+
+	public Geonames(final Context context) {
 		mContext = context;
 	}
 
-	public String findNearestPlace(Location location) throws ClientProtocolException, IOException, ParserConfigurationException, SAXException{
+	public String findNearestPlace(final Location location)
+			throws ClientProtocolException, IOException,
+			ParserConfigurationException, SAXException {
 		// Makes the uri
 		final Uri.Builder uri = new Uri.Builder();
 		uri.authority("ws.geonames.org");
@@ -67,14 +68,13 @@ public class Geonames {
 		uri.appendQueryParameter("lng", lon);
 
 		final HttpRequest httpRequest = new HttpGet(uri.toString());
-		//httpRequest.addHeader("Accept-Encoding", "gzip");
-		Log.d(TAG, "Getting place name, url:"+uri.toString());
+		// httpRequest.addHeader("Accept-Encoding", "gzip");
+		Log.d(TAG, "Getting place name, url:" + uri.toString());
 
 		final HttpClient httpClient = new DefaultHttpClient();
 		final HttpHost httpHost = new HttpHost("ws.geonames.org");
 		HttpResponse httpResponse = null;
 		httpResponse = httpClient.execute(httpHost, httpRequest);
-		
 
 		if (httpResponse.getStatusLine().getStatusCode() != 200) {
 			final int responseCode = httpResponse.getStatusLine()
@@ -83,76 +83,76 @@ public class Geonames {
 					"Trouble with response from geonames: Response code: "
 							+ responseCode);
 		}
-		
-		
+
 		final InputStream inputStream = httpResponse.getEntity().getContent();
 		final SAXParserFactory spf = SAXParserFactory.newInstance();
 		final SAXParser parser = spf.newSAXParser();
-		
-		FindNearestPlaceParser findNearestPlaceParser = new FindNearestPlaceParser();
-		
+
+		final FindNearestPlaceParser findNearestPlaceParser = new FindNearestPlaceParser();
+
 		parser.parse(inputStream, findNearestPlaceParser);
-		
-		String place = findNearestPlaceParser.getName();
-		String returnString = "";	
-		double distance = findNearestPlaceParser.getDistance();
-		if(distance>.5){
-			Formatter f = new Formatter();
-			returnString = f.format("%1.1f",  distance).toString() + mContext.getResources().getString(R.string.km_from_);
+
+		final String place = findNearestPlaceParser.getName();
+		String returnString = "";
+		final double distance = findNearestPlaceParser.getDistance();
+		if (distance > .5) {
+			final Formatter f = new Formatter();
+			returnString = f.format("%1.1f", distance).toString()
+					+ mContext.getResources().getString(R.string.km_from_);
 		}
-		
+
 		returnString += place;
-		
+
 		return returnString;
 	}
-	
-	private class FindNearestPlaceParser extends DefaultHandler{
+
+	private class FindNearestPlaceParser extends DefaultHandler {
 		String place;
 		private boolean isInName = false;
 		private boolean isInDistance = false;
 		private Double distance;
-		
+
 		@Override
-		public void characters(char[] ch, int start, int length)
-				throws SAXException {
+		public void characters(final char[] ch, final int start,
+				final int length) throws SAXException {
 			super.characters(ch, start, length);
-			
-			String value = new String(ch,start,length);
-			if(isInName)
+
+			final String value = new String(ch, start, length);
+			if (isInName)
 				place = value;
-			else if (isInDistance) {
+			else if (isInDistance)
 				distance = new Double(value);
-			}
 		}
-		
+
 		@Override
-		public void endElement(String uri, String localName, String qName)
-				throws SAXException {
+		public void endElement(final String uri, final String localName,
+				final String qName) throws SAXException {
 			// TODO Auto-generated method stub
 			super.endElement(uri, localName, qName);
-			if(qName.equals("name"))
+			if (qName.equals("name"))
 				isInName = false;
-			else if(qName.equals("distance"))
-				isInDistance  = false;
-			
+			else if (qName.equals("distance"))
+				isInDistance = false;
+
 		}
-		
-		public Double getDistance(){
+
+		public Double getDistance() {
 			return distance;
 		}
-		
-		public String getName(){
+
+		public String getName() {
 			return place;
 		}
-		
+
 		@Override
-		public void startElement(String uri, String localName, String qName,
-				Attributes attributes) throws SAXException {
+		public void startElement(final String uri, final String localName,
+				final String qName, final Attributes attributes)
+				throws SAXException {
 			super.startElement(uri, localName, qName, attributes);
-			if(qName.equals("name"))
+			if (qName.equals("name"))
 				isInName = true;
-			else if(qName.equals("distance"))
-				isInDistance  = true;
+			else if (qName.equals("distance"))
+				isInDistance = true;
 		}
 	}
 }

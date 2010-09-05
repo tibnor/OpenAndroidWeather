@@ -23,7 +23,6 @@ import no.openandroidweather.R;
 import no.openandroidweather.ui.map.GetPositionMapActivity;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Place;
-import android.R.bool;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -44,66 +43,9 @@ public class AddPlaceActivity extends Activity {
 	public final String RETURN_URI = "uri";
 	EditText mPlaceName, mLongtitude, mLatitude, mAltitude;
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.add_place);
-		
-		setResult(RESULT_CANCELED);
-
-		Button getCurrentPositionButton = (Button) findViewById(R.id.add_this_position_button);
-		getCurrentPositionButton.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				getCurrentPosition();
-			}
-		});
-
-		Button getPositionFromMapButton = (Button) findViewById(R.id.get_position_from_map);
-		getPositionFromMapButton.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				getPositionFromMap();
-			}
-		});
-
-		Button addPlaceButton = (Button) findViewById(R.id.add_place);
-		addPlaceButton.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				addPlace();
-			}
-		});
-
-		mPlaceName = (EditText) findViewById(R.id.place_name);
-		mLongtitude = (EditText) findViewById(R.id.longitude);
-		mLatitude = (EditText) findViewById(R.id.latitude);
-		mAltitude = (EditText) findViewById(R.id.altitude);
-
-	}
-
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		// TODO Auto-generated method stub
-		super.onActivityResult(requestCode, resultCode, data);
-		if (resultCode == Activity.RESULT_OK) {
-			Location loc = data.getExtras().getParcelable(
-					GetPositionMapActivity.POSITION);
-			if (loc != null)
-				renderLocation(loc);
-		}
-	}
-
-	protected void getPositionFromMap() {
-		startActivityForResult(new Intent(this, GetPositionMapActivity.class),
-				1);
-	}
-
 	protected void addPlace() {
 		if (checkAllInputs()) {
-			ContentValues values = new ContentValues();
+			final ContentValues values = new ContentValues();
 			values.put(Place.ALTITUDE, new Double(mAltitude.getText()
 					.toString()));
 			values.put(Place.LATITUDE, new Double(mLatitude.getText()
@@ -111,17 +53,16 @@ public class AddPlaceActivity extends Activity {
 			values.put(Place.LONGITUDE, new Double(mLongtitude.getText()
 					.toString()));
 			values.put(Place.PLACE_NAME, mPlaceName.getText().toString());
-			ContentResolver cr = getContentResolver();
-			Uri url = Uri.withAppendedPath(WeatherContentProvider.CONTENT_URI,
-					Place.CONTENT_PATH);
-			Uri uri = cr.insert(url, values);
-			
-			Intent data = new Intent();
+			final ContentResolver cr = getContentResolver();
+			final Uri url = Uri.withAppendedPath(
+					WeatherContentProvider.CONTENT_URI, Place.CONTENT_PATH);
+			final Uri uri = cr.insert(url, values);
+
+			final Intent data = new Intent();
 			data.putExtra(RETURN_URI, uri);
 			setResult(RESULT_OK, data);
 			finish();
 		}
-		
 
 	}
 
@@ -129,7 +70,7 @@ public class AddPlaceActivity extends Activity {
 	 * Check that all inputs are valid.
 	 */
 	private boolean checkAllInputs() {
-		String floatRegEx = "^[-+]?[0-9]*\\.?[0-9]+$";
+		final String floatRegEx = "^[-+]?[0-9]*\\.?[0-9]+$";
 		if (mAltitude.getText().length() == 0
 				|| mLatitude.getText().length() == 0
 				|| mLongtitude.getText().length() == 0
@@ -150,8 +91,7 @@ public class AddPlaceActivity extends Activity {
 	protected void getCurrentPosition() {
 		final Criteria criteria = new Criteria();
 		criteria.setAccuracy(Criteria.ACCURACY_COARSE);
-		LocationManager locationManager = (LocationManager) this
-				.getSystemService(Context.LOCATION_SERVICE);
+		final LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		final String provider = locationManager.getBestProvider(criteria, true);
 		if (provider == null) {
 			showMessage(R.string.no_position);
@@ -167,11 +107,69 @@ public class AddPlaceActivity extends Activity {
 		renderLocation(loc);
 	}
 
+	protected void getPositionFromMap() {
+		startActivityForResult(new Intent(this, GetPositionMapActivity.class),
+				1);
+	}
+
+	@Override
+	protected void onActivityResult(final int requestCode,
+			final int resultCode, final Intent data) {
+		// TODO Auto-generated method stub
+		super.onActivityResult(requestCode, resultCode, data);
+		if (resultCode == Activity.RESULT_OK) {
+			final Location loc = data.getExtras().getParcelable(
+					GetPositionMapActivity.POSITION);
+			if (loc != null)
+				renderLocation(loc);
+		}
+	}
+
+	@Override
+	protected void onCreate(final Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.add_place);
+
+		setResult(RESULT_CANCELED);
+
+		final Button getCurrentPositionButton = (Button) findViewById(R.id.add_this_position_button);
+		getCurrentPositionButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(final View v) {
+				getCurrentPosition();
+			}
+		});
+
+		final Button getPositionFromMapButton = (Button) findViewById(R.id.get_position_from_map);
+		getPositionFromMapButton.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(final View v) {
+				getPositionFromMap();
+			}
+		});
+
+		final Button addPlaceButton = (Button) findViewById(R.id.add_place);
+		addPlaceButton.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(final View v) {
+				addPlace();
+			}
+		});
+
+		mPlaceName = (EditText) findViewById(R.id.place_name);
+		mLongtitude = (EditText) findViewById(R.id.longitude);
+		mLatitude = (EditText) findViewById(R.id.latitude);
+		mAltitude = (EditText) findViewById(R.id.altitude);
+
+	}
+
 	/**
 	 * @param location
 	 *            to render on the view
 	 */
-	private void renderLocation(Location location) {
+	private void renderLocation(final Location location) {
 		mLatitude.setText(location.getLatitude() + "");
 		mLongtitude.setText(location.getLongitude() + "");
 		if (location.hasAltitude())
@@ -181,8 +179,8 @@ public class AddPlaceActivity extends Activity {
 	/**
 	 * Show a message
 	 */
-	private void showMessage(int resId) {
-		Toast toast = new Toast(this);
+	private void showMessage(final int resId) {
+		final Toast toast = new Toast(this);
 		toast.setText(resId);
 		toast.setDuration(Toast.LENGTH_LONG);
 		toast.show();

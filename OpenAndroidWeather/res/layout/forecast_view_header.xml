@@ -8,29 +8,25 @@
 			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:text="@string/Place" />
 			<TextView android:gravity="right" android:layout_width="wrap_content"
-				android:layout_height="wrap_content" 
-				android:id="@+id/place" />
+				android:layout_height="wrap_content" android:id="@+id/place" />
 		</TableRow>
 		<TableRow>
 			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:text="@string/Generated" />
 			<TextView android:gravity="right" android:layout_width="wrap_content"
-				android:layout_height="wrap_content" 
-				android:id="@+id/generated" />
+				android:layout_height="wrap_content" android:id="@+id/generated" />
 		</TableRow>
 		<TableRow>
 			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:text="@string/Downloaded" />
 			<TextView android:gravity="right" android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:id="@+id/downloaded" />
+				android:layout_height="wrap_content" android:id="@+id/downloaded" />
 		</TableRow>
 		<TableRow>
 			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:text="@string/Next_update" />
 			<TextView android:gravity="right" android:layout_width="wrap_content"
-				android:layout_height="wrap_content" 
-				android:id="@+id/next_update" />
+				android:layout_height="wrap_content" android:id="@+id/next_update" />
 		</TableRow>
 	</TableLayout>
 	<TextView layout_span="2" android:layout_width="wrap_content"

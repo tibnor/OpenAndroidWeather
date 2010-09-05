@@ -32,45 +32,45 @@ import android.os.AsyncTask;
 
 public class GeonamesFindNearbyPlaceNameAsync extends
 		AsyncTask<Location, Void, String> {
-	private Context mContext;
+	private final Context mContext;
 	private boolean isDone = false;
 	private String place;
-	
-	public GeonamesFindNearbyPlaceNameAsync(Context context){
+
+	public GeonamesFindNearbyPlaceNameAsync(final Context context) {
 		super();
 		mContext = context;
 	}
 
 	@Override
-	protected String doInBackground(Location... arg0) {
-		Geonames geonames = new Geonames(mContext);
+	protected String doInBackground(final Location... arg0) {
+		final Geonames geonames = new Geonames(mContext);
 		try {
 			place = geonames.findNearestPlace(arg0[0]);
-		} catch (ClientProtocolException e) {
+		} catch (final ClientProtocolException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (ParserConfigurationException e) {
+		} catch (final ParserConfigurationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (SAXException e) {
+		} catch (final SAXException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		synchronized (this) {
 			isDone = true;
-			this.notifyAll();
+			notifyAll();
 		}
 		return place;
 	}
 
-	public String getPlace(){
+	public String getPlace() {
 		return place;
 	}
-	
+
 	public boolean isDone() {
 		return isDone;
 	}

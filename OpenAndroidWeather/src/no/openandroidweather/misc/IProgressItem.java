@@ -15,13 +15,14 @@
 
     You should have received a copy of the GNU General Public License
     along with OpenAndroidWeather.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 package no.openandroidweather.misc;
 
 public interface IProgressItem {
 	/**
-	 * @param progress between 0 and 1000
+	 * @param progress
+	 *            between 0 and 1000
 	 */
 	void progress(int progress);
 }

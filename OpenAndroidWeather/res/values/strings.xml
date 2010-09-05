@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="km_from_">"km from "</string>
+	<string name="km_from_">"km from "</string>
 	<string name="app_name">Firestorm</string>
 	<string name="please_wait_1min">Please wait while downloading forecast, this can
 		take some time.</string>
 	<string name="no_internet_connection">Could not connect to internett, please make sure
 		that you have connection. Try again?"</string>
-	<string name="unknown_error_while_downloading">Something while downloading the forecast. Try again?</string>
+	<string name="unknown_error_while_downloading">Something while downloading the forecast. Try
+		again?</string>
 	<string name="no_position">Can not find your position. Try again?</string>
 	<string name="yes">Yes</string>
 	<string name="no">No</string>
@@ -28,6 +29,7 @@
 	<string name="Altitude_hint">Altitude in meter</string>
 	<string name="add_place">Add place</string>
 	<string name="GetPositionMapHint">Press long on the place you want to add.</string>
-	<string name="Add_place_required_format">Altitude, latitude and longitude must be a decimal number (x.x)</string>
+	<string name="Add_place_required_format">Altitude, latitude and longitude must be a decimal
+		number (x.x)</string>
 	<string name="Add_place_required_fields">All fields must be filled in.</string>
 </resources>

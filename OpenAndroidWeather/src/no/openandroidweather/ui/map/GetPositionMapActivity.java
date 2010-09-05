@@ -52,44 +52,44 @@ public class GetPositionMapActivity extends MapActivity {
 		final MapView mapView = (MapView) findViewById(R.id.mapview);
 		mapView.setBuiltInZoomControls(true);
 		mMapView = mapView;
-		
+
 		final List<Overlay> overlays = mapView.getOverlays();
 		overlays.clear();
 		overlays.add(new MapGestureDetectorOverlay());
-		
-		// Set result to canceled in case of canceling 
+
+		// Set result to canceled in case of canceling
 		setResult(RESULT_CANCELED);
-		
+
 		// Show help toast
-		Toast.makeText(this, R.string.GetPositionMapHint, Toast.LENGTH_LONG).show();
+		Toast.makeText(this, R.string.GetPositionMapHint, Toast.LENGTH_LONG)
+				.show();
 
 	}
-	
-	private void onLongPress(MotionEvent e){
-		MapView mapView = mMapView;
-		int xMin = mapView.getLeft();
-		int xSpan = mapView.getWidth();		
-		int yMin = mapView.getTop();
-		int ySpan = mapView.getHeight();
-		
+
+	private void onLongPress(final MotionEvent e) {
+		final MapView mapView = mMapView;
+		final int xMin = mapView.getLeft();
+		final int xSpan = mapView.getWidth();
+		final int yMin = mapView.getTop();
+		final int ySpan = mapView.getHeight();
+
 		// Get offset from center:
-		float x = e.getX()-xMin - xSpan/2;
-		float y = e.getY()-yMin - ySpan/2;
-		
-		int longSpan = mapView.getLongitudeSpan();
-		int latSpan = mapView.getLatitudeSpan();
-		GeoPoint center = mapView.getMapCenter();
-		
-		
-		Location loc = new Location("");
-		loc.setLatitude((center.getLatitudeE6()-y/ySpan*latSpan)/1e6);
-		loc.setLongitude((center.getLongitudeE6()+x/xSpan*longSpan)/1e6);
-		
+		final float x = e.getX() - xMin - xSpan / 2;
+		final float y = e.getY() - yMin - ySpan / 2;
+
+		final int longSpan = mapView.getLongitudeSpan();
+		final int latSpan = mapView.getLatitudeSpan();
+		final GeoPoint center = mapView.getMapCenter();
+
+		final Location loc = new Location("");
+		loc.setLatitude((center.getLatitudeE6() - y / ySpan * latSpan) / 1e6);
+		loc.setLongitude((center.getLongitudeE6() + x / xSpan * longSpan) / 1e6);
+
 		// Set result:
 
-		Intent data = new Intent();
+		final Intent data = new Intent();
 		data.putExtra(POSITION, loc);
-		setResult(RESULT_OK, data );
+		setResult(RESULT_OK, data);
 		finish();
 	}
 

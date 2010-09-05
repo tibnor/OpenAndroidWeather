@@ -25,7 +25,6 @@ import java.util.Date;
 import no.openandroidweather.R;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import no.openandroidweather.weathercontentprovider.WeatherType;
-import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Forecast;
 import no.openandroidweather.weatherservice.IForecastEventListener;
 import no.openandroidweather.weatherservice.IWeatherService;
 import no.openandroidweather.weatherservice.WeatherService;
@@ -41,7 +40,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Debug;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -344,7 +342,7 @@ public class WidgetProvider extends AppWidgetProvider {
 
 			@Override
 			public void completed() throws RemoteException {
-				if (mService != null) {
+				if (mService != null)
 					synchronized (mService) {
 						try {
 							unbindService(mServiceConnection);
@@ -353,7 +351,6 @@ public class WidgetProvider extends AppWidgetProvider {
 						}
 						mService = null;
 					}
-				}
 				isComplete = true;
 				if (!isWorking)
 					stop();
@@ -375,7 +372,8 @@ public class WidgetProvider extends AppWidgetProvider {
 				default:
 					text = "Trouble getting forecast, sorry!";
 				}
-				Thread ShowToastThread = new Thread() {
+				final Thread ShowToastThread = new Thread() {
+					@Override
 					public void run() {
 						Toast.makeText(getApplicationContext(), text,
 								Toast.LENGTH_LONG).show();

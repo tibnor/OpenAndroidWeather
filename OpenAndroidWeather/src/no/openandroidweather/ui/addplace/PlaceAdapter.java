@@ -15,7 +15,7 @@
 
     You should have received a copy of the GNU General Public License
     along with OpenAndroidWeather.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 package no.openandroidweather.ui.addplace;
 
@@ -30,33 +30,37 @@ import android.widget.CursorAdapter;
 import android.widget.TextView;
 
 public class PlaceAdapter extends CursorAdapter {
-	private int mPlaceNameCol;
+	private final int mPlaceNameCol;
 
-	public PlaceAdapter(Context context, Cursor c) {
+	public PlaceAdapter(final Context context, final Cursor c) {
 		super(context, c);
 		mPlaceNameCol = c.getColumnIndexOrThrow(Place.PLACE_NAME);
 	}
 
-	@Override
-	public void bindView(View view, Context context, Cursor cursor) {
-		TextView placeNameView = (TextView) view.findViewById(R.id.place_name);
-		placeNameView.setText(cursor.getString(mPlaceNameCol));
-	}
-
-	@Override
-	public View newView(Context context, Cursor cursor, ViewGroup parent) {
-		LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View view = inflater.inflate(R.layout.place_picker_row, null);
-		return view;
-	}
-	
 	@Override
 	public boolean areAllItemsEnabled() {
 		return true;
 	}
 
 	@Override
-	public boolean isEnabled(int position) {
+	public void bindView(final View view, final Context context,
+			final Cursor cursor) {
+		final TextView placeNameView = (TextView) view
+				.findViewById(R.id.place_name);
+		placeNameView.setText(cursor.getString(mPlaceNameCol));
+	}
+
+	@Override
+	public boolean isEnabled(final int position) {
 		return true;
+	}
+
+	@Override
+	public View newView(final Context context, final Cursor cursor,
+			final ViewGroup parent) {
+		final LayoutInflater inflater = (LayoutInflater) context
+				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		final View view = inflater.inflate(R.layout.place_picker_row, null);
+		return view;
 	}
 }

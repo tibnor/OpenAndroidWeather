@@ -20,12 +20,10 @@
 package no.openandroidweather.ui.forecast;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import no.openandroidweather.R;
 import no.openandroidweather.misc.IProgressItem;
-import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import no.openandroidweather.weatherservice.IForecastEventListener;
 import no.openandroidweather.weatherservice.IWeatherService;
 import no.openandroidweather.weatherservice.WeatherService;
@@ -35,46 +33,30 @@ import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.text.style.BulletSpan;
 import android.util.Log;
 import android.widget.HeaderViewListAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 import android.widget.ListView.FixedViewInfo;
 import android.widget.ProgressBar;
 
 public class ForecastListActivity extends ListActivity implements IProgressItem {
 	/**
-	 * Set this in intent extra to show a specific place. Use row id from WeatherContentProvider.Places
+	 * Set this in intent extra to show a specific place. Use row id from
+	 * WeatherContentProvider.Places
 	 */
 	public static final String _ROW_ID = "_rowId";
 	private final String TAG = "ForecastListActivity";
 	private final IForecastEventListener forcastListener = new ForecastListener();
 	private ProgressBar progressBar;
-	private Handler mHandler = new Handler();
+	private final Handler mHandler = new Handler();
 	private IWeatherService mService;
-	
-	@Override
-	protected void onResume() {
-		super.onResume();
-		if (mService == null)
-			bindService(new Intent(getApplicationContext(),
-					WeatherService.class), mServiceConnection, BIND_AUTO_CREATE);
-	}
-	
-	@Override
-	protected void onPause() {
-		unbindService(mServiceConnection);
-		super.onPause();
-	}
 
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -111,10 +93,25 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 		progressBar = (ProgressBar) findViewById(R.id.progressbar);
 	}
 
+	@Override
+	protected void onPause() {
+		unbindService(mServiceConnection);
+		super.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		if (mService == null)
+			bindService(new Intent(getApplicationContext(),
+					WeatherService.class), mServiceConnection, BIND_AUTO_CREATE);
+	}
+
 	/**
 	 * @param Between
 	 *            1 and 1000
 	 */
+	@Override
 	public void progress(final int progress) {
 		progressBar.setProgress(progress);
 	}
@@ -129,10 +126,12 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 		@Override
 		public void exceptionOccurred(final int errorcode)
 				throws RemoteException {
-			if(ForecastListActivity.this == null || ForecastListActivity.this.isFinishing())
+			if (ForecastListActivity.this == null || isFinishing())
 				return;
-			
-			Log.e(TAG, "error occured during downloading of forecast, errorcode:"+errorcode);
+
+			Log.e(TAG,
+					"error occured during downloading of forecast, errorcode:"
+							+ errorcode);
 			final AlertDialog.Builder builder = new AlertDialog.Builder(
 					ForecastListActivity.this);
 			switch (errorcode) {
@@ -173,17 +172,17 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 						public void onClick(final DialogInterface dialog,
 								final int which) {
 							dialog.cancel();
-							if(!hasGotForecast)
-								ForecastListActivity.this.finish();
+							if (!hasGotForecast)
+								finish();
 						}
 					});
-			Thread ShowErrorThread = new Thread() {
+			final Thread ShowErrorThread = new Thread() {
+				@Override
 				public void run() {
 					builder.show();
 				};
 			};
 			mHandler.post(ShowErrorThread);
-			
 
 		}
 
@@ -212,14 +211,15 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 
 		@Override
 		protected ListAdapter doInBackground(final Uri... params) {
-			ForecastListParser parser = new ForecastListParser(
+			final ForecastListParser parser = new ForecastListParser(
 					getApplicationContext(), ForecastListActivity.this);
 			final List<IListRow> rows = parser.parseData(params[0]);
-			ListView.FixedViewInfo header = getListView().new FixedViewInfo();
+			final ListView.FixedViewInfo header = getListView().new FixedViewInfo();
 			header.view = parser.getHeaderView(params[0]);
-			ArrayList<FixedViewInfo> headerViewInfos = new ArrayList<ListView.FixedViewInfo>();
+			final ArrayList<FixedViewInfo> headerViewInfos = new ArrayList<ListView.FixedViewInfo>();
 			headerViewInfos.add(header);
-			return new HeaderViewListAdapter(headerViewInfos, null,  new ForecastListAdapter(rows));
+			return new HeaderViewListAdapter(headerViewInfos, null,
+					new ForecastListAdapter(rows));
 		}
 
 		@Override
