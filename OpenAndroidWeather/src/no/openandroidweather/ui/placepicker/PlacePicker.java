@@ -24,7 +24,9 @@ import no.openandroidweather.ui.addplace.AddPlaceActivity;
 import no.openandroidweather.ui.forecast.ForecastListActivity;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Place;
+import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -33,13 +35,13 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.TextView;
 
 public class PlacePicker extends ListActivity {
-	Cursor mCursor;
-	private SimpleCursorAdapter mAdapter;
 
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
@@ -47,10 +49,21 @@ public class PlacePicker extends ListActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.place_picker);
 
+		TextView getNearestPlaceRow = (TextView) findViewById(R.id.place_name);
+		getNearestPlaceRow.setText(R.string.current_location);
+		getNearestPlaceRow.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				startActivity(new Intent(PlacePicker.this,
+						ForecastListActivity.class));
+			}
+		});
+
 		final Uri uri = Uri.withAppendedPath(
 				WeatherContentProvider.CONTENT_URI, Place.CONTENT_PATH);
 		final String[] projection = new String[] { Place._ID, Place.PLACE_NAME };
-		mCursor = managedQuery(uri, projection, null, null, null);
+		final Cursor mCursor = managedQuery(uri, projection, null, null, null);
 
 		final Button addPlaceButton = (Button) findViewById(R.id.add_place);
 		addPlaceButton.setOnClickListener(new OnClickListener() {
@@ -63,8 +76,8 @@ public class PlacePicker extends ListActivity {
 		});
 		final String[] from = new String[] { Place.PLACE_NAME };
 		final int[] to = new int[] { R.id.place_name };
-		mAdapter = new SimpleCursorAdapter(this, R.layout.place_picker_row,
-				mCursor, from, to);
+		SimpleCursorAdapter mAdapter = new SimpleCursorAdapter(this,
+				R.layout.place_picker_row, mCursor, from, to);
 		setListAdapter(mAdapter);
 		final ListView lv = getListView();
 		lv.setOnItemClickListener(new OnItemClickListener() {
@@ -78,5 +91,55 @@ public class PlacePicker extends ListActivity {
 				startActivity(intent);
 			}
 		});
+
+		lv.setOnItemLongClickListener(new OnItemLongClickListener() {
+
+			@Override
+			public boolean onItemLongClick(AdapterView<?> parent, View view,
+					int position, final long id) {
+				deletePlaceDialog(mCursor, id);
+				return true;
+			}
+		});
+	}
+
+	/**
+	 * Opens dialog for deleting place and delete it if requested
+	 * 
+	 * @param mCursor
+	 * @param id
+	 */
+	private void deletePlaceDialog(final Cursor mCursor, final long id) {
+		final AlertDialog.Builder builder = new AlertDialog.Builder(
+				PlacePicker.this);
+		builder.setMessage(R.string.delete_place);
+		builder.setCancelable(true);
+		builder.setPositiveButton(getResources()
+				.getString(R.string.yes),
+				new DialogInterface.OnClickListener() {
+
+					@Override
+					public void onClick(final DialogInterface dialog,
+							final int which) {
+						Uri url = Uri.withAppendedPath(
+								WeatherContentProvider.CONTENT_URI,
+								Place.CONTENT_PATH);
+						url = Uri.withAppendedPath(url, id + "");
+						getContentResolver().delete(url, null, null);
+						mCursor.requery();
+						dialog.cancel();
+					}
+				});
+		builder.setNegativeButton(
+				getResources().getString(R.string.no),
+				new DialogInterface.OnClickListener() {
+
+					@Override
+					public void onClick(final DialogInterface dialog,
+							final int which) {
+						dialog.cancel();
+					}
+				});
+		builder.show();
 	}
 }

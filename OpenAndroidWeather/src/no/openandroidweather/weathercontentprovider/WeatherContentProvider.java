@@ -81,7 +81,7 @@ public class WeatherContentProvider extends ContentProvider {
 		sURIMatcher.addURI(authority, "#/" + ForecastListView.CONTENT_PATH
 				+ "/#", sID_FORECAST_LIST_VIEW_ID);
 		sURIMatcher.addURI(authority, Place.CONTENT_PATH, sPLACE);
-		sURIMatcher.addURI(authority, Place.PLACE_NAME + "/#", sPLACE_ID);
+		sURIMatcher.addURI(authority, Place.CONTENT_PATH + "/#", sPLACE_ID);
 	}
 
 	private WeatherContentProviderDatabaseOpenHelper openHelper;
