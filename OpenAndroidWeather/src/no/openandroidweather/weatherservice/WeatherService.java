@@ -441,7 +441,7 @@ public class WeatherService extends Service implements IProgressItem {
 				stopSelf();
 			} else
 				new WorkAsync().execute(new Void[] {null});
-			// }
+			
 
 		}
 

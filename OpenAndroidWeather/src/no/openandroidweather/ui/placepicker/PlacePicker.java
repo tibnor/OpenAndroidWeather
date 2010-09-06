@@ -79,10 +79,4 @@ public class PlacePicker extends ListActivity {
 			}
 		});
 	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		mAdapter.changeCursor(mCursor);
-	}
 }

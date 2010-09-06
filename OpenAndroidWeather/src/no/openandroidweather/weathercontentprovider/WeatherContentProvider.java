@@ -130,7 +130,6 @@ public class WeatherContentProvider extends ContentProvider {
 		for (final ContentValues contentValues : values)
 			if (db.insertOrThrow(table, null, contentValues) != -1)
 				insertedRows++;
-		db.close();
 		return insertedRows;
 
 	}
@@ -268,7 +267,6 @@ public class WeatherContentProvider extends ContentProvider {
 
 		final SQLiteDatabase db = openHelper.getWritableDatabase();
 		final Long id = db.insert(table, null, values);
-		db.close();
 		return Uri.withAppendedPath(uri, id.toString());
 	}
 

@@ -135,7 +135,7 @@ public class ForecastListParser {
 				.getColumnIndexOrThrow(WeatherContentProvider.Forecast.TYPE);
 		c.moveToFirst();
 
-		reset();
+		resetCached();
 		final int length = c.getCount();
 		for (int i = 0; i < length; i++) {
 			if (progressItem != null)
@@ -151,7 +151,7 @@ public class ForecastListParser {
 				// ignored.
 				if (hasAll)
 					addRow();
-				reset();
+				resetCached();
 				fromTime = from;
 			}
 
@@ -276,7 +276,8 @@ public class ForecastListParser {
 		return rows;
 	}
 
-	private void reset() {
+	
+	private void resetCached() {
 		hasAll = false;
 		symbol = -1;
 		temperature = uknownTemperature;
