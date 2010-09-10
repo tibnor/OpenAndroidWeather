@@ -54,8 +54,7 @@ public class AddPlaceActivity extends Activity {
 					.toString()));
 			values.put(Place.PLACE_NAME, mPlaceName.getText().toString());
 			final ContentResolver cr = getContentResolver();
-			final Uri url = Uri.withAppendedPath(
-					WeatherContentProvider.CONTENT_URI, Place.CONTENT_PATH);
+			final Uri url = Place.CONTENT_URI;
 			final Uri uri = cr.insert(url, values);
 
 			final Intent data = new Intent();

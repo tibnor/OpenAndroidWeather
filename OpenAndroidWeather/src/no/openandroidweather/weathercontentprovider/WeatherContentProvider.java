@@ -80,8 +80,9 @@ public class WeatherContentProvider extends ContentProvider {
 				sID_FORECAST_LIST_VIEW);
 		sURIMatcher.addURI(authority, "#/" + ForecastListView.CONTENT_PATH
 				+ "/#", sID_FORECAST_LIST_VIEW_ID);
-		sURIMatcher.addURI(authority, Place.CONTENT_PATH, sPLACE);
-		sURIMatcher.addURI(authority, Place.CONTENT_PATH + "/#", sPLACE_ID);
+		sURIMatcher.addURI(authority, Place.PATH, sPLACE);
+		sURIMatcher.addURI(Place.CONTENT_URI.getAuthority(), Place.PATH + "/#",
+				sPLACE_ID);
 	}
 
 	private WeatherContentProviderDatabaseOpenHelper openHelper;
@@ -348,31 +349,31 @@ public class WeatherContentProvider extends ContentProvider {
 		 */
 		public static final String _id = "_id";
 		/**
-		 * Start time of the forecast, integer in ms since Unix epoch time
+		 * Start time of the forecast, integer in ms since Unix epoch time, long
 		 */
 		public static final String fromTime = "fromTime";
 		/**
-		 * End time of the forecast, integer in ms since Unix epoch time
+		 * End time of the forecast, integer in ms since Unix epoch time, long
 		 */
 		public static final String toTime = "toTime";
 		/**
-		 * Temperature at the start time in degree of Celcius
+		 * Temperature at the start time in degree of Celcius, double
 		 */
 		public static final String temperature = "temperature";
 		/**
-		 * Weather symbol thru out the time span
+		 * Weather symbol thru out the time span, integer
 		 */
 		public static final String symbol = "symbol";
 		/**
-		 * Precipitation during the time span in mm
+		 * Precipitation during the time span in mm, double
 		 */
 		public static final String percipitation = "percipitation";
 		/**
-		 * Wind speed at start time in m/s
+		 * Wind speed at start time in m/s, double
 		 */
 		public static final String windSpeed = "windSpeed";
 		/**
-		 * Wind direction at start time in degrees (360)
+		 * Wind direction at start time in degrees (360), double
 		 */
 		public static final String windDirection = "windDirection";
 
@@ -430,7 +431,9 @@ public class WeatherContentProvider extends ContentProvider {
 	 * 
 	 */
 	public static class Place {
-		public static final String CONTENT_PATH = "places";
+		private static final String PATH = "places";
+		public static final Uri CONTENT_URI = Uri.withAppendedPath(
+				WeatherContentProvider.CONTENT_URI, PATH);
 
 		public static final String TABLE_NAME = "places";
 		/** Row id, integer, for place data */

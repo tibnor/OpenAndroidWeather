@@ -11,6 +11,8 @@ import java.util.TimeZone;
 
 import no.openandroidweather.misc.IProgressItem;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
+import no.openandroidweather.weathercontentprovider.WeatherContentProvider.ForecastListView;
+import no.openandroidweather.weatherproxy.yr.YrProxy;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.location.Location;
@@ -74,6 +76,11 @@ public class YrProxyTest extends ProviderTestCase2<WeatherContentProvider> imple
 				WeatherContentProvider.Forecast.CONTENT_DIRECTORY), null, null,
 				null, null);
 		assertTrue(500 < c.getCount());
+		c.close();
+		
+		// Checks that there are some data in forecast list view table
+		c = content.query(Uri.withAppendedPath(uri, ForecastListView.CONTENT_PATH), null, null, null, null);
+		assertTrue(50 < c.getCount());
 		c.close();
 	}
 

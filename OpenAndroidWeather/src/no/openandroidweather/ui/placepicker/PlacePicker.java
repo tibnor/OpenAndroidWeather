@@ -60,8 +60,7 @@ public class PlacePicker extends ListActivity {
 			}
 		});
 
-		final Uri uri = Uri.withAppendedPath(
-				WeatherContentProvider.CONTENT_URI, Place.CONTENT_PATH);
+		final Uri uri = Place.CONTENT_URI;
 		final String[] projection = new String[] { Place._ID, Place.PLACE_NAME };
 		final Cursor mCursor = managedQuery(uri, projection, null, null, null);
 
@@ -87,7 +86,7 @@ public class PlacePicker extends ListActivity {
 					final View view, final int position, final long id) {
 				final Intent intent = new Intent(PlacePicker.this,
 						ForecastListActivity.class);
-				intent.putExtra(ForecastListActivity._ROW_ID, id);
+				intent.putExtra(ForecastListActivity.PLACE_ROW_ID, id);
 				startActivity(intent);
 			}
 		});
@@ -114,24 +113,20 @@ public class PlacePicker extends ListActivity {
 				PlacePicker.this);
 		builder.setMessage(R.string.delete_place);
 		builder.setCancelable(true);
-		builder.setPositiveButton(getResources()
-				.getString(R.string.yes),
+		builder.setPositiveButton(getResources().getString(R.string.yes),
 				new DialogInterface.OnClickListener() {
 
 					@Override
 					public void onClick(final DialogInterface dialog,
 							final int which) {
-						Uri url = Uri.withAppendedPath(
-								WeatherContentProvider.CONTENT_URI,
-								Place.CONTENT_PATH);
+						Uri url = Place.CONTENT_URI;
 						url = Uri.withAppendedPath(url, id + "");
 						getContentResolver().delete(url, null, null);
 						mCursor.requery();
 						dialog.cancel();
 					}
 				});
-		builder.setNegativeButton(
-				getResources().getString(R.string.no),
+		builder.setNegativeButton(getResources().getString(R.string.no),
 				new DialogInterface.OnClickListener() {
 
 					@Override

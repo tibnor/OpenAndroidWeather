@@ -20,7 +20,7 @@
 /**
  * 
  */
-package no.openandroidweather.weatherproxy;
+package no.openandroidweather.weatherproxy.yr;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,8 +32,9 @@ import javax.xml.parsers.SAXParserFactory;
 
 import no.openandroidweather.misc.GeonamesFindNearbyPlaceNameAsync;
 import no.openandroidweather.misc.IProgressItem;
+import no.openandroidweather.misc.ProgressWrapper;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
-import no.openandroidweather.weatherproxy.yr.YrLocationForecastParser;
+import no.openandroidweather.weatherproxy.WeatherProxy;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -148,7 +149,8 @@ public class YrProxy implements WeatherProxy {
 
 		// Parse it
 		final YrLocationForecastParser yrLocationForecastParser = new YrLocationForecastParser(
-				mContentResolver, lastForecastGenerated, mProgressItem);
+				mContentResolver, lastForecastGenerated, new ProgressWrapper(
+						AFTER_DOWNLOAD_PROGRESS, 1000, mProgressItem));
 		try {
 			parser.parse(inputStream, yrLocationForecastParser);
 		} catch (final SAXException e) {

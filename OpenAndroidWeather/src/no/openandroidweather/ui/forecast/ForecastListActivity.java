@@ -51,7 +51,7 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 	 * Set this in intent extra to show a specific place. Use row id from
 	 * WeatherContentProvider.Places
 	 */
-	public static final String _ROW_ID = "_rowId";
+	public static final String PLACE_ROW_ID = "_rowId";
 	private final String TAG = "ForecastListActivity";
 	private final IForecastEventListener forcastListener = new ForecastListener();
 	private ProgressBar progressBar;
@@ -66,11 +66,29 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 			mService = IWeatherService.Stub.asInterface(service);
 			synchronized (mService) {
 				// Sets up a call for new forecast
-				try {
-					mService.getNearestForecast(forcastListener, 2000, 100);
-				} catch (final RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				Bundle extra = getIntent().getExtras();
+				boolean getFromPlace = false;
+				if (extra != null) {
+					long placeId = extra.getLong(PLACE_ROW_ID, -1L);
+					if (placeId != -1L) {
+						getFromPlace = true;
+						try {
+							mService.getForecastFromPlace(forcastListener,
+									placeId, 2000, 100);
+						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+				}
+			
+				if (!getFromPlace) {
+					try {
+						mService.getNearestForecast(forcastListener, 2000, 100);
+					} catch (final RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 			}
 		}
@@ -91,11 +109,13 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 
 		setContentView(R.layout.forecast_view);
 		progressBar = (ProgressBar) findViewById(R.id.progressbar);
+
 	}
 
 	@Override
 	protected void onPause() {
-		unbindService(mServiceConnection);
+		if (mService != null)
+			unbindService(mServiceConnection);
 		super.onPause();
 	}
 

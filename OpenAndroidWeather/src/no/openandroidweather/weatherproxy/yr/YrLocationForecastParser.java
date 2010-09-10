@@ -24,8 +24,8 @@ import java.util.List;
 
 import no.openandroidweather.misc.IProgressItem;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
+import no.openandroidweather.weathercontentprovider.WeatherContentProvider.ForecastListView;
 import no.openandroidweather.weathercontentprovider.WeatherType;
-import no.openandroidweather.weatherproxy.YrProxy;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -52,8 +52,16 @@ public class YrLocationForecastParser extends DefaultHandler {
 	long nextForecastTime = Long.MAX_VALUE;
 	long forecastGenerated = 0;
 	final long lastGenerated;
-	List<ContentValues> values = new ArrayList<ContentValues>();
+	List<ContentValues> rawValues = new ArrayList<ContentValues>();
+	List<ContentValues> forecastListValues = new ArrayList<ContentValues>();
 	IProgressItem progressItem;
+	private final static Double TEMPERATURE_NOT_SET_VALUE = -300.;
+	private Double mTemperature = TEMPERATURE_NOT_SET_VALUE;
+	private Double mWindDirection = -1.;
+	private Double mWindSpeed = -1.;
+	private Integer mSymbol = -1;
+	private Double mPercipitation = -1.;
+	private boolean hasParsedForecastRow = false;
 
 	public YrLocationForecastParser(final ContentResolver contentResolver,
 			final long lastGeneratedForecastTime,
@@ -62,6 +70,43 @@ public class YrLocationForecastParser extends DefaultHandler {
 		lastGenerated = lastGeneratedForecastTime;
 		this.contentResolver = contentResolver;
 		this.progressItem = progressItem;
+	}
+
+	/**
+	 * Check if all data is parsed for a forecastList row, if so it is saved in
+	 * the database and hasParsedForecastRow is set to true
+	 */
+	private void checkForecastRow() {
+		if (!hasParsedForecastRow && mTemperature != TEMPERATURE_NOT_SET_VALUE
+				&& mWindDirection >= 0 && mWindSpeed >= 0 && mSymbol >= 0
+				&& mPercipitation >= 0) {
+			// Adds values
+			ContentValues values = new ContentValues();
+			values.put(ForecastListView.fromTime, from);
+			values.put(ForecastListView.percipitation, mPercipitation);
+			values.put(ForecastListView.symbol, mSymbol);
+			values.put(ForecastListView.toTime, to);
+			values.put(ForecastListView.temperature, mTemperature);
+			values.put(ForecastListView.windDirection, mWindDirection);
+			values.put(ForecastListView.windSpeed, mWindSpeed);
+			forecastListValues.add(values);
+			hasParsedForecastRow = true;
+
+			resetCached();
+		}
+
+	}
+
+	/**
+	 * Reset data cached for forecast list view table
+	 */
+	private void resetCached() {
+		// Resets values:
+		mTemperature = TEMPERATURE_NOT_SET_VALUE;
+		mWindDirection = -1.;
+		mWindSpeed = -1.;
+		mSymbol = -1;
+		mPercipitation = -1.;
 	}
 
 	/**
@@ -80,19 +125,34 @@ public class YrLocationForecastParser extends DefaultHandler {
 	@Override
 	public void endDocument() throws SAXException {
 		super.endDocument();
-		progressItem.progress(500 + YrProxy.AFTER_DOWNLOAD_PROGRESS / 2);
-		ContentValues valueArray[] = new ContentValues[1];
-		valueArray = values.toArray(valueArray);
+		// Post progress
+		progressItem.progress(500);
+		// Stores raw values
+		ContentValues[] values = new ContentValues[0];
+		values = rawValues.toArray(values);
 		contentResolver.bulkInsert(Uri.withAppendedPath(contentUri,
-				WeatherContentProvider.Forecast.CONTENT_DIRECTORY), valueArray);
+				WeatherContentProvider.Forecast.CONTENT_DIRECTORY),
+				values);
+
+		// Post progress
+		progressItem.progress(750);
+		// Stores values for forecast list view
+		values = new ContentValues[0];
+		values = forecastListValues.toArray(values);
+		contentResolver
+				.bulkInsert(Uri.withAppendedPath(contentUri,
+						ForecastListView.CONTENT_PATH),
+						values);
+
 	}
 
 	@Override
 	public void endElement(final String uri, final String localName,
 			final String qName) throws SAXException {
-		if (localName.equals("time"))
+		if (localName.equals("time")) {
 			isInTime = false;
-		else if (localName.equals("meta"))
+			checkForecastRow();
+		} else if (localName.equals("meta"))
 			isInMeta = false;
 	}
 
@@ -114,7 +174,7 @@ public class YrLocationForecastParser extends DefaultHandler {
 		v.put(WeatherContentProvider.Forecast.TO, to);
 		v.put(WeatherContentProvider.Forecast.TYPE, type);
 		v.put(WeatherContentProvider.Forecast.VALUE, value);
-		values.add(v);
+		rawValues.add(v);
 	}
 
 	private void parseLocation(final Attributes attributes) throws SAXException {
@@ -156,6 +216,11 @@ public class YrLocationForecastParser extends DefaultHandler {
 		}
 	}
 
+	/**
+	 * Parse model attributes get next forecast time and forecast generated
+	 * 
+	 * @param attributes
+	 */
 	private void parseModel(final Attributes attributes) {
 		final long runendedI = getTime(attributes, "runended");
 		if (runendedI > forecastGenerated)
@@ -169,33 +234,45 @@ public class YrLocationForecastParser extends DefaultHandler {
 	private void parsePrecipitation(final Attributes attributes) {
 		final String value = attributes.getValue(attributes.getIndex("value"));
 		insertValue(WeatherType.precipitation, value);
+		mPercipitation = new Double(value);
 	}
 
 	private void parseSymbol(final Attributes attributes) {
 		final String value = attributes.getValue(attributes.getIndex("number"));
 		insertValue(WeatherType.symbol, value);
+		mSymbol = new Integer(value);
 	}
 
 	private void parseTemperature(final Attributes attributes) {
 		final String value = attributes.getValue(attributes.getIndex("value"));
 		insertValue(WeatherType.temperature, value);
+		mTemperature = new Double(value);
 	}
 
 	private void parseTime(final Attributes attributes) {
 		isInTime = true;
-		from = getTime(attributes, "from");
+		long newFrom = getTime(attributes, "from");
 		to = getTime(attributes, "to");
+
+		// If the forecast is a new starting time, reset hasParsedForecastRow
+		if (newFrom != from) {
+			hasParsedForecastRow = false;
+			from = newFrom;
+			resetCached();
+		}
 
 	}
 
 	private void parseWindDirection(final Attributes attributes) {
 		final String value = attributes.getValue(attributes.getIndex("deg"));
 		insertValue(WeatherType.windDirection, value);
+		mWindDirection = new Double(value);
 	}
 
 	private void parseWindSpeed(final Attributes attributes) {
 		final String value = attributes.getValue(attributes.getIndex("mps"));
 		insertValue(WeatherType.windSpeed, value);
+		mWindSpeed = new Double(value);
 	}
 
 	@Override

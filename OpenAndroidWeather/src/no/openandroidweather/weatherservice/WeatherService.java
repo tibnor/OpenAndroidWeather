@@ -6,8 +6,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import no.openandroidweather.misc.IProgressItem;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
+import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Place;
 import no.openandroidweather.weatherproxy.WeatherProxy;
-import no.openandroidweather.weatherproxy.YrProxy;
+import no.openandroidweather.weatherproxy.yr.YrProxy;
 import android.app.Service;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -104,6 +105,27 @@ public class WeatherService extends Service implements IProgressItem {
 			final GetForecast getForecast = new GetForecast(listener, loc,
 					toleranceRadius, toleranceVerticalDistance);
 			mDbCheckQueue.add(getForecast);
+			work();
+		}
+
+		@Override
+		public void getForecastFromPlace(IForecastEventListener listener,
+				long placeRowId, double toleranceRadius,
+				double toleranceVerticalDistance) throws RemoteException {
+			// Gets data for where the place is:
+			Cursor c = getContentResolver().query(
+					Uri.withAppendedPath(Place.CONTENT_URI, placeRowId + ""),
+					null, null, null, null);
+			c.moveToFirst();
+
+			final Location loc = new Location("");
+			loc.setLatitude(c.getDouble(c.getColumnIndex(Place.LATITUDE)));
+			loc.setLongitude(c.getDouble(c.getColumnIndex(Place.LONGITUDE)));
+			loc.setAltitude(c.getDouble(c.getColumnIndex(Place.ALTITUDE)));
+			c.close();
+
+			mDbCheckQueue.add(new GetForecast(listener, loc, toleranceRadius,
+					toleranceVerticalDistance));
 			work();
 		}
 	};
@@ -298,7 +320,7 @@ public class WeatherService extends Service implements IProgressItem {
 		// synchronized (isWorking) {
 		if (!isWorking) {
 			isWorking = true;
-			new WorkAsync().execute(new Void[] {null});
+			new WorkAsync().execute(new Void[] { null });
 		}
 		// }
 	}
@@ -364,7 +386,8 @@ public class WeatherService extends Service implements IProgressItem {
 		public boolean isInTargetZone(final double lat, final double lon,
 				final double alt) {
 			if (location.hasAltitude()
-					&& (Math.abs(alt - location.getAltitude()) > toleranceVertical))
+					&& (Math.abs(alt - location.getAltitude()) > toleranceVertical)
+					&& location.getAltitude() != 0)
 				return false;
 			final float dist[] = new float[3];
 			Location.distanceBetween(lat, lon, location.getLatitude(),
@@ -440,8 +463,7 @@ public class WeatherService extends Service implements IProgressItem {
 				progress(0);
 				stopSelf();
 			} else
-				new WorkAsync().execute(new Void[] {null});
-			
+				new WorkAsync().execute(new Void[] { null });
 
 		}
 
