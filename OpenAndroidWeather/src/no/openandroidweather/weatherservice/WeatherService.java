@@ -6,11 +6,15 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import no.openandroidweather.misc.IProgressItem;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
+import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Meta;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Place;
 import no.openandroidweather.weatherproxy.WeatherProxy;
 import no.openandroidweather.weatherproxy.yr.YrProxy;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -19,6 +23,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
@@ -52,6 +57,7 @@ public class WeatherService extends Service implements IProgressItem {
 	public final static int ERROR_UNKNOWN_ERROR = 2;
 	public static final int ERROR_NO_KNOWN_POSITION = 3;
 	public static final String TAG = "WeatherService";
+	private static final String UPDATE_PLACES = "update places";
 	private GetForecast inProgress;
 	private final Queue<GetForecast> mDbCheckQueue = new ConcurrentLinkedQueue<GetForecast>();
 	private final Queue<GetForecast> mDownloadQueue = new ConcurrentLinkedQueue<GetForecast>();
@@ -127,6 +133,18 @@ public class WeatherService extends Service implements IProgressItem {
 			mDbCheckQueue.add(new GetForecast(listener, loc, toleranceRadius,
 					toleranceVerticalDistance));
 			work();
+		}
+	};
+
+	public void onStart(Intent intent, int startId) {
+		Bundle extra = intent.getExtras();
+		if (extra != null) {
+			boolean updatePlaces = extra.getBoolean(UPDATE_PLACES);
+			if (updatePlaces) {
+				// This will start an async task who eventually check if
+				// forecasts for places is updated.
+				new WorkAsync().execute(new Void[] { null });
+			}
 		}
 	};
 
@@ -447,8 +465,14 @@ public class WeatherService extends Service implements IProgressItem {
 			while (!mDownloadQueue.isEmpty())
 				downloadForcast(mDownloadQueue.poll());
 
+			// Check for new forecasts:
+			checkPlacesForNewForecasts();
+
 			// Delete all old forecasts:
 			deleteOldForecasts();
+
+			// Set alarm:
+			setAlarm();
 
 			return null;
 		}
@@ -465,6 +489,143 @@ public class WeatherService extends Service implements IProgressItem {
 			} else
 				new WorkAsync().execute(new Void[] { null });
 
+		}
+
+	}
+
+	public void setAlarm() {
+		String[] projection = { Meta.NEXT_FORECAST };
+		String sortOrder = Meta.NEXT_FORECAST + " DESC";
+		Cursor c = getContentResolver().query(
+				WeatherContentProvider.CONTENT_URI, projection, null, null,
+				sortOrder);
+
+		long nextForecast = 0;
+		if (c.getCount() > 0) {
+			c.moveToFirst();
+			nextForecast = c.getLong(c
+					.getColumnIndexOrThrow(Meta.NEXT_FORECAST));
+		}
+		c.close();
+
+		if (nextForecast < System.currentTimeMillis()) {
+			// Try again next hour
+			nextForecast = System.currentTimeMillis() + 1000 * 3600;
+		}
+
+		Intent intent = new Intent(this, WeatherService.class);
+		intent.putExtra(UPDATE_PLACES, true);
+
+		final PendingIntent operation = PendingIntent.getService(this, 0,
+				intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+		AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+		alarmManager.set(AlarmManager.RTC, nextForecast, operation);
+
+	}
+
+	/**
+	 * Gets all places and check if there is a updated forecast
+	 */
+	private void checkPlacesForNewForecasts() {
+		Cursor c = getContentResolver().query(Place.CONTENT_URI, null, null,
+				null, null);
+		int length = c.getCount();
+		int forecastCol = c.getColumnIndexOrThrow(Place.FORECAST_ROW);
+		int longtitudeCol = c.getColumnIndexOrThrow(Place.LONGITUDE);
+		int latitudeCol = c.getColumnIndexOrThrow(Place.LATITUDE);
+		int altitudeCol = c.getColumnIndexOrThrow(Place.ALTITUDE);
+		int idCol = c.getColumnIndexOrThrow(Place._ID);
+		c.moveToFirst();
+		for (int i = 0; i < length; i++) {
+			if (!checkIfForecastIsUpdated(c.getInt(forecastCol))) {
+				// Adds place to db check
+				Location location = new Location("");
+				location.setLatitude(c.getDouble(latitudeCol));
+				location.setLongitude(c.getDouble(longtitudeCol));
+				location.setAltitude(c.getDouble(altitudeCol));
+				PlaceForecastEventListener listener = new PlaceForecastEventListener(
+						c.getInt(idCol));
+				GetForecast getForecast = new GetForecast(listener, location,
+						2000, 100);
+				mDbCheckQueue.add(getForecast);
+			}
+			c.moveToNext();
+		}
+		c.close();
+	}
+
+	/**
+	 * Check if the forecast exist in meta table and next forecast is in the
+	 * future
+	 * 
+	 * @param metaId
+	 * @return
+	 */
+	private boolean checkIfForecastIsUpdated(int metaId) {
+		String[] projection = { Meta.NEXT_FORECAST };
+		Uri uri = Uri.withAppendedPath(WeatherContentProvider.CONTENT_URI,
+				metaId + "");
+		Cursor c = getContentResolver()
+				.query(uri, projection, null, null, null);
+
+		if (c.getCount() != 1) {
+			c.close();
+			return false;
+		}
+
+		c.moveToFirst();
+		long nextForecast = c.getLong(c
+				.getColumnIndexOrThrow(Meta.NEXT_FORECAST));
+
+		if (nextForecast >= System.currentTimeMillis()) {
+			c.close();
+			return true;
+		} else {
+			c.close();
+			return false;
+		}
+	}
+
+	private class PlaceForecastEventListener implements IForecastEventListener {
+		public PlaceForecastEventListener(int placeId) {
+			super();
+			this.placeId = placeId;
+		}
+
+		int placeId;
+
+		@Override
+		public IBinder asBinder() {
+			return null;
+		}
+
+		@Override
+		public void newForecast(String uri, long forecastGenerated)
+				throws RemoteException {
+			int forecastId = new Integer(Uri.parse(uri).getLastPathSegment());
+			ContentValues values = new ContentValues();
+			values.put(Place.FORECAST_ROW, forecastId);
+			getContentResolver().update(
+					Uri.withAppendedPath(Place.CONTENT_URI, placeId + ""),
+					values, null, null);
+		}
+
+		@Override
+		public void progress(int progress) throws RemoteException {
+		}
+
+		@Override
+		public void newExpectedTime() throws RemoteException {
+		}
+
+		@Override
+		public void completed() throws RemoteException {
+		}
+
+		@Override
+		public void exceptionOccurred(int errorcode) throws RemoteException {
 		}
 
 	}

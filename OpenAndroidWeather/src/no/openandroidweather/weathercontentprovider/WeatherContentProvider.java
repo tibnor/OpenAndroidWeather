@@ -156,6 +156,20 @@ public class WeatherContentProvider extends ContentProvider {
 					ForecastListView.CONTENT_PATH);
 			delete(listViewUri, selection, selectionArgs);
 
+		} else if (uriMatch == sMETA) {
+			// Find id of all rows who shall be deleted
+			String[] projection = { Meta._ID };
+			Cursor c = query(uri, projection, newSelection, selectionArgs, null);
+			int col = c.getColumnIndexOrThrow(Meta._ID);
+			c.moveToFirst();
+			int length = c.getCount();
+
+			for (int i = 0; i < length; i++) {
+				delete(Uri.withAppendedPath(uri, c.getInt(col) + ""), null,
+						null);
+				c.moveToNext();
+			}
+			c.close();
 		}
 
 		return openHelper.getWritableDatabase().delete(table, newSelection,
@@ -446,10 +460,12 @@ public class WeatherContentProvider extends ContentProvider {
 		public static final String ALTITUDE = "altitude";
 		/** Name of the place for the forecast, Text, for place data */
 		public static final String PLACE_NAME = "place";
+		/** Row in forecast meta table for the most updated forecast, integer */
+		public static final String FORECAST_ROW = "forecastRow";
 
 		static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ("
 				+ _ID + " INTEGER PRIMARY KEY," + ALTITUDE + " REAL,"
-				+ LATITUDE + " REAL," + LONGITUDE + " REAL," + PLACE_NAME
-				+ " TEXT)";
+				+ LATITUDE + " REAL," + LONGITUDE + " REAL," + FORECAST_ROW
+				+ " INTEGER, " + PLACE_NAME + " TEXT)";
 	}
 }

@@ -56,7 +56,7 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 	private final IForecastEventListener forcastListener = new ForecastListener();
 	private ProgressBar progressBar;
 	private final Handler mHandler = new Handler();
-	private IWeatherService mService;
+	private IWeatherService mService = null;
 
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -81,7 +81,7 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 						}
 					}
 				}
-			
+
 				if (!getFromPlace) {
 					try {
 						mService.getNearestForecast(forcastListener, 2000, 100);
@@ -97,7 +97,8 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 		public void onServiceDisconnected(final ComponentName name) {
 			if (mService != null)
 				synchronized (mService) {
-					mService = null;
+					if (mService != null)
+						mService = null;
 				}
 		}
 
@@ -109,22 +110,21 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 
 		setContentView(R.layout.forecast_view);
 		progressBar = (ProgressBar) findViewById(R.id.progressbar);
+		bindService(new Intent(getApplicationContext(), WeatherService.class),
+				mServiceConnection, BIND_AUTO_CREATE);
 
 	}
 
 	@Override
-	protected void onPause() {
-		if (mService != null)
-			unbindService(mServiceConnection);
+	protected void onDestroy() {
+		if (mService != null) {
+			synchronized (mService) {
+				if (mService != null)
+					unbindService(mServiceConnection);
+			}
+		}
+
 		super.onPause();
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		if (mService == null)
-			bindService(new Intent(getApplicationContext(),
-					WeatherService.class), mServiceConnection, BIND_AUTO_CREATE);
 	}
 
 	/**
