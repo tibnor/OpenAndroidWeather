@@ -2,4 +2,5 @@
 <com.google.android.maps.MapView
 	xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/mapview"
 	android:layout_width="fill_parent" android:layout_height="fill_parent"
-	android:clickable="true" android:apiKey="0TZAhNp--MXELL3ufV_CJx4UC2kzo4BYDsZtAHg" />
+	android:clickable="true" android:apiKey="0TZAhNp--MXH37MSL335XdPw7vtYg5W9QcXaLRA" />
+
