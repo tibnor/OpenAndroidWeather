@@ -24,6 +24,8 @@ import java.util.List;
 
 import no.openandroidweather.R;
 import no.openandroidweather.misc.IProgressItem;
+import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
+import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Place;
 import no.openandroidweather.weatherservice.IForecastEventListener;
 import no.openandroidweather.weatherservice.IWeatherService;
 import no.openandroidweather.weatherservice.WeatherService;
@@ -33,6 +35,7 @@ import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -64,33 +67,45 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 		public void onServiceConnected(final ComponentName name,
 				final IBinder service) {
 			mService = IWeatherService.Stub.asInterface(service);
-			synchronized (mService) {
-				// Sets up a call for new forecast
-				Bundle extra = getIntent().getExtras();
-				boolean getFromPlace = false;
-				if (extra != null) {
-					long placeId = extra.getLong(PLACE_ROW_ID, -1L);
-					if (placeId != -1L) {
-						getFromPlace = true;
-						try {
-							mService.getForecastFromPlace(forcastListener,
-									placeId, 2000, 100);
-						} catch (RemoteException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-				}
 
-				if (!getFromPlace) {
+			// Sets up a call for new forecast
+			Bundle extra = getIntent().getExtras();
+			boolean getFromPlace = false;
+			if (extra != null) {
+				long placeId = extra.getLong(PLACE_ROW_ID, -1L);
+				if (placeId != -1L) {
+					getFromPlace = true;
+					//Gets place in database for the forecast
+					Uri uri = Uri.withAppendedPath(Place.CONTENT_URI, placeId+"");
+					String[] projection = {Place.FORECAST_ROW};
+					Cursor c = getContentResolver().query(uri, projection , null, null, null);
+					c.moveToFirst();
+					int forecastId = c.getInt(c.getColumnIndex(Place.FORECAST_ROW));
+					c.close();
+					
+					// Make the new uri for the forecast.
+					uri = Uri
+							.withAppendedPath(
+									WeatherContentProvider.CONTENT_URI,
+									forecastId + "");
+					
 					try {
-						mService.getNearestForecast(forcastListener, 2000, 100);
-					} catch (final RemoteException e) {
-						// TODO Auto-generated catch block
+						forcastListener.newForecast(uri.toString(), 0L);
+						forcastListener.completed();
+					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
 				}
 			}
+
+			if (!getFromPlace) {
+				try {
+					mService.getNearestForecast(forcastListener, 2000, 100);
+				} catch (final RemoteException e) {
+					e.printStackTrace();
+				}
+			}
+
 		}
 
 		@Override
@@ -234,6 +249,9 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 			final ForecastListParser parser = new ForecastListParser(
 					getApplicationContext(), ForecastListActivity.this);
 			final List<IListRow> rows = parser.parseData(params[0]);
+			if(rows==null || rows.isEmpty())
+				return null;
+			
 			final ListView.FixedViewInfo header = getListView().new FixedViewInfo();
 			header.view = parser.getHeaderView(params[0]);
 			final ArrayList<FixedViewInfo> headerViewInfos = new ArrayList<ListView.FixedViewInfo>();
@@ -245,7 +263,21 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 		@Override
 		protected void onPostExecute(final ListAdapter result) {
 			super.onPostExecute(result);
-			setListAdapter(result);
+			if(result!=null)
+				setListAdapter(result);
+			else
+			{
+				AlertDialog.Builder builder = new AlertDialog.Builder(ForecastListActivity.this);
+				builder.setMessage(R.string.no_forecast)
+				       .setCancelable(false)
+				       .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+				           public void onClick(DialogInterface dialog, int id) {
+				                ForecastListActivity.this.finish();
+				           }
+				       });
+				AlertDialog alert = builder.create();
+				alert.show();
+			}
 		}
 
 	}

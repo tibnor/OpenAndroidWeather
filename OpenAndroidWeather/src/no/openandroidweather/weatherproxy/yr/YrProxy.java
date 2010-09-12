@@ -30,7 +30,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import no.openandroidweather.misc.GeonamesFindNearbyPlaceNameAsync;
+import no.openandroidweather.misc.GeonamesFindNearbyPlaceNameTask;
 import no.openandroidweather.misc.IProgressItem;
 import no.openandroidweather.misc.ProgressWrapper;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
@@ -102,9 +102,9 @@ public class YrProxy implements WeatherProxy {
 			final long lastForecastGenerated) throws UnknownHostException,
 			IOException, ParserConfigurationException, SAXException {
 		// Get place:
-		final GeonamesFindNearbyPlaceNameAsync placeTask = new GeonamesFindNearbyPlaceNameAsync(
-				mContext);
-		placeTask.execute(location);
+		final GeonamesFindNearbyPlaceNameTask placeTask = new GeonamesFindNearbyPlaceNameTask(
+				mContext,location);
+		new Thread(placeTask).start();
 
 		// Set progress:
 		mProgressItem.progress(1);

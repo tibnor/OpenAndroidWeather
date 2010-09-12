@@ -30,22 +30,23 @@ import android.content.Context;
 import android.location.Location;
 import android.os.AsyncTask;
 
-public class GeonamesFindNearbyPlaceNameAsync extends
-		AsyncTask<Location, Void, String> {
+public class GeonamesFindNearbyPlaceNameTask implements Runnable {
 	private final Context mContext;
 	private boolean isDone = false;
 	private String place;
+	private Location mLocation;
 
-	public GeonamesFindNearbyPlaceNameAsync(final Context context) {
+	public GeonamesFindNearbyPlaceNameTask(final Context context, Location location) {
 		super();
 		mContext = context;
+		mLocation = location;
 	}
 
 	@Override
-	protected String doInBackground(final Location... arg0) {
+	public void run() {
 		final Geonames geonames = new Geonames(mContext);
 		try {
-			place = geonames.findNearestPlace(arg0[0]);
+			place = geonames.findNearestPlace(mLocation);
 		} catch (final ClientProtocolException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -64,7 +65,6 @@ public class GeonamesFindNearbyPlaceNameAsync extends
 			isDone = true;
 			notifyAll();
 		}
-		return place;
 	}
 
 	public String getPlace() {

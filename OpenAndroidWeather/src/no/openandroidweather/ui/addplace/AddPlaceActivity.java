@@ -20,9 +20,10 @@
 package no.openandroidweather.ui.addplace;
 
 import no.openandroidweather.R;
+import no.openandroidweather.misc.GetLocation;
 import no.openandroidweather.ui.map.GetPositionMapActivity;
-import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Place;
+import no.openandroidweather.weatherservice.WeatherService;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -57,6 +58,11 @@ public class AddPlaceActivity extends Activity {
 			final Uri url = Place.CONTENT_URI;
 			final Uri uri = cr.insert(url, values);
 
+			// Update forecast:
+			Intent intent = new Intent(this, WeatherService.class);
+			intent.putExtra(WeatherService.UPDATE_PLACES, true);
+			startService(intent);
+			
 			final Intent data = new Intent();
 			data.putExtra(RETURN_URI, uri);
 			setResult(RESULT_OK, data);
@@ -88,16 +94,7 @@ public class AddPlaceActivity extends Activity {
 	}
 
 	protected void getCurrentPosition() {
-		final Criteria criteria = new Criteria();
-		criteria.setAccuracy(Criteria.ACCURACY_COARSE);
-		final LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-		final String provider = locationManager.getBestProvider(criteria, true);
-		if (provider == null) {
-			showMessage(R.string.no_position);
-			return;
-		}
-
-		final Location loc = locationManager.getLastKnownLocation(provider);
+		final Location loc = GetLocation.getLocation(this);
 		if (loc == null) {
 			showMessage(R.string.no_position);
 			return;
@@ -179,9 +176,6 @@ public class AddPlaceActivity extends Activity {
 	 * Show a message
 	 */
 	private void showMessage(final int resId) {
-		final Toast toast = new Toast(this);
-		toast.setText(resId);
-		toast.setDuration(Toast.LENGTH_LONG);
-		toast.show();
+		Toast.makeText(this, resId, Toast.LENGTH_LONG).show();
 	}
 }

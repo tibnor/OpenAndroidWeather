@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="delete_place">Do you want to delete this place?</string>
-    <string name="current_location">Current location</string>
+	<string name="ok">Ok</string>
+	<string name="updating_forecasts">Updating forecasts</string>
+	<string name="update_forecasts">Update forecasts</string>
+	<string name="delete_place">Do you want to delete this place?</string>
+	<string name="current_location">Current location</string>
 	<string name="km_from_">"km from "</string>
 	<string name="app_name">Firestorm</string>
 	<string name="please_wait_1min">Please wait while downloading forecast, this can
 		take up to a minute.</string>
 	<string name="no_internet_connection">Could not connect to internett, please make sure
 		that you have connection. Try again?"</string>
-	<string name="unknown_error_while_downloading">Something went wrong during downloading of the forecast. Try
+	<string name="unknown_error_while_downloading">Something went wrong during downloading of the
+		forecast. Try
 		again?</string>
 	<string name="no_position">Can not find your position. Try again?</string>
 	<string name="yes">Yes</string>
@@ -17,7 +21,8 @@
 	<string name="Downloaded">Downloaded:</string>
 	<string name="Generated">Generated:</string>
 	<string name="Next_update">Next update:</string>
-	<string name="Provider">Data from The Norwegian Meteorological Institute</string>
+	<string name="Provider">Data from The Norwegian Meteorological Institute
+	</string>
 	<string name="Places">Places:</string>
 	<string name="Add_place">Add a place</string>
 	<string name="getting_information">Getting information, please wait.</string>
@@ -34,4 +39,7 @@
 	<string name="Add_place_required_format">Altitude, latitude and longitude must be a decimal
 		number (x.x)</string>
 	<string name="Add_place_required_fields">All fields must be filled in.</string>
+	<string name="no_forecast">The forecast is not downloaded for this place. This
+		can happen after a place is added and a forecast is not yet
+		downloaded or for places outside Norway.</string>
 </resources>

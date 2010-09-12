@@ -23,7 +23,6 @@ import java.util.Formatter;
 
 import no.openandroidweather.R;
 import no.openandroidweather.widget.Q;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -69,7 +68,6 @@ public class ForecastRow implements IListRow {
 		// Set hour
 		((TextView) convertView.findViewById(R.id.hour)).setText(hour);
 
-		Log.i(TAG, "Symbol" + symbol);
 		// Set symbol
 		((ImageView) convertView.findViewById(R.id.symbol))
 				.setImageResource(Q.symbol[symbol]);

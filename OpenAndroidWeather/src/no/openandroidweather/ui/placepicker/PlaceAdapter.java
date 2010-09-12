@@ -17,7 +17,7 @@
     along with OpenAndroidWeather.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package no.openandroidweather.ui.addplace;
+package no.openandroidweather.ui.placepicker;
 
 import no.openandroidweather.R;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Place;

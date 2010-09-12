@@ -107,10 +107,10 @@ public class Geonames {
 	}
 
 	private class FindNearestPlaceParser extends DefaultHandler {
-		String place;
+		String place = "";
 		private boolean isInName = false;
 		private boolean isInDistance = false;
-		private Double distance;
+		private double distance = 0;
 
 		@Override
 		public void characters(final char[] ch, final int start,

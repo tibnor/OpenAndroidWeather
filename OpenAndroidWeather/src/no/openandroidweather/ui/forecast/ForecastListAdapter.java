@@ -41,7 +41,10 @@ public class ForecastListAdapter implements ListAdapter {
 
 	@Override
 	public int getCount() {
-		return mRows.size();
+		if (mRows == null)
+			return 0;
+		else
+			return mRows.size();
 	}
 
 	@Override
@@ -77,7 +80,7 @@ public class ForecastListAdapter implements ListAdapter {
 
 	@Override
 	public boolean isEmpty() {
-		return mRows.isEmpty();
+		return mRows == null || mRows.isEmpty();
 	}
 
 	@Override

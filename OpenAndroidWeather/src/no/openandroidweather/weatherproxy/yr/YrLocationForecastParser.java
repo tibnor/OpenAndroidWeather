@@ -73,6 +73,19 @@ public class YrLocationForecastParser extends DefaultHandler {
 	}
 
 	/**
+	 * @param attributes
+	 * @param key
+	 * @return time in ms since 01.01.1970
+	 */
+	private static long getTime(final Attributes attributes, final String key) {
+		final String timeS = attributes.getValue(attributes.getIndex(key));
+		final Time time = new Time("UTC");
+		time.parse3339(timeS);
+
+		return time.toMillis(false);
+	}
+
+	/**
 	 * Check if all data is parsed for a forecastList row, if so it is saved in
 	 * the database and hasParsedForecastRow is set to true
 	 */
@@ -95,31 +108,6 @@ public class YrLocationForecastParser extends DefaultHandler {
 			resetCached();
 		}
 
-	}
-
-	/**
-	 * Reset data cached for forecast list view table
-	 */
-	private void resetCached() {
-		// Resets values:
-		mTemperature = TEMPERATURE_NOT_SET_VALUE;
-		mWindDirection = -1.;
-		mWindSpeed = -1.;
-		mSymbol = -1;
-		mPercipitation = -1.;
-	}
-
-	/**
-	 * @param attributes
-	 * @param key
-	 * @return time in ms since 01.01.1970
-	 */
-	private static long getTime(final Attributes attributes, final String key) {
-		final String timeS = attributes.getValue(attributes.getIndex(key));
-		final Time time = new Time("UTC");
-		time.parse3339(timeS);
-
-		return time.toMillis(false);
 	}
 
 	@Override
@@ -273,6 +261,18 @@ public class YrLocationForecastParser extends DefaultHandler {
 		final String value = attributes.getValue(attributes.getIndex("mps"));
 		insertValue(WeatherType.windSpeed, value);
 		mWindSpeed = new Double(value);
+	}
+
+	/**
+	 * Reset data cached for forecast list view table
+	 */
+	private void resetCached() {
+		// Resets values:
+		mTemperature = TEMPERATURE_NOT_SET_VALUE;
+		mWindDirection = -1.;
+		mWindSpeed = -1.;
+		mSymbol = -1;
+		mPercipitation = -1.;
 	}
 
 	@Override

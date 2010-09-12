@@ -44,21 +44,6 @@ interface IWeatherService{
 	void getForecast(IForecastEventListener listener, double latitude, double longitude, 
 			double altitude, double toleranceRadius, double toleranceVerticalDistance);
 			
-		/**
-	 * Adds a forecast listener who is called when a new forecast is ready. If
-	 * there is a forecast in the within the target zone, the listener will be
-	 * called with a reference to the row in the database. If the forecast is
-	 * old or there is no forecast in the database a new forecast is fetched
-	 * from the provider.
-	 * 
-	 * @param listener for callbacks
-	 * @param row id for the place
-	 * @param tolleranceRadius A horizontal tolerance radius, if there are already forecasts who are downloaded within this radius,
-	 *			 this forecast will be returned
-	 * @param tolleranceVerticalDistance A vertical tolerance distance.
-	 */
-	void getForecastFromPlace(IForecastEventListener listener, long placeRowId, double toleranceRadius, double toleranceVerticalDistance);
-	
 	/**
 	 * Downloads the forecast who is closest to to the current position of the device.
 	 *  

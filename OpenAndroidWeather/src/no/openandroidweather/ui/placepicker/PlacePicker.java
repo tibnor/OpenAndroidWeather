@@ -22,8 +22,8 @@ package no.openandroidweather.ui.placepicker;
 import no.openandroidweather.R;
 import no.openandroidweather.ui.addplace.AddPlaceActivity;
 import no.openandroidweather.ui.forecast.ForecastListActivity;
-import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Place;
+import no.openandroidweather.weatherservice.WeatherService;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
@@ -31,6 +31,10 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -40,8 +44,75 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class PlacePicker extends ListActivity {
+	
+	private static final int UPDATE_FORECASTS = Menu.FIRST;
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		super.onCreateOptionsMenu(menu);
+		menu.add(Menu.NONE, UPDATE_FORECASTS, Menu.NONE, R.string.update_forecasts);
+		return true;
+	}
+	
+	@Override
+	public boolean onMenuItemSelected(int featureId, MenuItem item) {
+		// TODO Auto-generated method stub
+		
+		switch (item.getItemId()) {
+		case UPDATE_FORECASTS:
+			updateForecast();
+			return true;
+		default:
+			return super.onMenuItemSelected(featureId, item);
+		}
+	}
+
+	private void updateForecast() {
+		Intent intent = new Intent(this, WeatherService.class);
+		intent.putExtra(WeatherService.UPDATE_PLACES, true);
+		startService(intent);
+		
+		Toast.makeText(this, R.string.updating_forecasts, Toast.LENGTH_SHORT);
+	}
+
+	/**
+	 * Opens dialog for deleting place and delete it if requested
+	 * 
+	 * @param mCursor
+	 * @param id
+	 */
+	private void deletePlaceDialog(final Cursor mCursor, final long id) {
+		final AlertDialog.Builder builder = new AlertDialog.Builder(
+				PlacePicker.this);
+		builder.setMessage(R.string.delete_place);
+		builder.setCancelable(true);
+		builder.setPositiveButton(getResources().getString(R.string.yes),
+				new DialogInterface.OnClickListener() {
+
+					@Override
+					public void onClick(final DialogInterface dialog,
+							final int which) {
+						Uri url = Place.CONTENT_URI;
+						url = Uri.withAppendedPath(url, id + "");
+						getContentResolver().delete(url, null, null);
+						mCursor.requery();
+						dialog.cancel();
+					}
+				});
+		builder.setNegativeButton(getResources().getString(R.string.no),
+				new DialogInterface.OnClickListener() {
+
+					@Override
+					public void onClick(final DialogInterface dialog,
+							final int which) {
+						dialog.cancel();
+					}
+				});
+		builder.show();
+	}
 
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
@@ -100,41 +171,5 @@ public class PlacePicker extends ListActivity {
 				return true;
 			}
 		});
-	}
-
-	/**
-	 * Opens dialog for deleting place and delete it if requested
-	 * 
-	 * @param mCursor
-	 * @param id
-	 */
-	private void deletePlaceDialog(final Cursor mCursor, final long id) {
-		final AlertDialog.Builder builder = new AlertDialog.Builder(
-				PlacePicker.this);
-		builder.setMessage(R.string.delete_place);
-		builder.setCancelable(true);
-		builder.setPositiveButton(getResources().getString(R.string.yes),
-				new DialogInterface.OnClickListener() {
-
-					@Override
-					public void onClick(final DialogInterface dialog,
-							final int which) {
-						Uri url = Place.CONTENT_URI;
-						url = Uri.withAppendedPath(url, id + "");
-						getContentResolver().delete(url, null, null);
-						mCursor.requery();
-						dialog.cancel();
-					}
-				});
-		builder.setNegativeButton(getResources().getString(R.string.no),
-				new DialogInterface.OnClickListener() {
-
-					@Override
-					public void onClick(final DialogInterface dialog,
-							final int which) {
-						dialog.cancel();
-					}
-				});
-		builder.show();
 	}
 }

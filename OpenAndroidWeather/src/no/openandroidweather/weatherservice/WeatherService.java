@@ -1,11 +1,15 @@
 package no.openandroidweather.weatherservice;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import no.openandroidweather.misc.GetLocation;
 import no.openandroidweather.misc.IProgressItem;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
+import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Forecast;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Meta;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Place;
 import no.openandroidweather.weatherproxy.WeatherProxy;
@@ -27,6 +31,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
+import android.widget.Toast;
 
 /*
  Copyright 2010 Torstein Ingebrigtsen Bø
@@ -57,12 +62,16 @@ public class WeatherService extends Service implements IProgressItem {
 	public final static int ERROR_UNKNOWN_ERROR = 2;
 	public static final int ERROR_NO_KNOWN_POSITION = 3;
 	public static final String TAG = "WeatherService";
-	private static final String UPDATE_PLACES = "update places";
+	public static final String UPDATE_PLACES = "update places";
 	private GetForecast inProgress;
-	private final Queue<GetForecast> mDbCheckQueue = new ConcurrentLinkedQueue<GetForecast>();
-	private final Queue<GetForecast> mDownloadQueue = new ConcurrentLinkedQueue<GetForecast>();
-	private Boolean isWorking = false;
-
+	private static final Queue<GetForecast> mDbCheckQueue = new ConcurrentLinkedQueue<GetForecast>();
+	private static final Queue<GetForecast> mDownloadQueue = new ConcurrentLinkedQueue<GetForecast>();
+	private static final Set<Location> mDownloadingForecasts = new HashSet<Location>();
+	private static Boolean isWorking = false;
+	private static boolean isUpdatingForecastForPlaces = false;
+	private static PendingIntent mAlarmIntent = null;
+	public final static double defaultAceptanceRadius = 2000.;
+	public final static double defaultAceptanceVerticalDistance = 100.;
 	/**
 	 * Used in progress, for each GetForecast in mDbCheckQueue there is 2 jobs
 	 * (db check and download). for each GetForecast in mDownloadQueue there is
@@ -91,19 +100,8 @@ public class WeatherService extends Service implements IProgressItem {
 		public void getNearestForecast(final IForecastEventListener listener,
 				final double toleranceRadius,
 				final double toleranceVerticalDistance) throws RemoteException {
-			final LocationManager locationManager = (LocationManager) WeatherService.this
-					.getApplicationContext().getSystemService(
-							Context.LOCATION_SERVICE);
-			final Criteria criteria = new Criteria();
-			criteria.setAccuracy(Criteria.ACCURACY_COARSE);
-			final String provider = locationManager.getBestProvider(criteria,
-					true);
-			if (provider == null) {
-				listener.exceptionOccurred(ERROR_NO_KNOWN_POSITION);
-				return;
-			}
 
-			final Location loc = locationManager.getLastKnownLocation(provider);
+			Location loc = GetLocation.getLocation(WeatherService.this);
 			if (loc == null) {
 				listener.exceptionOccurred(ERROR_NO_KNOWN_POSITION);
 				return;
@@ -113,56 +111,58 @@ public class WeatherService extends Service implements IProgressItem {
 			mDbCheckQueue.add(getForecast);
 			work();
 		}
-
-		@Override
-		public void getForecastFromPlace(IForecastEventListener listener,
-				long placeRowId, double toleranceRadius,
-				double toleranceVerticalDistance) throws RemoteException {
-			// Gets data for where the place is:
-			Cursor c = getContentResolver().query(
-					Uri.withAppendedPath(Place.CONTENT_URI, placeRowId + ""),
-					null, null, null, null);
-			c.moveToFirst();
-
-			final Location loc = new Location("");
-			loc.setLatitude(c.getDouble(c.getColumnIndex(Place.LATITUDE)));
-			loc.setLongitude(c.getDouble(c.getColumnIndex(Place.LONGITUDE)));
-			loc.setAltitude(c.getDouble(c.getColumnIndex(Place.ALTITUDE)));
-			c.close();
-
-			mDbCheckQueue.add(new GetForecast(listener, loc, toleranceRadius,
-					toleranceVerticalDistance));
-			work();
-		}
 	};
 
-	public void onStart(Intent intent, int startId) {
-		Bundle extra = intent.getExtras();
-		if (extra != null) {
-			boolean updatePlaces = extra.getBoolean(UPDATE_PLACES);
-			if (updatePlaces) {
-				// This will start an async task who eventually check if
-				// forecasts for places is updated.
-				new WorkAsync().execute(new Void[] { null });
-			}
+	/**
+	 * Check if the forecast exist in meta table and next forecast is in the
+	 * future
+	 * 
+	 * @param metaId
+	 * @return
+	 */
+	private boolean checkIfForecastIsUpdated(int metaId) {
+		String[] projection = { Meta.NEXT_FORECAST };
+		Uri uri = Uri.withAppendedPath(WeatherContentProvider.CONTENT_URI,
+				metaId + "");
+		Cursor c = getContentResolver()
+				.query(uri, projection, null, null, null);
+
+		if (c.getCount() != 1) {
+			c.close();
+			return false;
+		}
+
+		c.moveToFirst();
+		long nextForecast = c.getLong(c
+				.getColumnIndexOrThrow(Meta.NEXT_FORECAST));
+
+		if (nextForecast >= System.currentTimeMillis()) {
+			c.close();
+			return true;
+		} else {
+			c.close();
+			return false;
 		}
 	};
 
 	/**
 	 * Check if there are any forecasts in database, and calls the event
 	 * listener if it is in the db. If data is old or not found in db, the
-	 * listener is added to the download queue.
+	 * forecast is downloaded
 	 * 
 	 * @param EventListener
 	 *            to check
 	 * @throws RemoteException
 	 */
-	public void checkInDb(final GetForecast getForecast) {
+	public void checkInDbOrDownload(final GetForecast getForecast) {
+		Log.i(TAG, "Start  Id:" + WeatherService.this.hashCode());
+
 		inProgress = getForecast;
 		final ContentResolver cr = getContentResolver();
+		final String sortOrder = Meta.GENERATED + " DESC";
 		// Gets all forecasts
 		final Cursor c = cr.query(WeatherContentProvider.CONTENT_URI, null,
-				null, null, null);
+				null, null, sortOrder);
 
 		// Gets columns
 		final int latCol = c
@@ -208,7 +208,7 @@ public class WeatherService extends Service implements IProgressItem {
 							.getLong(c
 									.getColumnIndexOrThrow(WeatherContentProvider.Meta.GENERATED));
 					getForecast.setLastGeneratedForecast(lastGeneratedForecast);
-					mDownloadQueue.add(getForecast);
+					downloadForcast(getForecast);
 				} else {
 					getForecast.completed();
 					jobCompleted();
@@ -218,46 +218,105 @@ public class WeatherService extends Service implements IProgressItem {
 			}
 		}
 		c.close();
-		mDownloadQueue.add(getForecast);
+		downloadForcast(getForecast);
 		jobCompleted();
 
 	}
 
+	/**
+	 * Deletes forecasts who has a newer one within the tolerance distance or
+	 * with no forecasts for the future.
+	 */
 	public void deleteOldForecasts() {
 		final ContentResolver cr = getContentResolver();
-		// Check what is the latest forecast:
+		// Check if there are some forecast who has a newer one
+		final String sortOrder = Meta.GENERATED + " DESC";
+		final Cursor c = cr.query(WeatherContentProvider.CONTENT_URI, null,
+				null, null, sortOrder);
 
-		final String[] projection = { WeatherContentProvider.Meta.GENERATED };
-		final String selection = WeatherContentProvider.Meta.PROVIDER + "='"
-				+ YrProxy.PROVIDER + "'";
-		final String sortOrder = WeatherContentProvider.Meta.GENERATED
-				+ " DESC";
-		final Cursor c = cr.query(WeatherContentProvider.CONTENT_URI,
-				projection, selection, null, sortOrder);
-
-		// Check that there is forecasts in the table
-		if (c.getCount() == 0)
-			return;
+		Set<Location> locationWithForecast = new HashSet<Location>();
 		c.moveToFirst();
-		final long latestGeneratedForecast = c.getLong(c
-				.getColumnIndexOrThrow(WeatherContentProvider.Meta.GENERATED));
+		int length = c.getCount();
+		int latCol = c.getColumnIndexOrThrow(Meta.LATITUDE);
+		int lonCol = c.getColumnIndexOrThrow(Meta.LONGITUDE);
+		int altCol = c.getColumnIndexOrThrow(Meta.ALTITUDE);
+		int idCol = c.getColumnIndexOrThrow(Meta._ID);
+		for (int i = 0; i < length; i++) {
+			// Get place of forecast
+			Location rowLocation = new Location("");
+			rowLocation.setAltitude(c.getDouble(altCol));
+			rowLocation.setLatitude(c.getDouble(latCol));
+			rowLocation.setLongitude(c.getDouble(lonCol));
+			int id = c.getInt(idCol);
+			// Check if this radius is within tolerance radius of any other
+			boolean deleteForecast = false;
+			for (Location location : locationWithForecast) {
+				if (location.distanceTo(rowLocation) < defaultAceptanceRadius
+						&& (Math.abs(location.getAltitude()
+								- rowLocation.getAltitude()) < defaultAceptanceVerticalDistance || rowLocation
+								.getAltitude() == 0)) {
+					deleteForecast = true;
+					break;
+				}
+			}
+			if (deleteForecast || !hasForecastInFuture(id)) {
+				Uri uri = Uri.withAppendedPath(
+						WeatherContentProvider.CONTENT_URI, id + "");
+				getContentResolver().delete(uri, null, null);
+			} else {
+				locationWithForecast.add(rowLocation);
+			}
+			c.moveToNext();
+		}
 		c.close();
 
-		// Deletes all old forecasts:
-		final String where = WeatherContentProvider.Meta.GENERATED + "<"
-				+ latestGeneratedForecast + " AND " + selection;
-		cr.delete(WeatherContentProvider.CONTENT_URI, where, null);
+	};
+
+	/**
+	 * Check if the forecast has any sub forecasts in the future or if all
+	 * forecast is in the past
+	 * 
+	 * @param id
+	 *            in meta table.
+	 * @return
+	 */
+	private boolean hasForecastInFuture(int id) {
+		Uri uri = Uri.withAppendedPath(WeatherContentProvider.CONTENT_URI, id
+				+ "");
+		Uri forecastUri = Uri.withAppendedPath(uri, Forecast.CONTENT_DIRECTORY);
+		String[] projection = { Forecast._ID };
+		String selection = Forecast.FROM + ">" + System.currentTimeMillis();
+		Cursor c = getContentResolver().query(forecastUri, projection,
+				selection, null, null);
+		int length = c.getCount();
+		c.close();
+
+		return length > 0;
 	}
 
 	/**
 	 * Downloads forecast from Internet, and calls the event listener when
-	 * completed.
+	 * completed. If it is already downloading it is added to mDbCheckQueue
 	 * 
 	 * @param getForecast
 	 *            to check
 	 * @throws RemoteException
 	 */
 	void downloadForcast(final GetForecast getForecast) {
+		synchronized (mDownloadingForecasts) {
+			for (Location downloadingLocation : mDownloadingForecasts) {
+				if (getForecast.isInTargetZone(
+						downloadingLocation.getLatitude(),
+						downloadingLocation.getLongitude(),
+						downloadingLocation.getAltitude())) {
+					mDbCheckQueue.add(getForecast);
+					return;
+				}
+			}
+
+			mDownloadingForecasts.add(getForecast.getLocation());
+		}
+
 		inProgress = getForecast;
 		final WeatherProxy proxy = new YrProxy(getApplicationContext(), this);
 		Uri uri = null;
@@ -293,9 +352,16 @@ public class WeatherService extends Service implements IProgressItem {
 		// synchronized (getForecast.getListener()) {
 		// getForecast.getListener().notifyAll();
 		// }
+		synchronized (mDownloadingForecasts) {
+			if (!mDownloadingForecasts.remove(getForecast)) {
+				Log.e(TAG, "Did not remove note of downloading");
+				mDownloadingForecasts.clear();
+			}
+		}
+
 		getForecast.completed();
 		jobCompleted();
-	};
+	}
 
 	/**
 	 * 
@@ -319,9 +385,34 @@ public class WeatherService extends Service implements IProgressItem {
 	}
 
 	@Override
+	public void onCreate() {
+		super.onCreate();
+		setAlarm();
+	}
+
+	public void onStart(Intent intent, int startId) {
+		super.onStart(intent, startId);
+
+		Log.d(TAG, "Id:" + this.hashCode());
+
+		Bundle extra = intent.getExtras();
+		if (extra != null) {
+			boolean updatePlaces = extra.getBoolean(UPDATE_PLACES);
+			if (updatePlaces) {
+				new Thread(new Runnable() {
+					public void run() {
+						updateForecastForPlaces();
+					}
+				}).start();
+			}
+		}
+	}
+
+	@Override
 	public void progress(int progress) {
 		progress += numberOfJobsCompleted * 1000;
-		progress /= numberOfJobsStarted;
+		if (numberOfJobsStarted > 0)
+			progress /= numberOfJobsStarted;
 
 		for (final GetForecast i : mDbCheckQueue)
 			i.progress(progress);
@@ -334,13 +425,104 @@ public class WeatherService extends Service implements IProgressItem {
 
 	}
 
+	public void setAlarm() {
+		String[] projection = { Meta.NEXT_FORECAST };
+		String sortOrder = Meta.NEXT_FORECAST + " DESC";
+		Cursor c = getContentResolver().query(
+				WeatherContentProvider.CONTENT_URI, projection, null, null,
+				sortOrder);
+
+		long nextForecast = 0;
+		if (c.getCount() > 0) {
+			c.moveToFirst();
+			nextForecast = c.getLong(c
+					.getColumnIndexOrThrow(Meta.NEXT_FORECAST));
+		}
+		c.close();
+
+		if (nextForecast < System.currentTimeMillis()) {
+			// Try again next hour
+			nextForecast = System.currentTimeMillis() + 1000 * 3600;
+		}
+
+		if (mAlarmIntent == null) {
+
+			Intent intent = new Intent(this, WeatherService.class);
+			intent.putExtra(UPDATE_PLACES, true);
+
+			mAlarmIntent = PendingIntent.getService(this, 0, intent,
+					PendingIntent.FLAG_CANCEL_CURRENT);
+		}
+
+		AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+		alarmManager.set(AlarmManager.RTC, nextForecast, mAlarmIntent);
+
+	}
+
+	/**
+	 * Check if all places has a forecast that is updated, if not download a new
+	 * one. At the end delete all forecast who has a newer forecast and forecast
+	 * who has no sub-forecast for the future.
+	 */
+	private void updateForecastForPlaces() {
+		if (isUpdatingForecastForPlaces) {
+			Log.i(TAG,
+					"Updating of forecasts for places is already ongoing, request ignored");
+			return;
+		} else {
+			Log.i(TAG, "Starting updating forecasts for places");
+			isUpdatingForecastForPlaces = true;
+		}
+
+		Cursor c = getContentResolver().query(Place.CONTENT_URI, null, null,
+				null, null);
+
+		int length = c.getCount();
+		int forecastCol = c.getColumnIndexOrThrow(Place.FORECAST_ROW);
+		int longtitudeCol = c.getColumnIndexOrThrow(Place.LONGITUDE);
+		int latitudeCol = c.getColumnIndexOrThrow(Place.LATITUDE);
+		int altitudeCol = c.getColumnIndexOrThrow(Place.ALTITUDE);
+		int idCol = c.getColumnIndexOrThrow(Place._ID);
+		c.moveToFirst();
+		for (int i = 0; i < length; i++) {
+			if (!checkIfForecastIsUpdated(c.getInt(forecastCol))) {
+				// Adds place to db check
+				Location location = new Location("");
+				location.setLatitude(c.getDouble(latitudeCol));
+				location.setLongitude(c.getDouble(longtitudeCol));
+				location.setAltitude(c.getDouble(altitudeCol));
+				PlaceForecastEventListener listener = new PlaceForecastEventListener(
+						c.getInt(idCol));
+				GetForecast getForecast = new GetForecast(listener, location,
+						defaultAceptanceRadius,
+						defaultAceptanceVerticalDistance);
+				checkInDbOrDownload(getForecast);
+			}
+			c.moveToNext();
+		}
+		c.close();
+
+		deleteOldForecasts();
+
+		setAlarm();
+
+		// If one of the queues is not empty the are started again.
+		if (!mDbCheckQueue.isEmpty() && !mDownloadQueue.isEmpty())
+			work();
+
+		Log.v(TAG, "Updating of forecasts is completed");
+		// Toast.makeText(this, "Updating of forecasts is completed",
+		// Toast.LENGTH_SHORT);
+		isUpdatingForecastForPlaces = false;
+	}
+
 	protected void work() {
-		// synchronized (isWorking) {
 		if (!isWorking) {
 			isWorking = true;
 			new WorkAsync().execute(new Void[] { null });
 		}
-		// }
+
 	}
 
 	class GetForecast {
@@ -367,7 +549,6 @@ public class WeatherService extends Service implements IProgressItem {
 			try {
 				listener.completed();
 			} catch (final RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -446,159 +627,29 @@ public class WeatherService extends Service implements IProgressItem {
 		}
 	}
 
-	/**
-	 * Gets forecast needs to be started from the UI thread.
-	 */
-	private class WorkAsync extends AsyncTask<Void, Float, Void> {
-		@Override
-		protected Void doInBackground(final Void... params) {
-			numberOfJobsStarted = mDbCheckQueue.size() * 2
-					+ mDownloadQueue.size();
-			numberOfJobsCompleted = 0;
-			// Check db
-			Log.d(TAG, "Checking database, " + mDbCheckQueue.size()
-					+ " in queue");
-			while (!mDbCheckQueue.isEmpty())
-				checkInDb(mDbCheckQueue.poll());
-			// Download from Internet
-			Log.d(TAG, "Downloading, " + mDownloadQueue.size() + " in queue");
-			while (!mDownloadQueue.isEmpty())
-				downloadForcast(mDownloadQueue.poll());
-
-			// Check for new forecasts:
-			checkPlacesForNewForecasts();
-
-			// Delete all old forecasts:
-			deleteOldForecasts();
-
-			// Set alarm:
-			setAlarm();
-
-			return null;
-		}
-
-		@Override
-		protected void onPostExecute(final Void result) {
-			super.onPostExecute(result);
-			// synchronized (isWorking) {
-			if (mDownloadQueue.isEmpty() && mDbCheckQueue.isEmpty()) {
-				isWorking = false;
-				numberOfJobsCompleted = numberOfJobsStarted;
-				progress(0);
-				stopSelf();
-			} else
-				new WorkAsync().execute(new Void[] { null });
-
-		}
-
-	}
-
-	public void setAlarm() {
-		String[] projection = { Meta.NEXT_FORECAST };
-		String sortOrder = Meta.NEXT_FORECAST + " DESC";
-		Cursor c = getContentResolver().query(
-				WeatherContentProvider.CONTENT_URI, projection, null, null,
-				sortOrder);
-
-		long nextForecast = 0;
-		if (c.getCount() > 0) {
-			c.moveToFirst();
-			nextForecast = c.getLong(c
-					.getColumnIndexOrThrow(Meta.NEXT_FORECAST));
-		}
-		c.close();
-
-		if (nextForecast < System.currentTimeMillis()) {
-			// Try again next hour
-			nextForecast = System.currentTimeMillis() + 1000 * 3600;
-		}
-
-		Intent intent = new Intent(this, WeatherService.class);
-		intent.putExtra(UPDATE_PLACES, true);
-
-		final PendingIntent operation = PendingIntent.getService(this, 0,
-				intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-		AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-
-		alarmManager.set(AlarmManager.RTC, nextForecast, operation);
-
-	}
-
-	/**
-	 * Gets all places and check if there is a updated forecast
-	 */
-	private void checkPlacesForNewForecasts() {
-		Cursor c = getContentResolver().query(Place.CONTENT_URI, null, null,
-				null, null);
-		int length = c.getCount();
-		int forecastCol = c.getColumnIndexOrThrow(Place.FORECAST_ROW);
-		int longtitudeCol = c.getColumnIndexOrThrow(Place.LONGITUDE);
-		int latitudeCol = c.getColumnIndexOrThrow(Place.LATITUDE);
-		int altitudeCol = c.getColumnIndexOrThrow(Place.ALTITUDE);
-		int idCol = c.getColumnIndexOrThrow(Place._ID);
-		c.moveToFirst();
-		for (int i = 0; i < length; i++) {
-			if (!checkIfForecastIsUpdated(c.getInt(forecastCol))) {
-				// Adds place to db check
-				Location location = new Location("");
-				location.setLatitude(c.getDouble(latitudeCol));
-				location.setLongitude(c.getDouble(longtitudeCol));
-				location.setAltitude(c.getDouble(altitudeCol));
-				PlaceForecastEventListener listener = new PlaceForecastEventListener(
-						c.getInt(idCol));
-				GetForecast getForecast = new GetForecast(listener, location,
-						2000, 100);
-				mDbCheckQueue.add(getForecast);
-			}
-			c.moveToNext();
-		}
-		c.close();
-	}
-
-	/**
-	 * Check if the forecast exist in meta table and next forecast is in the
-	 * future
-	 * 
-	 * @param metaId
-	 * @return
-	 */
-	private boolean checkIfForecastIsUpdated(int metaId) {
-		String[] projection = { Meta.NEXT_FORECAST };
-		Uri uri = Uri.withAppendedPath(WeatherContentProvider.CONTENT_URI,
-				metaId + "");
-		Cursor c = getContentResolver()
-				.query(uri, projection, null, null, null);
-
-		if (c.getCount() != 1) {
-			c.close();
-			return false;
-		}
-
-		c.moveToFirst();
-		long nextForecast = c.getLong(c
-				.getColumnIndexOrThrow(Meta.NEXT_FORECAST));
-
-		if (nextForecast >= System.currentTimeMillis()) {
-			c.close();
-			return true;
-		} else {
-			c.close();
-			return false;
-		}
-	}
-
 	private class PlaceForecastEventListener implements IForecastEventListener {
+		int placeId;
+
 		public PlaceForecastEventListener(int placeId) {
 			super();
 			this.placeId = placeId;
 		}
 
-		int placeId;
-
 		@Override
 		public IBinder asBinder() {
 			return null;
+		}
+
+		@Override
+		public void completed() throws RemoteException {
+		}
+
+		@Override
+		public void exceptionOccurred(int errorcode) throws RemoteException {
+		}
+
+		@Override
+		public void newExpectedTime() throws RemoteException {
 		}
 
 		@Override
@@ -616,16 +667,41 @@ public class WeatherService extends Service implements IProgressItem {
 		public void progress(int progress) throws RemoteException {
 		}
 
+	}
+
+	/**
+	 * Gets forecast needs to be started from the UI thread.
+	 */
+	private class WorkAsync extends AsyncTask<Void, Float, Void> {
 		@Override
-		public void newExpectedTime() throws RemoteException {
+		protected Void doInBackground(final Void... params) {
+			numberOfJobsStarted = mDbCheckQueue.size() * 2
+					+ mDownloadQueue.size();
+			numberOfJobsCompleted = 0;
+			// Check db and download if the forecast is not updated or not in db
+			Log.d(TAG, "Checking database, " + mDbCheckQueue.size()
+					+ " in queue");
+			while (!mDbCheckQueue.isEmpty())
+				checkInDbOrDownload(mDbCheckQueue.poll());
+			// Download from Internet
+			Log.d(TAG, "Downloading, " + mDownloadQueue.size()
+					+ " in queue, service:" + WeatherService.this.hashCode());
+			while (!mDownloadQueue.isEmpty())
+				downloadForcast(mDownloadQueue.poll());
+
+			return null;
 		}
 
 		@Override
-		public void completed() throws RemoteException {
-		}
-
-		@Override
-		public void exceptionOccurred(int errorcode) throws RemoteException {
+		protected void onPostExecute(final Void result) {
+			super.onPostExecute(result);
+			if (mDownloadQueue.isEmpty() && mDbCheckQueue.isEmpty()) {
+				isWorking = false;
+				numberOfJobsCompleted = numberOfJobsStarted;
+				progress(0);
+				stopSelf();
+			} else
+				new WorkAsync().execute(new Void[] { null });
 		}
 
 	}
