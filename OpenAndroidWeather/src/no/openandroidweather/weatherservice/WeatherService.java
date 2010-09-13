@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import no.openandroidweather.misc.GetLocation;
 import no.openandroidweather.misc.IProgressItem;
+import no.openandroidweather.misc.WeatherPreferences;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Forecast;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Meta;
@@ -21,17 +22,17 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.location.Criteria;
 import android.location.Location;
-import android.location.LocationManager;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.util.Log;
-import android.widget.Toast;
 
 /*
  Copyright 2010 Torstein Ingebrigtsen Bø
@@ -61,6 +62,7 @@ public class WeatherService extends Service implements IProgressItem {
 	public final static int ERROR_NETWORK_ERROR = 1;
 	public final static int ERROR_UNKNOWN_ERROR = 2;
 	public static final int ERROR_NO_KNOWN_POSITION = 3;
+	public static final int ERROR_NO_WIFI = 4;
 	public static final String TAG = "WeatherService";
 	public static final String UPDATE_PLACES = "update places";
 	private GetForecast inProgress;
@@ -72,6 +74,7 @@ public class WeatherService extends Service implements IProgressItem {
 	private static PendingIntent mAlarmIntent = null;
 	public final static double defaultAceptanceRadius = 2000.;
 	public final static double defaultAceptanceVerticalDistance = 100.;
+
 	/**
 	 * Used in progress, for each GetForecast in mDbCheckQueue there is 2 jobs
 	 * (db check and download). for each GetForecast in mDownloadQueue there is
@@ -303,6 +306,23 @@ public class WeatherService extends Service implements IProgressItem {
 	 * @throws RemoteException
 	 */
 	void downloadForcast(final GetForecast getForecast) {
+		// Check if it has wifi connection if required.
+		SharedPreferences preferences = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		Boolean downloadOnlyOnWifi = preferences.getBoolean(
+				WeatherPreferences.DOWNLOAD_ONLY_ON_WIFI,
+				WeatherPreferences.DOWNLOAD_ONLY_ON_WIFI_DEFAULT);
+		if (downloadOnlyOnWifi) {
+			ConnectivityManager connManager = (ConnectivityManager) this
+					.getSystemService(Context.CONNECTIVITY_SERVICE);
+			Boolean onWifi = connManager.getNetworkInfo(
+					ConnectivityManager.TYPE_WIFI).isConnected();
+			if (!onWifi) {
+				getForecast.exceptionOccured(ERROR_NO_WIFI);
+				return;
+			}
+		}
+
 		synchronized (mDownloadingForecasts) {
 			for (Location downloadingLocation : mDownloadingForecasts) {
 				if (getForecast.isInTargetZone(
@@ -328,6 +348,16 @@ public class WeatherService extends Service implements IProgressItem {
 		} catch (final Exception e) {
 			getForecast.exceptionOccured(ERROR_UNKNOWN_ERROR);
 		}
+
+		// Update number of downloaded forecasts
+		int downloadedforecasts = preferences.getInt(
+				WeatherPreferences.NUMBER_OF_DOWNLOADED_FORECASTS,
+				WeatherPreferences.NUMBER_OF_DOWNLOADED_FORECASTS_DEFAULT);
+		downloadedforecasts++;
+		
+		SharedPreferences.Editor edit = preferences.edit();
+		edit.putInt(WeatherPreferences.NUMBER_OF_DOWNLOADED_FORECASTS, downloadedforecasts);
+		edit.commit();
 
 		// If no new forecast send status update and delete downloads
 		// queue.

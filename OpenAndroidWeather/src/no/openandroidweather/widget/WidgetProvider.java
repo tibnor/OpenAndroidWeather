@@ -368,6 +368,9 @@ public class WidgetProvider extends AppWidgetProvider {
 				case (WeatherService.ERROR_NO_KNOWN_POSITION):
 					text = "There is no known position, can't download forecast!";
 					break;
+				case WeatherService.ERROR_NO_WIFI:
+					text = "There is no Wifi connection, can't download forecast!";
+					break;
 				case (WeatherService.ERROR_UNKNOWN_ERROR):
 				default:
 					text = "Trouble getting forecast, sorry!";

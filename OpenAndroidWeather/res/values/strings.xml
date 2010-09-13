@@ -15,6 +15,7 @@
 		forecast. Try
 		again?</string>
 	<string name="no_position">Can not find your position. Try again?</string>
+	<string name="no_wifi_connection">"Could not connect to internett via Wifi(Uncheck\"Wifi only\" option in settings if you want to download forecast also when Wifi is not available). Try again?"</string>
 	<string name="yes">Yes</string>
 	<string name="no">No</string>
 	<string name="Place">Place:</string>
@@ -41,5 +42,13 @@
 	<string name="Add_place_required_fields">All fields must be filled in.</string>
 	<string name="no_forecast">The forecast is not downloaded for this place. This
 		can happen after a place is added and a forecast is not yet
-		downloaded or for places outside Norway.</string>
+		downloaded
+		or for places outside Norway.</string>
+	<string name="only_download_forecast_on_wifi">Wifi only</string>
+	<string name="only_download_forecast_on_wifi_summary">Only download forecasts on wifi. Each forecast is
+		about 150 kB, it is therefore
+		recommended to only download forecast on
+		wifi.</string>
+	<string name="Settings">Settings</string>
+	<string name="Downloaded_forecasts">Downloaded forecasts</string>
 </resources>

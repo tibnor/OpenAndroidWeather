@@ -1,3 +1,13 @@
+0.0.7
+Added possibility to only download forecast on wifi.
+
+0.0.6
+Removed a bug that caused map to not display
+
+0.0.5
+Added the possibility to have forecast from multiple places. 
+Changed the way forecasts is downloaded, now forecast should be updated for all places.
+
 0.0.4
 Added place name in ListView
 Better handling of no Internet connection.

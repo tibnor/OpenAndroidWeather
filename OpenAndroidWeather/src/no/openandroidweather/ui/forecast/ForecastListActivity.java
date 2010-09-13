@@ -75,20 +75,23 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 				long placeId = extra.getLong(PLACE_ROW_ID, -1L);
 				if (placeId != -1L) {
 					getFromPlace = true;
-					//Gets place in database for the forecast
-					Uri uri = Uri.withAppendedPath(Place.CONTENT_URI, placeId+"");
-					String[] projection = {Place.FORECAST_ROW};
-					Cursor c = getContentResolver().query(uri, projection , null, null, null);
+					// Gets place in database for the forecast
+					Uri uri = Uri.withAppendedPath(Place.CONTENT_URI, placeId
+							+ "");
+					String[] projection = { Place.FORECAST_ROW };
+					Cursor c = getContentResolver().query(uri, projection,
+							null, null, null);
 					c.moveToFirst();
-					int forecastId = c.getInt(c.getColumnIndex(Place.FORECAST_ROW));
+					int forecastId = c.getInt(c
+							.getColumnIndex(Place.FORECAST_ROW));
 					c.close();
-					
+
 					// Make the new uri for the forecast.
 					uri = Uri
 							.withAppendedPath(
 									WeatherContentProvider.CONTENT_URI,
 									forecastId + "");
-					
+
 					try {
 						forcastListener.newForecast(uri.toString(), 0L);
 						forcastListener.completed();
@@ -171,17 +174,17 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 					ForecastListActivity.this);
 			switch (errorcode) {
 			case WeatherService.ERROR_NETWORK_ERROR:
-				builder.setMessage(getResources().getString(
-						R.string.no_internet_connection));
+				builder.setMessage(R.string.no_internet_connection);
 				break;
 			case WeatherService.ERROR_NO_KNOWN_POSITION:
-				builder.setMessage(getResources().getString(
-						R.string.no_position));
+				builder.setMessage(R.string.no_position);
+				break;
+			case WeatherService.ERROR_NO_WIFI:
+				builder.setMessage(R.string.no_wifi_connection);
 				break;
 			case WeatherService.ERROR_UNKNOWN_ERROR:
 			default:
-				builder.setMessage(getResources().getString(
-						R.string.unknown_error_while_downloading));
+				builder.setMessage(R.string.unknown_error_while_downloading);
 				break;
 			}
 			builder.setCancelable(false);
@@ -249,9 +252,9 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 			final ForecastListParser parser = new ForecastListParser(
 					getApplicationContext(), ForecastListActivity.this);
 			final List<IListRow> rows = parser.parseData(params[0]);
-			if(rows==null || rows.isEmpty())
+			if (rows == null || rows.isEmpty())
 				return null;
-			
+
 			final ListView.FixedViewInfo header = getListView().new FixedViewInfo();
 			header.view = parser.getHeaderView(params[0]);
 			final ArrayList<FixedViewInfo> headerViewInfos = new ArrayList<ListView.FixedViewInfo>();
@@ -263,18 +266,20 @@ public class ForecastListActivity extends ListActivity implements IProgressItem 
 		@Override
 		protected void onPostExecute(final ListAdapter result) {
 			super.onPostExecute(result);
-			if(result!=null)
+			if (result != null)
 				setListAdapter(result);
-			else
-			{
-				AlertDialog.Builder builder = new AlertDialog.Builder(ForecastListActivity.this);
+			else {
+				AlertDialog.Builder builder = new AlertDialog.Builder(
+						ForecastListActivity.this);
 				builder.setMessage(R.string.no_forecast)
-				       .setCancelable(false)
-				       .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-				           public void onClick(DialogInterface dialog, int id) {
-				                ForecastListActivity.this.finish();
-				           }
-				       });
+						.setCancelable(false)
+						.setPositiveButton(R.string.ok,
+								new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog,
+											int id) {
+										ForecastListActivity.this.finish();
+									}
+								});
 				AlertDialog alert = builder.create();
 				alert.show();
 			}

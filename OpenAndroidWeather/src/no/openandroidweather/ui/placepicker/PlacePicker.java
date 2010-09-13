@@ -22,6 +22,7 @@ package no.openandroidweather.ui.placepicker;
 import no.openandroidweather.R;
 import no.openandroidweather.ui.addplace.AddPlaceActivity;
 import no.openandroidweather.ui.forecast.ForecastListActivity;
+import no.openandroidweather.ui.preferences.WeatherPreferencesActivity;
 import no.openandroidweather.weathercontentprovider.WeatherContentProvider.Place;
 import no.openandroidweather.weatherservice.WeatherService;
 import android.app.AlertDialog;
@@ -31,9 +32,8 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -47,34 +47,42 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class PlacePicker extends ListActivity {
-	
-	private static final int UPDATE_FORECASTS = Menu.FIRST;
+
+	private static final int UPDATE_FORECASTS = R.id.update;
+	private static final int MENU_SETTINGS = R.id.settings;
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		super.onCreateOptionsMenu(menu);
-		menu.add(Menu.NONE, UPDATE_FORECASTS, Menu.NONE, R.string.update_forecasts);
+	    MenuInflater inflater = getMenuInflater();
+	    inflater.inflate(R.menu.place_picker_option_menu, menu);
 		return true;
 	}
-	
+
 	@Override
 	public boolean onMenuItemSelected(int featureId, MenuItem item) {
 		// TODO Auto-generated method stub
-		
+
 		switch (item.getItemId()) {
 		case UPDATE_FORECASTS:
 			updateForecast();
+			return true;
+		case MENU_SETTINGS:
+			goToSettings();
 			return true;
 		default:
 			return super.onMenuItemSelected(featureId, item);
 		}
 	}
 
+	private void goToSettings() {
+		startActivity(new Intent(this, WeatherPreferencesActivity.class));
+	}
+
 	private void updateForecast() {
 		Intent intent = new Intent(this, WeatherService.class);
 		intent.putExtra(WeatherService.UPDATE_PLACES, true);
 		startService(intent);
-		
+
 		Toast.makeText(this, R.string.updating_forecasts, Toast.LENGTH_SHORT);
 	}
 
