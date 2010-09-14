@@ -51,4 +51,10 @@
 		wifi.</string>
 	<string name="Settings">Settings</string>
 	<string name="Downloaded_forecasts">Downloaded forecasts</string>
+	<string name="time">Time</string>
+	<string name="forecast">Forecast</string>
+	<string name="temperature">Temp.</string>
+	<string name="percipitation">Percip.</string>
+	<string name="wind">Wind</string>
+	<string name="windDirection">Wind dir.</string>
 </resources>

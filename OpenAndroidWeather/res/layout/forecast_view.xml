@@ -1,13 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent" android:layout_height="fill_parent"
 	android:orientation="vertical">
-	<TextView android:layout_width="fill_parent"
-		android:layout_height="wrap_content" android:id="@+id/android:empty"
-		android:text="@string/please_wait_1min" />
-	<ListView android:id="@+id/android:list" android:layout_width="fill_parent"
-		android:layout_height="fill_parent" />
-	<ProgressBar android:id="@+id/progressbar"
-		android:layout_width="fill_parent" android:layout_height="wrap_content"
-		style="?android:attr/progressBarStyleHorizontal" android:max="1000" />
-</LinearLayout>
+	<LinearLayout android:orientation="vertical" android:id="@+id/main"
+		android:layout_width="fill_parent" android:layout_height="wrap_content">
+		<TableLayout android:layout_width="fill_parent"
+			android:layout_height="wrap_content" android:stretchColumns="0" android:padding="3dip">
+			<TableRow>
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:text="@string/Place" />
+				<TextView android:gravity="right" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/place" />
+			</TableRow>
+			<TableRow>
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:text="@string/Generated" />
+				<TextView android:gravity="right" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/generated" />
+			</TableRow>
+			<TableRow>
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:text="@string/Downloaded" />
+				<TextView android:gravity="right" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/downloaded" />
+			</TableRow>
+			<TableRow>
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:text="@string/Next_update" />
+				<TextView android:gravity="right" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:id="@+id/next_update" />
+			</TableRow>
+		</TableLayout>
+		<TextView layout_span="2" android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:text="@string/Provider" android:padding="3dip"/>
+
+		<TableLayout android:id="@+id/forecastsTable"
+			android:layout_width="fill_parent" android:layout_height="fill_parent">
+			<TableRow>
+				<TextView android:text="@string/time" android:padding="3dip" />
+				<TextView android:text="@string/forecast" android:padding="3dip" />
+				<TextView android:text="@string/temperature"
+					android:padding="3dip" />
+				<TextView android:text="@string/percipitation"
+					android:padding="3dip" />
+				<TextView android:text="@string/wind" android:padding="3dip" />
+				<TextView android:text="@string/windDirection"
+					android:padding="3dip" />
+			</TableRow>
+		</TableLayout>
+	</LinearLayout>
+</ScrollView>
