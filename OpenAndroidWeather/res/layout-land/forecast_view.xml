@@ -5,7 +5,7 @@
 	<LinearLayout android:orientation="vertical" android:id="@+id/main"
 		android:layout_width="fill_parent" android:layout_height="wrap_content">
 		<TableLayout android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:stretchColumns="0,1"
+			android:layout_height="wrap_content" android:stretchColumns="0,1,2,3"
 			android:padding="3dip">
 			<TableRow>
 				<TextView android:layout_width="wrap_content"
@@ -14,8 +14,6 @@
 				<TextView android:layout_width="wrap_content"
 					android:layout_height="wrap_content" android:id="@+id/place"
 					android:gravity="left" />
-			</TableRow>
-			<TableRow>
 				<TextView android:layout_width="wrap_content"
 					android:gravity="right" android:layout_height="wrap_content"
 					android:text="@string/Generated" />
@@ -30,8 +28,6 @@
 				<TextView android:layout_width="wrap_content"
 					android:layout_height="wrap_content" android:id="@+id/downloaded"
 					android:gravity="left" />
-			</TableRow>
-			<TableRow>
 				<TextView android:layout_width="wrap_content"
 					android:gravity="right" android:layout_height="wrap_content"
 					android:text="@string/Next_update" />

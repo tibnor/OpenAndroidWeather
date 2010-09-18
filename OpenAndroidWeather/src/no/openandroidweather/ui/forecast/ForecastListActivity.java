@@ -23,6 +23,9 @@ import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Formatter;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import no.openandroidweather.R;
 import no.openandroidweather.misc.IProgressItem;
@@ -62,12 +65,13 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 	public static final String PLACE_ROW_ID = "_rowId";
 	private final String TAG = "ForecastListActivity";
 	private final IForecastEventListener forcastListener = new ForecastListener();
-	private ProgressDialog progressBar;
+	private ProgressDialog mProgressBar;
 	private TableLayout mTable;
 	private final Handler mHandler = new Handler();
 	private IWeatherService mService = null;
 	private LayoutInflater inflater;
 	final DateFormat df = DateFormat.getDateInstance(DateFormat.FULL);
+	private Queue<View> mTableRows = new ConcurrentLinkedQueue<View>();
 
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -142,13 +146,14 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 				mServiceConnection, BIND_AUTO_CREATE);
 
 		inflater = getLayoutInflater();
-		
-		progressBar = new ProgressDialog(this);
-		progressBar.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-		progressBar.setMax(1000);
-		progressBar.setMessage(getResources().getText(R.string.please_wait_1min));
-		progressBar.setCancelable(false);
-		progressBar.show();
+
+		mProgressBar = new ProgressDialog(this);
+		mProgressBar.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+		mProgressBar.setMax(1000);
+		mProgressBar.setMessage(getResources().getText(
+				R.string.please_wait_1min));
+		mProgressBar.setCancelable(false);
+		mProgressBar.show();
 
 	}
 
@@ -170,7 +175,7 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 	 */
 	@Override
 	public void progress(final int progress) {
-		progressBar.setProgress(progress);
+		mProgressBar.setProgress(progress);
 	}
 
 	private void checkDate(final long from, final long to) {
@@ -187,19 +192,22 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 	public void inflateDateRow(long date) {
 		final View row = inflater.inflate(R.layout.forecast_view_date_item,
 				null);
+		final View descriptionRow = inflater.inflate(
+				R.layout.forecast_view_description, null);
+		final View unitsRow = inflater.inflate(R.layout.forecast_view_units,
+				null);
+
 		final DateFormat df = DateFormat.getDateInstance(DateFormat.FULL);
 		String dateS = df.format(new Date(date));
 		((TextView) row).setText(dateS);
-		runOnUiThread(new Runnable() {
 
-			@Override
-			public void run() {
-				mTable.addView(row);
-			}
-		});
+		mTableRows.add(row);
+		mTableRows.add(descriptionRow);
+		mTableRows.add(unitsRow);
 	}
 
-	/** Get the meta data and render the header
+	/**
+	 * Get the meta data and render the header
 	 * 
 	 * @param uri
 	 * @return If no forecast it returns false else true
@@ -207,14 +215,14 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 	public boolean setHeader(final Uri uri) {
 		final Cursor c = getContentResolver()
 				.query(uri, null, null, null, null);
-		if (c == null || c.getCount() == 0){
+		if (c == null || c.getCount() == 0) {
 			c.close();
 			noForecast();
 			return false;
 		}
 
 		c.moveToFirst();
-		final DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG,
+		final DateFormat df = DateFormat.getDateTimeInstance(DateFormat.SHORT,
 				DateFormat.SHORT);
 
 		final String place = c.getString(c
@@ -252,7 +260,19 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 		Uri forecastUri = Uri.withAppendedPath(uri,
 				ForecastListView.CONTENT_PATH);
 
-		if(!setHeader(uri))
+		runOnUiThread(new Runnable() {
+
+			@Override
+			public void run() {
+				mProgressBar = new ProgressDialog(ForecastListActivity.this);
+				mProgressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+				mProgressBar.setMessage(getResources().getString(
+						R.string.please_wait));
+				mProgressBar.show();
+			}
+		});
+
+		if (!setHeader(uri))
 			return;
 
 		// Set start time to the beginning of this hour
@@ -303,6 +323,10 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 		}
 		c.close();
 
+		dumpTableRows();
+		
+		mProgressBar.dismiss();
+
 		return;
 	}
 
@@ -335,8 +359,8 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 			final double windDirection, final long startTime) {
 		final TableRow row = (TableRow) inflater.inflate(
 				R.layout.forecast_view_item, null);
-		final Formatter formatter = new Formatter();
-		String hour = formatter.format("%tH", startTime).toString();
+		final DateFormat df = DateFormat.getTimeInstance(DateFormat.SHORT);
+		String hour = df.format(new Date(startTime));
 
 		// Set hour
 		((TextView) row.findViewById(R.id.hour)).setText(hour);
@@ -346,30 +370,37 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 				.setImageResource(Q.symbol[symbol]);
 
 		// Set temperature
-		((TextView) row.findViewById(R.id.temperature)).setText(temperature
-				+ "°C");
+		((TextView) row.findViewById(R.id.temperature)).setText(Double
+				.toString(temperature));
 
 		// Set precipitation
-		((TextView) row.findViewById(R.id.percipitation)).setText(percipitation
-				+ " mm");
+		((TextView) row.findViewById(R.id.percipitation)).setText(Double
+				.toString(percipitation));
 
 		// Set wind speed
-		((TextView) row.findViewById(R.id.wind_speed)).setText(windSpeed
-				+ " m/s");
+		((TextView) row.findViewById(R.id.wind_speed)).setText(Double
+				.toString(windSpeed));
 
 		// Set wind direction
-		((TextView) row.findViewById(R.id.wind_direction))
-				.setText(windDirection + "°");
+		((TextView) row.findViewById(R.id.wind_direction)).setText(Double
+				.toString(windDirection));
 
+		mTableRows.add(row);
+
+		return;
+	}
+
+	private void dumpTableRows() {
 		runOnUiThread(new Runnable() {
 
 			@Override
 			public void run() {
-				mTable.addView(row);
+				for (View row : mTableRows) {
+					mTable.addView(row);
+				}
 			}
 		});
 
-		return;
 	}
 
 	private class ForecastListener extends IForecastEventListener.Stub {
@@ -451,9 +482,15 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 		public void newForecast(final String uri, final long forecastGenerated)
 				throws RemoteException {
 			hasGotForecast = true;
-			progressBar.setProgress(1000);
-			progressBar.dismiss();
-			parseData(Uri.parse(uri), findViewById(R.id.main));
+			mProgressBar.setProgress(1000);
+			mProgressBar.dismiss();
+			new Thread(new Runnable() {
+
+				@Override
+				public void run() {
+					parseData(Uri.parse(uri), findViewById(R.id.main));
+				}
+			}).start();
 
 		}
 

@@ -54,7 +54,12 @@
 	<string name="time">Time</string>
 	<string name="forecast">Forecast</string>
 	<string name="temperature">Temp.</string>
+	<string name="degreeCelius">°C</string>
+	<string name="millimeter">mm</string>
+	<string name="meterperseconds">m/s</string>
+	<string name="degree">deg.</string>
 	<string name="percipitation">Percip.</string>
 	<string name="wind">Wind</string>
 	<string name="windDirection">Wind dir.</string>
+	<string name="please_wait">Please wait.</string>
 </resources>

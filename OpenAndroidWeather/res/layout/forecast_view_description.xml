@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableRow xmlns:android="http://schemas.android.com/apk/res/android">
+	<TextView android:text="@string/time" android:padding="3dip" android:gravity="center"/>
+	<TextView android:text="@string/forecast" android:padding="3dip" android:gravity="center"/>
+	<TextView android:text="@string/temperature" android:padding="3dip" android:gravity="center"/>
+	<TextView android:text="@string/percipitation"
+		android:padding="3dip" android:gravity="center"/>
+	<TextView android:text="@string/wind" android:padding="3dip" android:gravity="center"/>
+	<TextView android:text="@string/windDirection"
+		android:padding="3dip" android:gravity="center"/>
+</TableRow>

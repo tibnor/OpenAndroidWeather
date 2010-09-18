@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableRow
+  xmlns:android="http://schemas.android.com/apk/res/android">
+  	<TextView android:gravity="center"/>
+	<TextView  android:gravity="center"/>
+	<TextView android:text="@string/degreeCelius" android:padding="3dip" android:gravity="center"/>
+	<TextView android:text="@string/millimeter"
+		android:padding="3dip" android:gravity="center"/>
+	<TextView android:text="@string/meterperseconds" android:padding="3dip" android:gravity="center"/>
+	<TextView android:text="@string/degree"
+		android:padding="3dip" android:gravity="center"/>
+</TableRow>

@@ -1,3 +1,6 @@
+0.0.8
+Changed forecast list view now it is a scrollable table view
+
 0.0.7
 Added possibility to only download forecast on wifi.
 
