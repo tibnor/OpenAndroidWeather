@@ -405,14 +405,15 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 				.findViewById(R.id.cloud_coverage);
 
 		if (cloudCoverageTextView != null) {
-			cloudCoverageTextView.setText(Double.toString(cloudCoverage));
-			
+			if (cloudCoverage >= 0)
+				cloudCoverageTextView.setText(Double.toString(cloudCoverage));
+
 			TextView humidityTextView = (TextView) row
-			.findViewById(R.id.humidity);
-			if(humidityTextView != null){
-				humidityTextView.setText(Double
-						.toString(humidity));
-				
+					.findViewById(R.id.humidity);
+			if (humidityTextView != null) {
+				if (humidity >= 0)
+					humidityTextView.setText(Double.toString(humidity));
+
 				((TextView) row.findViewById(R.id.pressure)).setText(Double
 						.toString(pressure));
 			}

@@ -62,8 +62,8 @@
 	<string name="wind">Wind\nspeed</string>
 	<string name="windDirection">Wind\ndirection</string>
 	<string name="cloudCoverage">Cloud\ncover</string>
-	<string name="humidity">Humidity</string>
-	<string name="pressure">Pressure</string>
+	<string name="humidity">Humi-\ndity</string>
+	<string name="pressure">Pres-\nsure</string>
 	<string name="hPa">hPa</string>
 	<string name="percent">%</string>
 	<string name="please_wait">Please wait.</string>

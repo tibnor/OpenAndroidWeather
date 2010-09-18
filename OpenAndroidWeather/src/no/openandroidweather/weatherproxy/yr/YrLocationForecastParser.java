@@ -64,6 +64,7 @@ public class YrLocationForecastParser extends DefaultHandler {
 	private Double mPercipitation = -1.;
 	private Double mPressure = -1.;
 	private Double mHumidity = -1.;
+	private boolean isCoarseForecast = false;
 	private boolean hasParsedForecastRow = false;
 
 	public YrLocationForecastParser(final ContentResolver contentResolver,
@@ -95,8 +96,7 @@ public class YrLocationForecastParser extends DefaultHandler {
 	private void checkForecastRow() {
 		if (!hasParsedForecastRow && mTemperature != TEMPERATURE_NOT_SET_VALUE
 				&& mWindDirection >= 0 && mWindSpeed >= 0 && mSymbol >= 0
-				&& mPercipitation >= 0 && mCloudCoverage >= 0 && mPressure >= 0
-				&& mHumidity >= 0) {
+				&& mPercipitation >= 0  && mPressure >= 0) {
 			// Adds values
 			ContentValues values = new ContentValues();
 			values.put(ForecastListView.fromTime, from);
@@ -262,6 +262,8 @@ public class YrLocationForecastParser extends DefaultHandler {
 		// If the forecast is a new starting time, reset hasParsedForecastRow
 		if (newFrom != from) {
 			hasParsedForecastRow = false;
+			if((newFrom-from)>3600*1000)
+				isCoarseForecast=true;
 			from = newFrom;
 			resetCached();
 		}
