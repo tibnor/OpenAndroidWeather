@@ -25,6 +25,9 @@ public class WeatherType {
 	public static final int temperature = 2;
 	public static final int windSpeed = 3;
 	public static final int windDirection = 4;
+	public static final int cloudCoverage = 5;
+	public static final int humidity = 6;
+	public static final int pressure = 7;
 
 	public class symbol {
 		public static final int SUN = 1;

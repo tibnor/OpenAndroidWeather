@@ -53,13 +53,18 @@
 	<string name="Downloaded_forecasts">Downloaded forecasts</string>
 	<string name="time">Time</string>
 	<string name="forecast">Forecast</string>
-	<string name="temperature">Temp.</string>
+	<string name="temperature">Tempe-\nrature</string>
 	<string name="degreeCelius">°C</string>
 	<string name="millimeter">mm</string>
 	<string name="meterperseconds">m/s</string>
 	<string name="degree">deg.</string>
-	<string name="percipitation">Percip.</string>
-	<string name="wind">Wind</string>
-	<string name="windDirection">Wind dir.</string>
+	<string name="percipitation">Percipi-\ntation</string>
+	<string name="wind">Wind\nspeed</string>
+	<string name="windDirection">Wind\ndirection</string>
+	<string name="cloudCoverage">Cloud\ncover</string>
+	<string name="humidity">Humidity</string>
+	<string name="pressure">Pressure</string>
+	<string name="hPa">hPa</string>
+	<string name="percent">%</string>
 	<string name="please_wait">Please wait.</string>
 </resources>

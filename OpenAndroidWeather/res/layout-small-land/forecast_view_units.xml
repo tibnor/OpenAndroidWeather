@@ -6,4 +6,5 @@
 	<TextView android:text="@string/millimeter" style="@style/forecastList.TextView"/>
 	<TextView android:text="@string/meterperseconds" style="@style/forecastList.TextView"/>
 	<TextView android:text="@string/degree" style="@style/forecastList.TextView"/>
+	<TextView android:text="@string/percent" style="@style/forecastList.TextView"/>
 </TableRow>

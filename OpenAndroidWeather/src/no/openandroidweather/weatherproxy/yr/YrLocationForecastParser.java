@@ -59,8 +59,11 @@ public class YrLocationForecastParser extends DefaultHandler {
 	private Double mTemperature = TEMPERATURE_NOT_SET_VALUE;
 	private Double mWindDirection = -1.;
 	private Double mWindSpeed = -1.;
+	private Double mCloudCoverage = -1.;
 	private Integer mSymbol = -1;
 	private Double mPercipitation = -1.;
+	private Double mPressure = -1.;
+	private Double mHumidity = -1.;
 	private boolean hasParsedForecastRow = false;
 
 	public YrLocationForecastParser(final ContentResolver contentResolver,
@@ -92,7 +95,8 @@ public class YrLocationForecastParser extends DefaultHandler {
 	private void checkForecastRow() {
 		if (!hasParsedForecastRow && mTemperature != TEMPERATURE_NOT_SET_VALUE
 				&& mWindDirection >= 0 && mWindSpeed >= 0 && mSymbol >= 0
-				&& mPercipitation >= 0) {
+				&& mPercipitation >= 0 && mCloudCoverage >= 0 && mPressure >= 0
+				&& mHumidity >= 0) {
 			// Adds values
 			ContentValues values = new ContentValues();
 			values.put(ForecastListView.fromTime, from);
@@ -102,6 +106,9 @@ public class YrLocationForecastParser extends DefaultHandler {
 			values.put(ForecastListView.temperature, mTemperature);
 			values.put(ForecastListView.windDirection, mWindDirection);
 			values.put(ForecastListView.windSpeed, mWindSpeed);
+			values.put(ForecastListView.cloudCoverage, mCloudCoverage);
+			values.put(ForecastListView.pressure, mPressure);
+			values.put(ForecastListView.humidity, mHumidity);
 			forecastListValues.add(values);
 			hasParsedForecastRow = true;
 
@@ -119,8 +126,7 @@ public class YrLocationForecastParser extends DefaultHandler {
 		ContentValues[] values = new ContentValues[0];
 		values = rawValues.toArray(values);
 		contentResolver.bulkInsert(Uri.withAppendedPath(contentUri,
-				WeatherContentProvider.Forecast.CONTENT_DIRECTORY),
-				values);
+				WeatherContentProvider.Forecast.CONTENT_DIRECTORY), values);
 
 		// Post progress
 		progressItem.progress(750);
@@ -129,8 +135,7 @@ public class YrLocationForecastParser extends DefaultHandler {
 		values = forecastListValues.toArray(values);
 		contentResolver
 				.bulkInsert(Uri.withAppendedPath(contentUri,
-						ForecastListView.CONTENT_PATH),
-						values);
+						ForecastListView.CONTENT_PATH), values);
 
 	}
 
@@ -225,6 +230,18 @@ public class YrLocationForecastParser extends DefaultHandler {
 		mPercipitation = new Double(value);
 	}
 
+	private void parseHumidity(final Attributes attributes) {
+		final String value = attributes.getValue(attributes.getIndex("value"));
+		insertValue(WeatherType.humidity, value);
+		mHumidity = new Double(value);
+	}
+
+	private void parsePressure(final Attributes attributes) {
+		final String value = attributes.getValue(attributes.getIndex("value"));
+		insertValue(WeatherType.pressure, value);
+		mPressure = new Double(value);
+	}
+
 	private void parseSymbol(final Attributes attributes) {
 		final String value = attributes.getValue(attributes.getIndex("number"));
 		insertValue(WeatherType.symbol, value);
@@ -263,6 +280,13 @@ public class YrLocationForecastParser extends DefaultHandler {
 		mWindSpeed = new Double(value);
 	}
 
+	private void parseTotalCloudCoverage(final Attributes attributes) {
+		final String value = attributes
+				.getValue(attributes.getIndex("percent"));
+		insertValue(WeatherType.cloudCoverage, value);
+		mCloudCoverage = new Double(value);
+	}
+
 	/**
 	 * Reset data cached for forecast list view table
 	 */
@@ -273,6 +297,9 @@ public class YrLocationForecastParser extends DefaultHandler {
 		mWindSpeed = -1.;
 		mSymbol = -1;
 		mPercipitation = -1.;
+		mCloudCoverage = -1.;
+		mPressure = -1.;
+		mHumidity = -1.;
 	}
 
 	@Override
@@ -292,6 +319,12 @@ public class YrLocationForecastParser extends DefaultHandler {
 			parseWindSpeed(attributes);
 		else if (localName.equals("windDirection"))
 			parseWindDirection(attributes);
+		else if (localName.equals("cloudiness"))
+			parseTotalCloudCoverage(attributes);
+		else if (localName.equals("humidity"))
+			parseHumidity(attributes);
+		else if (localName.equals("pressure"))
+			parsePressure(attributes);
 		else if (localName.equals("meta"))
 			isInMeta = true;
 		else if (!locationIsSet && localName.equals("location"))

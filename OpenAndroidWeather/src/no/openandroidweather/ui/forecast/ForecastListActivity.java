@@ -22,9 +22,7 @@ package no.openandroidweather.ui.forecast;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Formatter;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import no.openandroidweather.R;
@@ -158,6 +156,12 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 	}
 
 	@Override
+	protected void onPause() {
+		super.onPause();
+		mProgressBar.dismiss();
+	}
+
+	@Override
 	protected void onDestroy() {
 		if (mService != null) {
 			synchronized (mService) {
@@ -166,7 +170,7 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 			}
 		}
 
-		super.onPause();
+		super.onDestroy();
 	}
 
 	/**
@@ -300,11 +304,17 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 				.getColumnIndexOrThrow(ForecastListView.windDirection);
 		final int windSpeedCol = c
 				.getColumnIndexOrThrow(ForecastListView.windSpeed);
+		final int cloudCoverageCol = c
+				.getColumnIndexOrThrow(ForecastListView.cloudCoverage);
+		final int pressureCol = c
+				.getColumnIndexOrThrow(ForecastListView.pressure);
+		final int humidityCol = c
+				.getColumnIndexOrThrow(ForecastListView.humidity);
 
 		c.moveToFirst();
 		long from = c.getLong(fromCol), to;
 		int symbol;
-		double percipitation, temperature, windDirection, windSpeed;
+		double percipitation, temperature, windDirection, windSpeed, cloudCoverage, humidity, pressure;
 		inflateDateRow(from);
 		int length = c.getCount();
 		for (int i = 0; i < length; i++) {
@@ -315,8 +325,12 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 			temperature = c.getDouble(temperatureCol);
 			windDirection = c.getDouble(windDirectionCol);
 			windSpeed = c.getDouble(windSpeedCol);
+			cloudCoverage = c.getDouble(cloudCoverageCol);
+			pressure = c.getDouble(pressureCol);
+			humidity = c.getDouble(humidityCol);
+
 			addForecastRow(symbol, temperature, percipitation, windSpeed,
-					windDirection, from);
+					windDirection, from, cloudCoverage, humidity, pressure);
 			checkDate(from, to);
 			c.moveToNext();
 
@@ -324,7 +338,7 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 		c.close();
 
 		dumpTableRows();
-		
+
 		mProgressBar.dismiss();
 
 		return;
@@ -356,7 +370,9 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 
 	public void addForecastRow(final int symbol, final double temperature,
 			final double percipitation, final double windSpeed,
-			final double windDirection, final long startTime) {
+			final double windDirection, final long startTime,
+			final double cloudCoverage, final double humidity,
+			final double pressure) {
 		final TableRow row = (TableRow) inflater.inflate(
 				R.layout.forecast_view_item, null);
 		final DateFormat df = DateFormat.getTimeInstance(DateFormat.SHORT);
@@ -384,6 +400,23 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 		// Set wind direction
 		((TextView) row.findViewById(R.id.wind_direction)).setText(Double
 				.toString(windDirection));
+
+		TextView cloudCoverageTextView = (TextView) row
+				.findViewById(R.id.cloud_coverage);
+
+		if (cloudCoverageTextView != null) {
+			cloudCoverageTextView.setText(Double.toString(cloudCoverage));
+			
+			TextView humidityTextView = (TextView) row
+			.findViewById(R.id.humidity);
+			if(humidityTextView != null){
+				humidityTextView.setText(Double
+						.toString(humidity));
+				
+				((TextView) row.findViewById(R.id.pressure)).setText(Double
+						.toString(pressure));
+			}
+		}
 
 		mTableRows.add(row);
 

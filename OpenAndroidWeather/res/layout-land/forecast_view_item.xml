@@ -6,4 +6,7 @@
 	<TextView android:id="@+id/percipitation" style="@style/forecastList.TextView"/>
 	<TextView android:id="@+id/wind_speed" style="@style/forecastList.TextView"/>
 	<TextView android:id="@+id/wind_direction" style="@style/forecastList.TextView"/>
+	<TextView android:id="@+id/cloud_coverage" style="@style/forecastList.TextView"/>
+	<TextView android:id="@+id/humidity" style="@style/forecastList.TextView"/>
+	<TextView android:id="@+id/pressure" style="@style/forecastList.TextView"/>
 </TableRow>

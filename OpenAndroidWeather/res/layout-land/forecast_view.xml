@@ -6,7 +6,7 @@
 		android:layout_width="fill_parent" android:layout_height="wrap_content">
 		<TableLayout android:layout_width="fill_parent"
 			android:layout_height="wrap_content" android:stretchColumns="0,1,2,3"
-			android:padding="3dip">
+			android:padding="3dip" >
 			<TableRow>
 				<TextView android:layout_width="wrap_content"
 					android:layout_height="wrap_content" android:text="@string/Place"

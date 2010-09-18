@@ -28,7 +28,7 @@ import android.util.Log;
 class WeatherContentProviderDatabaseOpenHelper extends SQLiteOpenHelper {
 	private static final String TAG = "WeatherProxyDatabaseOpenHelper";
 	private static final String DATABASE_FILE = "weather.db";
-	static final int DATABASE_VERSION = 8;
+	static final int DATABASE_VERSION = 10;
 
 	public WeatherContentProviderDatabaseOpenHelper(final Context context) {
 		super(context, DATABASE_FILE, null, DATABASE_VERSION);
@@ -40,14 +40,22 @@ class WeatherContentProviderDatabaseOpenHelper extends SQLiteOpenHelper {
 	}
 
 	void deleteDatabase(final SQLiteDatabase db) {
+
+		deleteForecasts(db);
+		db.execSQL("DROP TABLE IF EXISTS "
+				+ WeatherContentProvider.Place.TABLE_NAME);
+	}
+
+	/**
+	 * @param db
+	 */
+	private void deleteForecasts(final SQLiteDatabase db) {
 		db.execSQL("DROP TABLE IF EXISTS "
 				+ WeatherContentProvider.Forecast.TABLE_NAME);
 		db.execSQL("DROP TABLE IF EXISTS "
 				+ WeatherContentProvider.Meta.TABLE_NAME);
 		db.execSQL("DROP TABLE IF EXISTS "
 				+ WeatherContentProvider.ForecastListView.TABLE_NAME);
-		db.execSQL("DROP TABLE IF EXISTS "
-				+ WeatherContentProvider.Place.TABLE_NAME);
 	}
 
 	@Override
@@ -67,7 +75,15 @@ class WeatherContentProviderDatabaseOpenHelper extends SQLiteOpenHelper {
 		if (oldVersion == DATABASE_VERSION)
 			return;
 
-		deleteDatabase(db);
+		if (oldVersion <= 7){
+			deleteDatabase(db);
+		}
+		
+		if (oldVersion < 10){
+			deleteForecasts(db);
+		}
+		
+
 		onCreate(db);
 	}
 

@@ -345,7 +345,7 @@ public class WeatherContentProvider extends ContentProvider {
 		public static final String VALUE = "value";
 		/** _id in META table for forecast data, integer */
 		static final String META = "meta";
-		static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ("
+		static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " ("
 				+ _ID + " INTEGER PRIMARY KEY, " + FROM + " INTEGER, " + META
 				+ " INTEGER, " + TO + " INTEGER, " + TYPE + " INTEGER, "
 				+ VALUE + " TEXT )";
@@ -390,12 +390,24 @@ public class WeatherContentProvider extends ContentProvider {
 		 * Wind direction at start time in degrees (360), double
 		 */
 		public static final String windDirection = "windDirection";
+		/**
+		 * Total cloud coverage at total in percentage, double
+		 */
+		public static final String cloudCoverage ="cloudCoverage";
+		/**
+		 * Pressure in hPa, double
+		 */
+		public static final String pressure = "pressure";
+		/**
+		 * Humidity in percentage, double
+		 */
+		public static final String humidity = "humidity";
 
-		static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ("
+		static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " ("
 				+ _id + " INTEGER PRIMARY KEY, " + metaId + " INTEGER, "
 				+ fromTime + " INTEGER, " + toTime + " INTEGER, " + temperature
 				+ " REAL," + symbol + " INTEGER," + percipitation + " REAL, "
-				+ windSpeed + " REAL," + windDirection + " REAL)";
+				+ windSpeed + " REAL," + pressure + " REAL, " + humidity + " REAL, " + cloudCoverage + " REAL," + windDirection + " REAL)";
 
 	}
 
@@ -433,7 +445,7 @@ public class WeatherContentProvider extends ContentProvider {
 		public static final String LOADED = "loaded";
 		/** Provider of the forecast */
 		public static final String PROVIDER = "provider";
-		static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ("
+		static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " ("
 				+ _ID + " INTEGER PRIMARY KEY," + ALTITUDE + " REAL,"
 				+ NEXT_FORECAST + " INTEGER," + GENERATED + " INTEGER,"
 				+ LATITUDE + " REAL," + LOADED + " INTEGER," + LONGITUDE
@@ -463,7 +475,7 @@ public class WeatherContentProvider extends ContentProvider {
 		/** Row in forecast meta table for the most updated forecast, integer */
 		public static final String FORECAST_ROW = "forecastRow";
 
-		static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ("
+		static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " ("
 				+ _ID + " INTEGER PRIMARY KEY," + ALTITUDE + " REAL,"
 				+ LATITUDE + " REAL," + LONGITUDE + " REAL," + FORECAST_ROW
 				+ " INTEGER, " + PLACE_NAME + " TEXT)";
