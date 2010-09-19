@@ -39,6 +39,7 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
@@ -70,6 +71,7 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 	private LayoutInflater inflater;
 	final DateFormat df = DateFormat.getDateInstance(DateFormat.FULL);
 	private Queue<View> mTableRows = new ConcurrentLinkedQueue<View>();
+	private boolean isRunning = false;
 
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -135,6 +137,7 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		isRunning = true;
 
 		setContentView(R.layout.forecast_view);
 		// progressBar = (ProgressBar) findViewById(R.id.progressbar);
@@ -150,10 +153,18 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 		mProgressBar.setMax(1000);
 		mProgressBar.setMessage(getResources().getText(
 				R.string.please_wait_1min));
-		mProgressBar.setCancelable(false);
+		mProgressBar.setCancelable(true);
+		mProgressBar.setOnCancelListener(new OnCancelListener() {
+			
+			@Override
+			public void onCancel(DialogInterface dialog) {
+				ForecastListActivity.this.finish();
+			}
+		});
 		mProgressBar.show();
 
 	}
+	
 
 	@Override
 	protected void onPause() {
@@ -169,7 +180,7 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 					unbindService(mServiceConnection);
 			}
 		}
-
+		isRunning = false;
 		super.onDestroy();
 	}
 
@@ -272,6 +283,13 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 				mProgressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 				mProgressBar.setMessage(getResources().getString(
 						R.string.please_wait));
+				mProgressBar.setOnCancelListener(new OnCancelListener() {
+					
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						ForecastListActivity.this.finish();
+					}
+				});
 				mProgressBar.show();
 			}
 		});
@@ -515,6 +533,9 @@ public class ForecastListActivity extends Activity implements IProgressItem {
 		@Override
 		public void newForecast(final String uri, final long forecastGenerated)
 				throws RemoteException {
+			if(!isRunning)
+				return;
+			
 			hasGotForecast = true;
 			mProgressBar.setProgress(1000);
 			mProgressBar.dismiss();
