@@ -19,7 +19,6 @@
 
 package no.openandroidweather.misc;
 
-import no.openandroidweather.weatherservice.WeatherService;
 import android.content.Context;
 import android.location.Criteria;
 import android.location.Location;
@@ -27,7 +26,7 @@ import android.location.LocationManager;
 
 public class GetLocation {
 	public static Location getLocation(Context context) {
-		Location loc = getLocation(context, Criteria.ACCURACY_FINE);
+		final Location loc = getLocation(context, Criteria.ACCURACY_FINE);
 
 		if (loc != null)
 			return loc;
@@ -41,11 +40,10 @@ public class GetLocation {
 						Context.LOCATION_SERVICE);
 		final Criteria criteria = new Criteria();
 		criteria.setAccuracy(accuracyCriteria);
-		String provider = locationManager.getBestProvider(criteria, true);
+		final String provider = locationManager.getBestProvider(criteria, true);
 
-		if (provider == null) {
+		if (provider == null)
 			return null;
-		}
 
 		return locationManager.getLastKnownLocation(provider);
 	}

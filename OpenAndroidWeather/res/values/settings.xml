@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-
-	<item type="attr" format="float" name="tolleranceRadius">10000</item>
-</resources>

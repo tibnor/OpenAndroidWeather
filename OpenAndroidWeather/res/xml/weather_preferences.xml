@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-	<CheckBoxPreference android:title="@string/only_download_forecast_on_wifi"
-		android:defaultValue="true" android:key="download_only_on_wifi"
-		android:summary="@string/only_download_forecast_on_wifi_summary" />
-	<Preference android:key="number_of_downloaded_forecasts"
-		android:title="@string/Downloaded_forecasts" android:enabled="false" />
-
-</PreferenceScreen>

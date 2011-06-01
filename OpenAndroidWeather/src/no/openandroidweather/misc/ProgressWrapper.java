@@ -15,16 +15,16 @@
 
     You should have received a copy of the GNU General Public License
     along with OpenAndroidWeather.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 package no.openandroidweather.misc;
 
-public class ProgressWrapper implements IProgressItem{
+public class ProgressWrapper implements IProgressItem {
 
-	private int min;
-	private int max;
-	private IProgressItem mListener;
-	
+	private final int min;
+	private final int max;
+	private final IProgressItem mListener;
+
 	public ProgressWrapper(int min, int max, IProgressItem mListener) {
 		super();
 		this.min = min;
@@ -34,7 +34,7 @@ public class ProgressWrapper implements IProgressItem{
 
 	@Override
 	public void progress(int progress) {
-		mListener.progress((int) (min + progress/1000.*(max-min)));
+		mListener.progress((int) (min + progress / 1000. * (max - min)));
 	}
-	
+
 }
