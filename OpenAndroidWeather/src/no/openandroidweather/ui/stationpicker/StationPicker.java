@@ -19,29 +19,15 @@
 
 package no.openandroidweather.ui.stationpicker;
 
-import java.util.Date;
-import java.util.TimeZone;
-
 import no.openandroidweather.R;
-import no.openandroidweather.misc.TempToDrawable;
-import no.openandroidweather.ui.notificationpreferences.NotificationPreferences;
-import no.openandroidweather.wsklima.WeatherElement;
 import no.openandroidweather.wsklima.WsKlimaProxy;
 import no.openandroidweather.wsklima.database.WsKlimaDataBaseHelper;
-
-import org.apache.http.HttpException;
-
-import android.accounts.NetworkErrorException;
 import android.app.ListActivity;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
+import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.FilterQueryProvider;
 import android.widget.ListView;
@@ -52,17 +38,23 @@ public class StationPicker extends ListActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.stationslist);
+		setResult(RESULT_CANCELED);
 
+		// Get cursor
 		StationQuery stationQuery = new StationQuery(this);
 		Cursor c = stationQuery.runQuery("");
 		startManagingCursor(c);
 
+		// Set cursorAdapter
 		String[] from = { WsKlimaDataBaseHelper.STATIONS_NAME };
 		int[] to = { R.id.StationName };
 		SimpleCursorAdapter adapter = new SimpleCursorAdapter(this,
 				R.layout.stationslist_row, c, from, to);
+
+		// Set filter adater
 		adapter.setFilterQueryProvider(stationQuery);
 
+		// Add to list view
 		setListAdapter(adapter);
 		ListView lv = getListView();
 		lv.setTextFilterEnabled(true);
@@ -72,45 +64,39 @@ public class StationPicker extends ListActivity {
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);
-		// get temp
-		final WsKlimaProxy weatherProxy = new WsKlimaProxy();
-		WeatherElement temperature;
-		try {
+		// Save station
+		saveStation(id);
 
-			temperature = weatherProxy.getTemperatureNow((int) id, 3600 * 24);
-			final int icon = TempToDrawable.getDrawableFromTemp(Float
-					.valueOf(temperature.getValue()));
-			final CharSequence tickerText = "Temperatur";
-			final long when = System.currentTimeMillis();
+		// Return
+		setResult(RESULT_OK);
+		finish();
+	}
 
-			final Notification notification = new Notification(icon,
-					tickerText, when);
+	private void saveStation(long id) {
+		// find name
+		SQLiteDatabase db = new WsKlimaDataBaseHelper(this)
+				.getReadableDatabase();
+		String[] select = { WsKlimaDataBaseHelper.STATIONS_NAME };
+		String selection = WsKlimaDataBaseHelper.STATIONS_ID + " = " + id;
+		Cursor c = db.query(WsKlimaDataBaseHelper.STATIONS_TABLE_NAME, select,
+				selection, null, null, null, null);
 
-			final Context context = getApplicationContext();
-			final CharSequence contentTitle = "Temperatur";
-			final Date time = temperature.getFrom();
+		// Check that station exists
+		if (c.getCount() != 1)
+			throw new UnknownError("Could not find station");
 
-			java.text.DateFormat fmt = DateFormat.getTimeFormat(this);
-			
-			final CharSequence contentText = "Temperatur: "
-					+ temperature.getValue() + " Tid:" + fmt.format(time);
-			final Intent notificationIntent = new Intent(this,
-					NotificationPreferences.class);
-			final PendingIntent contentIntent = PendingIntent.getActivity(this,
-					0, notificationIntent, 0);
+		// Get name
+		c.moveToFirst();
+		String name = c.getString(c
+				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_NAME));
+		c.close();
 
-			notification.setLatestEventInfo(context, contentTitle, contentText,
-					contentIntent);
-
-			final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-			mNotificationManager.notify(1, notification);
-		} catch (final NetworkErrorException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (final HttpException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		// save
+		Editor settings = getSharedPreferences(WsKlimaProxy.PREFS_NAME, 0)
+				.edit();
+		settings.putInt(WsKlimaProxy.PREFS_STATION_ID_KEY, (int) id);
+		settings.putString(WsKlimaProxy.PREFS_STATION_NAME_KEY, name);
+		settings.commit();
 	}
 
 	class StationQuery implements FilterQueryProvider {

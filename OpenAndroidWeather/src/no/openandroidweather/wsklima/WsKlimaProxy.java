@@ -28,6 +28,11 @@ import android.accounts.NetworkErrorException;
 
 public class WsKlimaProxy {
 	public final static String PROVIDER = "Meteorologisk institutt";
+	public static final String PREFS_NAME = "no.WsKlimaProxy";
+	public static final String PREFS_STATION_ID_KEY = "station_id";
+	public static final int PREFS_STATION_ID_DEFAULT = 18700;
+	public static final String PREFS_STATION_NAME_KEY = "station_name";
+	public static final String PREFS_STATION_NAME_DEFAULT = "OSLO - BLINDERN";
 	@SuppressWarnings("unused")
 	private static final String LOG_ID = "no.weather.weatherProxy.wsKlima.WsKlimaProxy";
 

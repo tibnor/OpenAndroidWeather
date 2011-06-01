@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-	<EditTextPreference android:dialogTitle="@string/select_station_id_dialogTitle"
-		android:title="@string/select_station_id_title" android:key="station_id"
-		android:dialogMessage="@string/select_station_id_summary"
-		android:summary="@string/select_station_id_summary"></EditTextPreference>
-	<EditTextPreference android:title="@string/update_frequency_title"
-		android:dialogTitle="@string/update_frequency_ditalogTitle"
-		android:key="notification_update_frequency" android:dialogMessage="@string/update_frequency_summary"
-		android:summary="@string/update_frequency_summary"></EditTextPreference>
+<!-- 	<EditTextPreference android:dialogTitle="@string/select_station_id_dialogTitle" -->
+<!-- 		android:title="@string/select_station_id_title" android:key="station_id" -->
+<!-- 		android:dialogMessage="@string/select_station_id_summary" -->
+<!-- 		android:summary="@string/select_station_id_summary"></EditTextPreference> -->
+<!-- 	<EditTextPreference android:title="@string/update_frequency_title" -->
+<!-- 		android:dialogTitle="@string/update_frequency_ditalogTitle" -->
+<!-- 		android:key="notification_update_frequency" android:dialogMessage="@string/update_frequency_summary" -->
+<!-- 		android:summary="@string/update_frequency_summary"></EditTextPreference> -->
 </PreferenceScreen>
