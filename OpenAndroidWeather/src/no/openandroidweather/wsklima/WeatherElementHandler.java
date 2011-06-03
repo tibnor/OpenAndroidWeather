@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.TimeZone;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -23,6 +24,10 @@ public class WeatherElementHandler extends DefaultHandler {
 	private String weatherId = null;
 	private String weatherValue = null;
 	private String buffer = "";
+	
+	static{
+		timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+	}
 
 	/**
 	 * Gets be called on the following structure: <tag>characters</tag>
@@ -52,17 +57,9 @@ public class WeatherElementHandler extends DefaultHandler {
 		} else if (isInTimeItem) {
 			// Save time
 			if (lastLocalName.equals("to"))
-				try {
-					toTime = timeFormat.parse(buffer);
-				} catch (final ParseException e) {
-					e.printStackTrace();
-				}
+				toTime = parseDate(buffer);
 			if (lastLocalName.equals("from"))
-				try {
-					fromTime = timeFormat.parse(buffer);
-				} catch (final ParseException e) {
-					e.printStackTrace();
-				}
+				fromTime = parseDate(buffer);
 		}
 		
 		buffer = "";
@@ -79,6 +76,20 @@ public class WeatherElementHandler extends DefaultHandler {
 				fromTime = null;
 			}
 
+	}
+
+	private Date parseDate(String date) {
+		if (date == null || date.equals(""))
+			return null;
+		else {
+			try {
+				return timeFormat.parse(date);
+			} catch (final ParseException e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+		
 	}
 
 	public ArrayList<WeatherElement> getAllElements() {

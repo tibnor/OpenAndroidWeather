@@ -25,6 +25,7 @@
 			</activity> <activity android:name=".ui.preferences.WeatherPreferencesActivity" 
 			/> -->
 		<activity android:name=".ui.stationpicker.StationPicker"></activity>
+		<service android:name=".weathernotificatonservice.WeatherNotificationService"></service>
 	</application>
 
 	<uses-sdk android:minSdkVersion="8" android:targetSdkVersion="10"/>

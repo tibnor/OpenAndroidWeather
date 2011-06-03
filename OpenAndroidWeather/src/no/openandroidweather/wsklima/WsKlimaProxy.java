@@ -35,6 +35,8 @@ public class WsKlimaProxy {
 	public static final String PREFS_STATION_NAME_DEFAULT = "OSLO - BLINDERN";
 	@SuppressWarnings("unused")
 	private static final String LOG_ID = "no.weather.weatherProxy.wsKlima.WsKlimaProxy";
+	public static final String PREFS_UPDATE_RATE_KEY = "update_rate";
+	public static final int PREFS_UPDATE_RATE_DEFAULT = 0;
 
 	/**
 	 * @param weather
@@ -163,6 +165,7 @@ public class WsKlimaProxy {
 							+ "&stations=" + stations + "&elements=" + elements
 							+ "&hours=" + hours + "&months=" + months
 							+ "&username=" + username);
+
 
 			final HttpClient client = new DefaultHttpClient();
 			final HttpGet request = new HttpGet(url);

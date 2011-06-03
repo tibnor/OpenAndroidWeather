@@ -80,7 +80,6 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("Not implemented!");
 	}
 

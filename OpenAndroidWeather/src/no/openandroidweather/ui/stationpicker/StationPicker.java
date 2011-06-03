@@ -33,6 +33,8 @@ import android.widget.FilterQueryProvider;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 
+
+// TODO: handle filter adapter better
 public class StationPicker extends ListActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +61,15 @@ public class StationPicker extends ListActivity {
 		ListView lv = getListView();
 		lv.setTextFilterEnabled(true);
 
+	}
+	
+	@Override
+	protected void onDestroy() {
+		SimpleCursorAdapter adapter = (SimpleCursorAdapter) getListAdapter();
+		StationQuery stationQuery = (StationQuery) adapter.getFilterQueryProvider();
+		stationQuery.close();
+		
+		super.onDestroy();
 	}
 
 	@Override
@@ -90,6 +101,7 @@ public class StationPicker extends ListActivity {
 		String name = c.getString(c
 				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_NAME));
 		c.close();
+		db.close();
 
 		// save
 		Editor settings = getSharedPreferences(WsKlimaProxy.PREFS_NAME, 0)
@@ -101,10 +113,16 @@ public class StationPicker extends ListActivity {
 
 	class StationQuery implements FilterQueryProvider {
 		SQLiteDatabase mDb;
+		
+		
 
 		public StationQuery(Context context) {
 			WsKlimaDataBaseHelper dbHelper = new WsKlimaDataBaseHelper(context);
 			mDb = dbHelper.getReadableDatabase();
+		}
+		
+		public void close(){
+			mDb.close();
 		}
 
 		@Override
@@ -114,8 +132,10 @@ public class StationPicker extends ListActivity {
 			String orderBy = WsKlimaDataBaseHelper.STATIONS_NAME;
 			String selection = WsKlimaDataBaseHelper.STATIONS_NAME + " LIKE '%"
 					+ constraint.toString().toUpperCase() + "%'";
-			return mDb.query(WsKlimaDataBaseHelper.STATIONS_TABLE_NAME, select,
+			Cursor c = mDb.query(WsKlimaDataBaseHelper.STATIONS_TABLE_NAME, select,
 					selection, null, null, null, orderBy);
+			startManagingCursor(c);
+			return c;
 		}
 
 	}

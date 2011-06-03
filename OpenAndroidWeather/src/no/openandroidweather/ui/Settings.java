@@ -19,47 +19,63 @@
 
 package no.openandroidweather.ui;
 
-import java.util.Date;
-
-import org.apache.http.HttpException;
+import java.util.Arrays;
 
 import no.openandroidweather.R;
-import no.openandroidweather.misc.TempToDrawable;
-import no.openandroidweather.ui.notificationpreferences.NotificationPreferences;
 import no.openandroidweather.ui.stationpicker.StationPicker;
-import no.openandroidweather.wsklima.WeatherElement;
+import no.openandroidweather.weathernotificatonservice.WeatherNotificationService;
 import no.openandroidweather.wsklima.WsKlimaProxy;
-import android.accounts.NetworkErrorException;
 import android.app.Activity;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
-import android.text.format.DateFormat;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 public class Settings extends Activity {
 	private static final int ACTIVITY_CHOOSE_STATION = 1;
+	public static final String LOG_ID = "no.firestorm.settings";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.settings);
 
-		// Add station name
 		setStationName();
-
-		// Set onClickEvent for choose station
 		setChooseStationButtion();
-
-		// TODO: Set onClickEvent for get weather
 		setGetWeatherButton();
+		setUpdateRateSpinner();
+
+	}
+
+	private void setUpdateRateSpinner() {
+		// Add spinner
+		Spinner spinner = (Spinner) findViewById(R.id.updateRateSpinner);
+	    ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+	            this, R.array.Update_rates, android.R.layout.simple_spinner_item);
+	    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+	    spinner.setAdapter(adapter);
+	    spinner.setOnItemSelectedListener(new UpdateRateSelectedListener());
+	    
+	    // Find selected id
+		SharedPreferences settings = getSharedPreferences(
+				WsKlimaProxy.PREFS_NAME, 0);
+		int updateRate = settings.getInt(
+				WsKlimaProxy.PREFS_UPDATE_RATE_KEY,
+				WsKlimaProxy.PREFS_UPDATE_RATE_DEFAULT);
+		int[] updateRateArray = getResources().getIntArray(R.array.Update_rate_values);
+		int id = Arrays.binarySearch(updateRateArray, updateRate);
+		if (id>=0)
+			spinner.setSelection(id);
+		else
+			spinner.setSelection(0);
 	}
 
 	private void setGetWeatherButton() {
@@ -67,7 +83,9 @@ public class Settings extends Activity {
 		chooseStationButton.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View v) {
-				showTemp();
+				final Intent intent = new Intent(Settings.this,
+						WeatherNotificationService.class);
+				startService(intent);
 			}
 		});
 	}
@@ -108,54 +126,25 @@ public class Settings extends Activity {
 			break;
 		}
 	}
+	
+	public class UpdateRateSelectedListener implements OnItemSelectedListener {
+		@Override
+	    public void onItemSelected(AdapterView<?> parent,
+	        View view, int pos, long id) {
+			
+			// Get update rate in minutes
+			int updateRate = getResources().getIntArray(R.array.Update_rate_values)[(int) id];
+			
+			Editor settings = getSharedPreferences(
+					WsKlimaProxy.PREFS_NAME, 0).edit();
+			settings.putInt(WsKlimaProxy.PREFS_UPDATE_RATE_KEY, updateRate);
+			settings.commit();
+	    }
 
-	private void showTemp() {
-		// Find station id
-		SharedPreferences settings = getSharedPreferences(
-				WsKlimaProxy.PREFS_NAME, 0);
-		String stationName = settings.getString(
-				WsKlimaProxy.PREFS_STATION_NAME_KEY,
-				WsKlimaProxy.PREFS_STATION_NAME_DEFAULT);
-		int stationId = settings.getInt(WsKlimaProxy.PREFS_STATION_ID_KEY,
-				WsKlimaProxy.PREFS_STATION_ID_DEFAULT);
+		@Override
+	    public void onNothingSelected(AdapterView<?> parent) {}
 
-		// get temp
-		final WsKlimaProxy weatherProxy = new WsKlimaProxy();
-		WeatherElement temperature;
-		try {
-
-			temperature = weatherProxy.getTemperatureNow(stationId, 3600 * 24);
-			final int icon = TempToDrawable.getDrawableFromTemp(Float
-					.valueOf(temperature.getValue()));
-			final CharSequence tickerText = stationName;
-			final long when = System.currentTimeMillis();
-
-			final Notification notification = new Notification(icon,
-					tickerText, when);
-
-			final CharSequence contentTitle = stationName;
-			final Date time = temperature.getFrom();
-
-			java.text.DateFormat fmt = DateFormat.getTimeFormat(this);
-
-			final CharSequence contentText = "Temperatur: "
-					+ temperature.getValue() + " Tid: " + fmt.format(time);
-			final Intent notificationIntent = new Intent(this,
-					NotificationPreferences.class);
-			final PendingIntent contentIntent = PendingIntent.getActivity(this,
-					0, notificationIntent, 0);
-
-			notification.setLatestEventInfo(this, contentTitle, contentText,
-					contentIntent);
-
-			final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-			mNotificationManager.notify(1, notification);
-		} catch (final NetworkErrorException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (final HttpException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
+
+
 }
