@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="Station_semicolon">Værstasjon:</string>
+	<string name="choose_station">Velg stasjon</string>
+	<string name="Get_weather">Hent vær</string>
+	<string name="Update_rate">Updateringsintervall:</string>
+	<string name="app_name">FireStorm</string>
+	<string-array name="Update_rates">
+		<item>Aldri (Manuel)</item>
+		<item>Hver time</item>
+		<item>Hver andre time</item>
+		<item>Hver 6. time</item>
+		<item>Hver 12. time</item>
+		<item>Hver dag</item>
+	</string-array>
+	<integer-array name="Update_rate_values">
+		<item>0</item>
+		<item>60</item>
+		<item>120</item>
+		<item>360</item>
+		<item>720</item>
+		<item>1440</item>
+	</integer-array>
+</resources>

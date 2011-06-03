@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="Station_semicolon">Station:</string>
+	<string name="choose_station">Choose station</string>
+	<string name="Get_weather">Get weather</string>
+	<string name="Update_rate">Update rate:</string>
+	<string name="app_name">FireStorm</string>
+	<string name="download_error">FireStorm: download error</string>
+	<string name="press_for_update">Press here to try again</string>
+	<string-array name="Update_rates">
+		<item>Never (Manually)</item>
+		<item>Every hour</item>
+		<item>Every other hour</item>
+		<item>Every 6. hour</item>
+		<item>Every 12. hour</item>
+		<item>Once a day</item>
+	</string-array>
+	<integer-array name="Update_rate_values">
+		<item>0</item>
+		<item>60</item>
+		<item>120</item>
+		<item>360</item>
+		<item>720</item>
+		<item>1440</item>
+	</integer-array>
+		<string name="temperatur_">Temperatur: </string>
+		<string name="_tid_"> Tid: </string>
+</resources>
