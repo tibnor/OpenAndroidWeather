@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="no.openandroidweather" android:versionName="0.0.9"
-	android:versionCode="9">
+	package="no.firestorm" android:versionCode="10" android:versionName="0.1.0">
 	<uses-permission android:name="android.permission.INTERNET" />
-	<application android:icon="@drawable/icon" android:label="@string/app_name" android:debuggable="true">
+	<application android:icon="@drawable/icon" android:label="@string/app_name" android:debuggable="false">
 		<activity android:name=".ui.Settings">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
@@ -24,13 +23,9 @@
 			/> <category android:name="android.intent.category.LAUNCHER" /> </intent-filter> 
 			</activity> <activity android:name=".ui.preferences.WeatherPreferencesActivity" 
 			/> -->
-		<activity android:name=".ui.stationpicker.StationPicker"></activity>
+		<activity android:name=".ui.stationpicker.StationPicker"/>
 		<service android:name=".weathernotificatonservice.WeatherNotificationService"></service>
 	</application>
-
 	<uses-sdk android:minSdkVersion="8" android:targetSdkVersion="10"/>
 	<supports-screens />
-	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"></uses-permission>
-	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"></uses-permission>
-	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"></uses-permission>
 </manifest> 

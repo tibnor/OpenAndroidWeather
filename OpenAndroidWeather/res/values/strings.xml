@@ -7,6 +7,8 @@
 	<string name="app_name">FireStorm</string>
 	<string name="download_error">FireStorm: download error</string>
 	<string name="press_for_update">Press here to try again</string>
+	<string name="temperatur_">Temperature: </string>
+	<string name="_tid_"> Time: </string>
 	<string-array name="Update_rates">
 		<item>Never (Manually)</item>
 		<item>Every hour</item>
@@ -23,6 +25,5 @@
 		<item>720</item>
 		<item>1440</item>
 	</integer-array>
-		<string name="temperatur_">Temperatur: </string>
-		<string name="_tid_"> Tid: </string>
+
 </resources>
