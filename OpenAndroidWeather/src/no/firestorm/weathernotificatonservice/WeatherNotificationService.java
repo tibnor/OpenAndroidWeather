@@ -17,15 +17,15 @@
     along with OpenAndroidWeather.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package no.openandroidweather.weathernotificatonservice;
+package no.firestorm.weathernotificatonservice;
 
 import java.text.DateFormat;
 import java.util.Date;
 
-import no.openandroidweather.R;
-import no.openandroidweather.misc.TempToDrawable;
-import no.openandroidweather.wsklima.WeatherElement;
-import no.openandroidweather.wsklima.WsKlimaProxy;
+import no.firestorm.R;
+import no.firestorm.misc.TempToDrawable;
+import no.firestorm.wsklima.WeatherElement;
+import no.firestorm.wsklima.WsKlimaProxy;
 
 import org.apache.http.HttpException;
 
@@ -128,7 +128,8 @@ public class WeatherNotificationService extends Service {
 			// get temp
 			final WsKlimaProxy weatherProxy = new WsKlimaProxy();
 			try {
-				return weatherProxy.getTemperatureNow(stationId[0], 3600 * 24);
+				return weatherProxy.getTemperatureNowSmall(stationId[0]);
+				//return weatherProxy.getTemperatureNow(stationId[0], 3600);
 			} catch (NetworkErrorException e) {
 				return e;
 			} catch (HttpException e) {
@@ -162,9 +163,13 @@ public class WeatherNotificationService extends Service {
 						.getTimeInstance(DateFormat.SHORT);
 				contentText = WeatherNotificationService.this
 						.getString(R.string.temperatur_)
+						+ " "
 						+ temperature.getValue()
+						+ " "
 						+ WeatherNotificationService.this
-								.getString(R.string._tid_) + df.format(time);
+								.getString(R.string._tid_)
+						+ " "
+						+ df.format(time);
 				setAlarm();
 
 			} else {
@@ -187,7 +192,8 @@ public class WeatherNotificationService extends Service {
 					tickerText, when);
 			notification.flags = Notification.FLAG_ONGOING_EVENT;
 			final Intent notificationIntent = new Intent(
-					WeatherNotificationService.this, WeatherNotificationService.class);
+					WeatherNotificationService.this,
+					WeatherNotificationService.class);
 			final PendingIntent contentIntent = PendingIntent.getService(
 					WeatherNotificationService.this, 0, notificationIntent, 0);
 

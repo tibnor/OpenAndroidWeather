@@ -19,7 +19,7 @@
 
 // Inspired by http://www.helloandroid.com/tutorials/how-have-default-database
 
-package no.openandroidweather.wsklima.database;
+package no.firestorm.wsklima.database;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -27,10 +27,17 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import no.firestorm.ui.stationpicker.Station;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.location.Location;
 
 public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 	@SuppressWarnings("unused")
@@ -81,6 +88,77 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		throw new UnsupportedOperationException("Not implemented!");
+	}
+	
+	public List<Station> getStationsSortedByLocation(Location currentLocation) {
+		WsKlimaDataBaseHelper dbHelper = new WsKlimaDataBaseHelper(mContext);
+		SQLiteDatabase mDb = dbHelper.getReadableDatabase();
+		String[] select = { WsKlimaDataBaseHelper.STATIONS_ID,
+				WsKlimaDataBaseHelper.STATIONS_NAME,
+				WsKlimaDataBaseHelper.STATIONS_LAT,
+				WsKlimaDataBaseHelper.STATIONS_LON };
+		String orderBy = WsKlimaDataBaseHelper.STATIONS_LAT;
+		Cursor c = mDb.query(WsKlimaDataBaseHelper.STATIONS_TABLE_NAME, select,
+				null, null, null, null, orderBy);
+
+		List<Station> stationList = new ArrayList<Station>(c.getCount());
+
+		int nameCol = c
+				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_NAME);
+		int idCol = c.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_ID);
+		int latCol = c
+				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_LAT);
+		int lonCol = c
+				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_LON);
+
+		c.moveToFirst();
+		while (!c.isAfterLast()) {
+			Station station = new Station(c.getString(nameCol),
+					c.getInt(idCol), c.getDouble(latCol), c.getDouble(lonCol),
+					currentLocation);
+			stationList.add(station);
+			c.moveToNext();
+		}
+
+		c.close();
+		mDb.close();
+		Collections.sort(stationList);
+		return stationList;
+	}
+	
+	public List<Station> getStationsSortedAlphabetic(Location currentLocation) {
+		WsKlimaDataBaseHelper dbHelper = new WsKlimaDataBaseHelper(mContext);
+		SQLiteDatabase mDb = dbHelper.getReadableDatabase();
+		String[] select = { WsKlimaDataBaseHelper.STATIONS_ID,
+				WsKlimaDataBaseHelper.STATIONS_NAME,
+				WsKlimaDataBaseHelper.STATIONS_LAT,
+				WsKlimaDataBaseHelper.STATIONS_LON };
+		String orderBy = WsKlimaDataBaseHelper.STATIONS_NAME;
+		Cursor c = mDb.query(WsKlimaDataBaseHelper.STATIONS_TABLE_NAME, select,
+				null, null, null, null, orderBy);
+
+		List<Station> stationList = new ArrayList<Station>(c.getCount());
+
+		int nameCol = c
+				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_NAME);
+		int idCol = c.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_ID);
+		int latCol = c
+				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_LAT);
+		int lonCol = c
+				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_LON);
+
+		c.moveToFirst();
+		while (!c.isAfterLast()) {
+			Station station = new Station(c.getString(nameCol),
+					c.getInt(idCol), c.getDouble(latCol), c.getDouble(lonCol),
+					currentLocation);
+			stationList.add(station);
+			c.moveToNext();
+		}
+
+		c.close();
+		mDb.close();
+		return stationList;
 	}
 
 }

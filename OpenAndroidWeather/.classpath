@@ -3,5 +3,10 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
+	<classpathentry kind="lib" path="/home/torstein/workspace/OpenAndroidWeather/geocell-0.0.7.jar" sourcepath="/home/torstein/workspace/OpenAndroidWeather/geocell-0.0.7-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:file:/home/torstein/workspace/OpenAndroidWeather/geocell-0.0.7-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

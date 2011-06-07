@@ -1,4 +1,4 @@
-package no.openandroidweather.wsklima;
+package no.firestorm.wsklima;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -20,11 +20,14 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
 import android.accounts.NetworkErrorException;
+import android.util.Log;
 
 public class WsKlimaProxy {
 	public final static String PROVIDER = "Meteorologisk institutt";
@@ -33,7 +36,7 @@ public class WsKlimaProxy {
 	public static final int PREFS_STATION_ID_DEFAULT = 18700;
 	public static final String PREFS_STATION_NAME_KEY = "station_name";
 	public static final String PREFS_STATION_NAME_DEFAULT = "OSLO - BLINDERN";
-	@SuppressWarnings("unused")
+	//@SuppressWarnings("unused")
 	private static final String LOG_ID = "no.weather.weatherProxy.wsKlima.WsKlimaProxy";
 	public static final String PREFS_UPDATE_RATE_KEY = "update_rate";
 	public static final int PREFS_UPDATE_RATE_DEFAULT = 0;
@@ -90,6 +93,37 @@ public class WsKlimaProxy {
 		for (int i = 1; i < l.size(); i++)
 			str += "," + l.get(i).toString();
 		return str;
+	}
+
+	public WeatherElement getTemperatureNowSmall(Integer station)
+			throws HttpException, NetworkErrorException {
+		URI url;
+		try {
+			url = new URI("http://wsklimaproxy.appspot.com/temperature?st="
+					+ station);
+		} catch (URISyntaxException e) {
+			// Shuld not happend
+			e.printStackTrace();
+			return null;
+		}
+		Log.v(LOG_ID, "url: " + url.toString());
+
+		final HttpClient client = new DefaultHttpClient();
+		final HttpGet request = new HttpGet(url);
+
+		try {
+			HttpResponse response = client.execute(request);
+			final HttpEntity r_entity = response.getEntity();
+			final String xmlString = EntityUtils.toString(r_entity);
+			JSONObject val = new JSONObject(xmlString);
+			Date time = new Date(val.getLong("time") * 1000);
+			return new WeatherElement(time, time, WeatherType.temperature,
+					val.getString("temperature"));
+		} catch (IOException e) {
+			throw new NetworkErrorException(e);
+		} catch (JSONException e) {
+			throw new HttpException();
+		}
 	}
 
 	/**
@@ -165,7 +199,7 @@ public class WsKlimaProxy {
 							+ "&stations=" + stations + "&elements=" + elements
 							+ "&hours=" + hours + "&months=" + months
 							+ "&username=" + username);
-
+			Log.v(LOG_ID, "url: " + url.toString());
 
 			final HttpClient client = new DefaultHttpClient();
 			final HttpGet request = new HttpGet(url);

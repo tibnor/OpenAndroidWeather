@@ -17,12 +17,12 @@
     along with OpenAndroidWeather.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package no.openandroidweather.misc;
+package no.firestorm.misc;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import no.openandroidweather.R;
+import no.firestorm.R;
 
 public final class TempToDrawable {
 	private static final Map<Float, Integer> tempDrawable = new HashMap<Float, Integer>();

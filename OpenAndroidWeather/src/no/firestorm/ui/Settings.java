@@ -17,14 +17,14 @@
     along with OpenAndroidWeather.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package no.openandroidweather.ui;
+package no.firestorm.ui;
 
 import java.util.Arrays;
 
-import no.openandroidweather.R;
-import no.openandroidweather.ui.stationpicker.StationPicker;
-import no.openandroidweather.weathernotificatonservice.WeatherNotificationService;
-import no.openandroidweather.wsklima.WsKlimaProxy;
+import no.firestorm.R;
+import no.firestorm.ui.stationpicker.StationPicker;
+import no.firestorm.weathernotificatonservice.WeatherNotificationService;
+import no.firestorm.wsklima.WsKlimaProxy;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -58,21 +58,22 @@ public class Settings extends Activity {
 	private void setUpdateRateSpinner() {
 		// Add spinner
 		Spinner spinner = (Spinner) findViewById(R.id.updateRateSpinner);
-	    ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
-	            this, R.array.Update_rates, android.R.layout.simple_spinner_item);
-	    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-	    spinner.setAdapter(adapter);
-	    spinner.setOnItemSelectedListener(new UpdateRateSelectedListener());
-	    
-	    // Find selected id
+		ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+				this, R.array.Update_rates,
+				android.R.layout.simple_spinner_item);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		spinner.setAdapter(adapter);
+		spinner.setOnItemSelectedListener(new UpdateRateSelectedListener());
+
+		// Find selected id
 		SharedPreferences settings = getSharedPreferences(
 				WsKlimaProxy.PREFS_NAME, 0);
-		int updateRate = settings.getInt(
-				WsKlimaProxy.PREFS_UPDATE_RATE_KEY,
+		int updateRate = settings.getInt(WsKlimaProxy.PREFS_UPDATE_RATE_KEY,
 				WsKlimaProxy.PREFS_UPDATE_RATE_DEFAULT);
-		int[] updateRateArray = getResources().getIntArray(R.array.Update_rate_values);
+		int[] updateRateArray = getResources().getIntArray(
+				R.array.Update_rate_values);
 		int id = Arrays.binarySearch(updateRateArray, updateRate);
-		if (id>=0)
+		if (id >= 0)
 			spinner.setSelection(id);
 		else
 			spinner.setSelection(0);
@@ -83,9 +84,7 @@ public class Settings extends Activity {
 		chooseStationButton.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View v) {
-				final Intent intent = new Intent(Settings.this,
-						WeatherNotificationService.class);
-				startService(intent);
+				getWeather();
 			}
 		});
 	}
@@ -119,32 +118,43 @@ public class Settings extends Activity {
 		switch (requestCode) {
 		case ACTIVITY_CHOOSE_STATION:
 			// Update station name if changed
-			if (resultCode == RESULT_OK)
+			if (resultCode == RESULT_OK) {
 				setStationName();
+				getWeather();
+			}
 			break;
 		default:
 			break;
 		}
 	}
-	
-	public class UpdateRateSelectedListener implements OnItemSelectedListener {
-		@Override
-	    public void onItemSelected(AdapterView<?> parent,
-	        View view, int pos, long id) {
-			
-			// Get update rate in minutes
-			int updateRate = getResources().getIntArray(R.array.Update_rate_values)[(int) id];
-			
-			Editor settings = getSharedPreferences(
-					WsKlimaProxy.PREFS_NAME, 0).edit();
-			settings.putInt(WsKlimaProxy.PREFS_UPDATE_RATE_KEY, updateRate);
-			settings.commit();
-	    }
 
-		@Override
-	    public void onNothingSelected(AdapterView<?> parent) {}
-
+	private void getWeather() {
+		final Intent intent = new Intent(Settings.this,
+				WeatherNotificationService.class);
+		startService(intent);
 	}
 
+	public class UpdateRateSelectedListener implements OnItemSelectedListener {
+		@Override
+		public void onItemSelected(AdapterView<?> parent, View view, int pos,
+				long id) {
+
+			// Get update rate in minutes
+			int updateRate = getResources().getIntArray(
+					R.array.Update_rate_values)[(int) id];
+
+			Editor settings = getSharedPreferences(WsKlimaProxy.PREFS_NAME, 0)
+					.edit();
+			settings.putInt(WsKlimaProxy.PREFS_UPDATE_RATE_KEY, updateRate);
+			settings.commit();
+			getWeather();
+
+		}
+
+		@Override
+		public void onNothingSelected(AdapterView<?> parent) {
+		}
+
+	}
 
 }

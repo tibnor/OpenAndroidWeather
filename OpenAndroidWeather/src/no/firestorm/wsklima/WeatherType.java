@@ -1,5 +1,5 @@
 /*
-	Copyright 2010 Torstein Ingebrigtsen Bø
+	Copyright 2011 Torstein Ingebrigtsen Bø
 
     This file is part of OpenAndroidWeather.
 
@@ -17,16 +17,8 @@
     along with OpenAndroidWeather.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package no.openandroidweather.misc;
+package no.firestorm.wsklima;
 
-/**
- * Constants for shared preferences
- * 
- */
-public class WeatherPreferences {
-	public static final String DOWNLOAD_ONLY_ON_WIFI = "download_only_on_wifi";
-	public static final boolean DOWNLOAD_ONLY_ON_WIFI_DEFAULT = true;
-
-	public static final String NUMBER_OF_DOWNLOADED_FORECASTS = "number_of_downloaded_forecasts";
-	public static final int NUMBER_OF_DOWNLOADED_FORECASTS_DEFAULT = 0;
+public enum WeatherType {
+	temperature
 }

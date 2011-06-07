@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  android:layout_width="match_parent"
-  android:layout_height="match_parent" android:orientation="horizontal">
-    <TextView android:text="TextView" android:layout_width="match_parent" android:layout_height="wrap_content" android:id="@+id/StationName" android:textSize="20sp"></TextView>
-</LinearLayout>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent" android:layout_height="match_parent"
+	android:orientation="horizontal">
+	<TextView android:text="TextView" android:layout_width="match_parent"
+		android:layout_height="wrap_content" android:id="@+id/StationName"
+		android:textSize="20sp"></TextView>
+	<TextView android:layout_width="wrap_content" android:text="TextView"
+		android:layout_height="wrap_content" android:layout_alignParentLeft="true"
+		android:layout_below="@id/StationName" android:id="@+id/Distance"></TextView>
+	<TextView android:layout_width="wrap_content" android:text="TextView"
+		android:layout_height="wrap_content"
+		android:layout_toRightOf="@+id/Distance" android:layout_alignTop="@+id/Distance"
+		android:layout_alignBottom="@+id/Distance" android:layout_alignParentRight="true" android:id="@+id/Direction" android:layout_marginLeft="4dip"></TextView>
+</RelativeLayout>

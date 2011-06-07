@@ -1,4 +1,4 @@
-package no.openandroidweather.wsklima;
+package no.firestorm.wsklima;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

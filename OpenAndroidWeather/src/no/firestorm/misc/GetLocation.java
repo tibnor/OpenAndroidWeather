@@ -17,7 +17,7 @@
     along with OpenAndroidWeather.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package no.openandroidweather.misc;
+package no.firestorm.misc;
 
 import android.content.Context;
 import android.location.Criteria;

@@ -5,6 +5,10 @@
 	<string name="Get_weather">Hent vær</string>
 	<string name="Update_rate">Updateringsintervall:</string>
 	<string name="app_name">FireStorm</string>
+	<string name="download_error">FireStorm: nedlastings feil</string>
+	<string name="press_for_update">Trykk her for å prøve igjen</string>
+	<string name="temperatur_">Temperatur: </string>
+	<string name="_tid_"> Tid: </string>
 	<string-array name="Update_rates">
 		<item>Aldri (Manuel)</item>
 		<item>Hver time</item>
@@ -21,4 +25,8 @@
 		<item>720</item>
 		<item>1440</item>
 	</integer-array>
+	<string name="error_could_not_find_your_position_">Feil: Fant ikke din posisjon!</string>
+	<string name="sort_by_name">Sorter etter navn</string>
+	<string name="sort_by_distance">Sorter etter avstand</string>
+	<string name="type_to_filter">Søk</string>
 </resources>
