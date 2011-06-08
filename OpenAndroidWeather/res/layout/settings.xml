@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="match_parent" android:layout_height="match_parent"
+	android:layout_width="fill_parent" android:layout_height="fill_parent"
 	android:orientation="vertical">
 	<TextView android:layout_width="wrap_content"
 		android:textSize="20sp" android:text="@string/Station_semicolon"
@@ -8,15 +8,15 @@
 	<TextView android:id="@+id/StationName" android:layout_width="wrap_content"
 		android:textSize="20sp" android:text="TextView" android:layout_margin="4dip"
 		android:gravity="right" android:layout_height="wrap_content"></TextView>
-	<Button android:layout_width="match_parent" android:text="@string/choose_station"
+	<Button android:layout_width="fill_parent" android:text="@string/choose_station"
 		android:id="@+id/choose_station" android:layout_height="wrap_content"></Button>
 	<Button android:layout_height="wrap_content"
-		android:layout_width="match_parent" android:text="@string/Get_weather"
+		android:layout_width="fill_parent" android:text="@string/Get_weather"
 		android:id="@+id/get_weather"></Button>
 	<TextView android:layout_width="wrap_content"
 		android:textSize="20sp" android:text="@string/Update_rate"
 		android:layout_margin="4dip" android:layout_height="wrap_content"></TextView>
 	<Spinner android:layout_height="wrap_content"
-		android:layout_gravity="right" android:layout_width="match_parent"
+		android:layout_gravity="right" android:layout_width="fill_parent"
 		android:id="@+id/updateRateSpinner"></Spinner>
 </LinearLayout>

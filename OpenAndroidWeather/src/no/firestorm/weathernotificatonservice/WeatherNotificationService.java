@@ -100,8 +100,7 @@ public class WeatherNotificationService extends Service {
 		if (triggerAtTime < now)
 			triggerAtTime = now + updateRate * 60000;
 
-		alarm.setInexactRepeating(AlarmManager.RTC, triggerAtTime,
-				updateRate * 60000, pendingIntent);
+		alarm.set(AlarmManager.RTC, triggerAtTime, pendingIntent);
 	}
 
 	private void setShortAlarm() {
@@ -129,7 +128,7 @@ public class WeatherNotificationService extends Service {
 			final WsKlimaProxy weatherProxy = new WsKlimaProxy();
 			try {
 				return weatherProxy.getTemperatureNowSmall(stationId[0]);
-				//return weatherProxy.getTemperatureNow(stationId[0], 3600);
+				// return weatherProxy.getTemperatureNow(stationId[0], 3600);
 			} catch (NetworkErrorException e) {
 				return e;
 			} catch (HttpException e) {
@@ -161,15 +160,11 @@ public class WeatherNotificationService extends Service {
 				final Date time = temperature.getFrom();
 				final DateFormat df = DateFormat
 						.getTimeInstance(DateFormat.SHORT);
-				contentText = WeatherNotificationService.this
-						.getString(R.string.temperatur_)
-						+ " "
-						+ temperature.getValue()
-						+ " "
-						+ WeatherNotificationService.this
-								.getString(R.string._tid_)
-						+ " "
-						+ df.format(time);
+				Context context = WeatherNotificationService.this;
+				contentText = String.format("%s %.1f °C  %s %s",
+						context.getString(R.string.temperatur_),
+						new Float(temperature.getValue()),
+						context.getString(R.string._tid_), df.format(time));
 				setAlarm();
 
 			} else {

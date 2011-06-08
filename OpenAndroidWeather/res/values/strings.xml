@@ -28,5 +28,5 @@
 	<string name="error_could_not_find_your_position_">Error: Could not find your position!</string>
 	<string name="sort_by_name">Sort by name</string>
 	<string name="sort_by_distance">Sort by distance</string>
-	<string name="type_to_filter">type to filter</string>
+	<string name="type_to_filter">Search</string>
 </resources>
