@@ -115,8 +115,8 @@ public class WeatherNotificationService extends Service {
 		// Set time to next hour plus 5 minutes:
 		long now = System.currentTimeMillis();
 		long triggerAtTime = now;
-		// set back to last hour:
-		triggerAtTime -= triggerAtTime % 3600000;
+		// set back to last hour plus 2 minutes:
+		triggerAtTime -= triggerAtTime % 3600000 - 12000;
 		// Add selected update rate
 		triggerAtTime += updateRate * 60000;
 
