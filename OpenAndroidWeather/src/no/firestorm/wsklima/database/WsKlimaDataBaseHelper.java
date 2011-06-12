@@ -44,7 +44,7 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 	private static final String LOG_ID = "no.firestorm.db";
 	private static final String DATABASE_NAME = "stations.db";
 	private static Context mContext;
-	private static final int DATABASE_VERSION = 2;
+	private static final int DATABASE_VERSION = 4;
 	public static final String STATIONS_TABLE_NAME = "stations";
 	public static final String STATIONS_ID = "_id";
 	public static final String STATIONS_NAME = "name";
@@ -87,7 +87,10 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		throw new UnsupportedOperationException("Not implemented!");
+		if (oldVersion<DATABASE_VERSION){
+			db.execSQL("DROP TABLE IF EXISTS "+STATIONS_TABLE_NAME);
+			onCreate(db);
+		}
 	}
 	
 	public List<Station> getStationsSortedByLocation(Location currentLocation) {
