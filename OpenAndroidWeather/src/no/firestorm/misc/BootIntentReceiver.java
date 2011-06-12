@@ -15,23 +15,30 @@
 
     You should have received a copy of the GNU General Public License
     along with OpenAndroidWeather.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 package no.firestorm.misc;
 
 import no.firestorm.weathernotificatonservice.WeatherNotificationService;
+import no.firestorm.wsklima.WsKlimaProxy;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
+import android.content.SharedPreferences;
 
-public class BootIntentReceiver extends BroadcastReceiver{
+public class BootIntentReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		Log.d("no.firestorm", "got broadcast: boot");
-		final Intent serviceIntent = new Intent(context,WeatherNotificationService.class);
-		context.startService(serviceIntent);
+		SharedPreferences settings = context.getSharedPreferences(
+				WsKlimaProxy.PREFS_NAME, 0);
+		int updateRate = settings.getInt(WsKlimaProxy.PREFS_UPDATE_RATE_KEY,
+				WsKlimaProxy.PREFS_UPDATE_RATE_DEFAULT);
+		if (updateRate > 0) {
+			final Intent serviceIntent = new Intent(context,
+					WeatherNotificationService.class);
+			context.startService(serviceIntent);
+		}
 	}
 
 }

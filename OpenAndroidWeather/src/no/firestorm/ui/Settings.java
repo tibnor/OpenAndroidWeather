@@ -43,17 +43,31 @@ import android.widget.TextView;
 public class Settings extends Activity {
 	private static final int ACTIVITY_CHOOSE_STATION = 1;
 	public static final String LOG_ID = "no.firestorm.settings";
+	private static final String PREF_NAME = "first app run";
+	private static final String PREF_FIRST_RUN = "first app run";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.settings);
 
+		checkIfFirstRun();
 		setStationName();
 		setChooseStationButtion();
 		setGetWeatherButton();
 		setUpdateRateSpinner();
 
+	}
+
+	private void checkIfFirstRun() {
+		SharedPreferences settings = getSharedPreferences(PREF_NAME, 0);
+		boolean firstRun = settings.getBoolean(PREF_FIRST_RUN,true);
+		if (firstRun){
+			getWeather();
+			Editor edit = settings.edit();
+			edit.putBoolean(PREF_FIRST_RUN, false);
+			edit.commit();
+		}
 	}
 
 	private void setUpdateRateSpinner() {
@@ -66,7 +80,7 @@ public class Settings extends Activity {
 		spinner.setAdapter(adapter);
 		spinner.setOnItemSelectedListener(new UpdateRateSelectedListener());
 
-		// Find selected id
+		// Find selected update rate
 		SharedPreferences settings = getSharedPreferences(
 				WsKlimaProxy.PREFS_NAME, 0);
 		int updateRate = settings.getInt(WsKlimaProxy.PREFS_UPDATE_RATE_KEY,
@@ -121,7 +135,7 @@ public class Settings extends Activity {
 			// Update station name if changed
 			if (resultCode == RESULT_OK) {
 				setStationName();
-				//getWeather();
+				// getWeather();
 			}
 			break;
 		default:

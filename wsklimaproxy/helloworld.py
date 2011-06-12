@@ -1,3 +1,4 @@
+from google.appengine.api import memcache
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from weatherstation import WeatherStation
@@ -8,15 +9,17 @@ from weatherstation import WeatherStation
 class MainPage(webapp.RequestHandler):
     
     def get(self):
-        stationId = self.request.get("st")
-        station = WeatherStation.get_or_insert(stationId, id=int(stationId))
+        stationId = int(self.request.get("st"))
+        status = None
+        text = memcache.get("tempJSON:"+str(id))
+        if text is None:
+            station = WeatherStation.get_or_insert(str(stationId), id=stationId)
+            text = station.getTempNow()
+            status = station.getStatus()
+        
+        self.response.set_status(status)
         self.response.headers['Content-Type'] = 'text/plain'
-        responseText = station.getTempNow()
-        if responseText == "":
-            self.response.set_status(204)
-        else:
-            self.response.set_status(200)
-        self.response.out.write(responseText)
+        self.response.out.write(text)
 
 
 application = webapp.WSGIApplication([('/temperature', MainPage)], debug=True)

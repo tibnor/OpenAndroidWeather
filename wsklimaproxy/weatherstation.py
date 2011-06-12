@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 from google.appengine.api import urlfetch
 from google.appengine.ext import db
 from xml.dom import minidom
+from google.appengine.api import memcache
+import logging
 import time
 
 def getMetData(timeserietypeID, fromTime, toTime, stations, elements, hours, months):
@@ -20,34 +22,15 @@ class WeatherStation(db.Model):
     id = db.IntegerProperty(required=True)
     temperature = db.FloatProperty()
     temperatureUpdated = db.DateTimeProperty()
-    temperatureLastTry = db.DateTimeProperty()
+    temperatureExpires = db.DateTimeProperty()
+    status = int
+
     
     def getTempNow(self):
-        updatetime = datetime.utcnow() + timedelta(hours= -1);
-        if self.temperatureUpdated != None and updatetime < self.temperatureUpdated:
-            return  """{"time":%d,"temperature":%s}""" % (time.mktime(self.temperatureUpdated.timetuple()), self.temperature);
+        now = datetime.utcnow();
+        if (self.temperatureExpires is not None and self.temperatureExpires > now):
+            return self.tempToJson()
         
-        # return old data if the data is between 1 hour and 1 hour and 15 minutes. 
-        # And last try was within 5 minutes
-        minLastTryTime = datetime.utcnow() + timedelta(minutes= -5);
-        minDataTime = datetime.utcnow() + timedelta(minutes= -15, hours=-1);
-        if self.temperatureLastTry != None and minLastTryTime < self.temperatureLastTry \
-            and self.temperatureUpdated != None and minDataTime < self.temperatureUpdated:
-            if self.temperatureUpdated != None and self.temperature != None:
-                return  """{"time":%d,"temperature":%s}""" % (time.mktime(self.temperatureUpdated.timetuple()), self.temperature);
-            else:
-                return ""
-            
-        # return old data if the data is older than 1 hour and 15 minutes. 
-        # And last try was within 30 minutes
-        maxLastTryTime = datetime.utcnow() + timedelta(minutes= -30);
-        maxDataTime = datetime.utcnow() + timedelta(minutes= -15, hours=-1);
-        if self.temperatureLastTry != None and maxLastTryTime <= self.temperatureLastTry \
-            and self.temperatureUpdated != None and maxDataTime >= self.temperatureUpdated:
-            if self.temperatureUpdated != None and self.temperature != None:
-                return  """{"time":%d,"temperature":%s}""" % (time.mktime(self.temperatureUpdated.timetuple()), self.temperature);
-            else:
-                return ""
         
         fromTime = datetime.utcnow() + timedelta(hours= -6);
         toTime = datetime.utcnow();
@@ -66,14 +49,48 @@ class WeatherStation(db.Model):
                 if fromTime > fromTimeMax and tempTemperature != '-99999':
                     fromTimeMax = fromTime
                     temperature = tempTemperature;
-        # Save
-        self.temperatureLastTry = datetime.utcnow();
-        if temperature == None:
-            self.temperatureUpdated = datetime.fromtimestamp(0)
-            self.put();
-            return "";
-        self.temperature = float(temperature)
-        self.temperatureUpdated = fromTimeMax
-        self.put();
         
-        return  """{"time":%d,"temperature":%s}""" % (time.mktime(fromTimeMax.timetuple()), temperature);
+        # Save
+        now = datetime.utcnow()
+        fromTime = fromTimeMax
+        if (fromTime is None or fromTime < now + timedelta(hours= -2)):
+            # If no result or older than two hours, set expiration to 30 minutes from now
+            self.temperatureExpires = now + timedelta(minutes=30);
+        elif (fromTime < now + timedelta(minutes= -50)):
+            # If between 50 minute and 2 hours set to 2 minutes 
+            self.temperatureExpires = now + timedelta(minutes=2);
+        else:
+            # If temperature is not older than 50 minutes, set to next hour
+            expire = now + timedelta(hours=1);
+            expire -= timedelta(minutes=expire.minute, seconds=expire.second)
+            self.temperatureExpires = expire
+            
+            
+       
+        if temperature is not None:
+            self.temperature = float(temperature)
+            self.temperatureUpdated = fromTimeMax
+        self.put();
+        text = self.tempToJson();
+        return text;
+    
+    def saveToMemcach(self, text,status):
+        if not memcache.set("tempJSON:" + str(self.id), text, time.mktime(self.temperatureExpires.timetuple())):
+            logging.error("memcach not working") 
+        if not memcache.set("tempStatus:" + str(self.id), status, time.mktime(self.temperatureExpires.timetuple())):
+            logging.error("memcach not working") 
+        return    
+    
+    def tempToJson(self):
+        text = None
+        if self.temperatureUpdated != None and self.temperature != None:
+            text =  """{"time":%d,"temperature":%s}""" % (time.mktime(self.temperatureUpdated.timetuple()), self.temperature);
+            self.status = 200
+        else:
+            text = ""
+            self.status = 204
+        self.saveToMemcach(text,self.status)
+        return text
+    
+    def getStatus(self):
+        return self.status
