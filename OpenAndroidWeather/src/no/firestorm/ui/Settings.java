@@ -36,6 +36,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -80,7 +81,7 @@ public class Settings extends Activity {
 	}
 
 	private void setGetWeatherButton() {
-		Button chooseStationButton = (Button) findViewById(R.id.get_weather);
+		ImageButton chooseStationButton = (ImageButton) findViewById(R.id.get_weather);
 		chooseStationButton.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View v) {
@@ -120,7 +121,7 @@ public class Settings extends Activity {
 			// Update station name if changed
 			if (resultCode == RESULT_OK) {
 				setStationName();
-				getWeather();
+				//getWeather();
 			}
 			break;
 		default:
@@ -128,9 +129,19 @@ public class Settings extends Activity {
 		}
 	}
 
+	public void updateAlarm() {
+		final Intent intent = new Intent(Settings.this,
+				WeatherNotificationService.class);
+		intent.putExtra(WeatherNotificationService.INTENT_EXTRA_ACTION,
+				WeatherNotificationService.INTENT_EXTRA_ACTION_UPDATE_ALARM);
+		startService(intent);
+	}
+
 	private void getWeather() {
 		final Intent intent = new Intent(Settings.this,
 				WeatherNotificationService.class);
+		intent.putExtra(WeatherNotificationService.INTENT_EXTRA_ACTION,
+				WeatherNotificationService.INTENT_EXTRA_ACTION_GET_TEMP);
 		startService(intent);
 	}
 
@@ -147,7 +158,7 @@ public class Settings extends Activity {
 					.edit();
 			settings.putInt(WsKlimaProxy.PREFS_UPDATE_RATE_KEY, updateRate);
 			settings.commit();
-			getWeather();
+			updateAlarm();
 
 		}
 

@@ -22,12 +22,13 @@ package no.firestorm.ui.stationpicker;
 import java.util.List;
 
 import no.firestorm.R;
+import no.firestorm.weathernotificatonservice.WeatherNotificationService;
 import no.firestorm.wsklima.WsKlimaProxy;
 import no.firestorm.wsklima.database.WsKlimaDataBaseHelper;
 import android.app.ListActivity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences.Editor;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -37,12 +38,13 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
-// TODO: Search box: http://stackoverflow.com/questions/1737009/how-to-make-a-nice-looking-listview-filter-on-android
 public class StationPicker extends ListActivity {
 	List<Station> mStations;
 	List<Station> mStationsSortedAlphabetical = null;
@@ -55,13 +57,32 @@ public class StationPicker extends ListActivity {
 		setContentView(R.layout.stationslist);
 		setResult(RESULT_CANCELED);
 		updateAdapter();
-		
+		setGetWeatherButton();
+
 		ListView lw = getListView();
 		lw.setTextFilterEnabled(true);
-		
-	    EditText filterText = (EditText) findViewById(R.id.search_box);
-	    filterText.addTextChangedListener(filterTextWatcher);
 
+		EditText filterText = (EditText) findViewById(R.id.search_box);
+		filterText.addTextChangedListener(filterTextWatcher);
+
+	}
+	
+	private void setGetWeatherButton() {
+		ImageButton chooseStationButton = (ImageButton) findViewById(R.id.get_weather);
+		chooseStationButton.setOnClickListener(new OnClickListener() {
+
+			public void onClick(View v) {
+				getWeather();
+			}
+		});
+	}
+	
+	private void getWeather() {
+		final Intent intent = new Intent(StationPicker.this,
+				WeatherNotificationService.class);
+		intent.putExtra(WeatherNotificationService.INTENT_EXTRA_ACTION,
+				WeatherNotificationService.INTENT_EXTRA_ACTION_GET_TEMP);
+		startService(intent);
 	}
 
 	private void updateAdapter() {
@@ -105,7 +126,7 @@ public class StationPicker extends ListActivity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.layout.stationlists_menu, menu);
+		inflater.inflate(R.menu.stationslist, menu);
 		return true;
 	}
 
@@ -165,28 +186,32 @@ public class StationPicker extends ListActivity {
 	private Location getCurrentLocation() {
 		LocationManager locMan = (LocationManager) this
 				.getSystemService(Context.LOCATION_SERVICE);
-		Criteria locCriteria = new Criteria();
-		locCriteria.setAccuracy(Criteria.ACCURACY_COARSE);
-		String locProviderName = locMan.getBestProvider(locCriteria, true);
-		if (locProviderName == null) {
-			return null;
+//		Criteria locCriteria = new Criteria();
+//		locCriteria.setAccuracy(Criteria.ACCURACY_COARSE);
+//		List<String> locProviderNames = locMan.getProviders(locCriteria, true);
+		List<String> locProviderNames = locMan.getProviders(true);
+		Location location = null;
+		for (String locProvider : locProviderNames) {
+			location = locMan.getLastKnownLocation(locProvider);
+			if (location != null)
+				break;
 		}
-		return locMan.getLastKnownLocation(locProviderName);
+		return location;
 	}
-	
+
 	private TextWatcher filterTextWatcher = new TextWatcher() {
 
-	    public void afterTextChanged(Editable s) {
-	    }
+		public void afterTextChanged(Editable s) {
+		}
 
-	    public void beforeTextChanged(CharSequence s, int start, int count,
-	            int after) {
-	    }
+		public void beforeTextChanged(CharSequence s, int start, int count,
+				int after) {
+		}
 
-	    public void onTextChanged(CharSequence s, int start, int before,
-	            int count) {
-	        ((SimpleAdapter) getListAdapter()).getFilter().filter(s);
-	    }
+		public void onTextChanged(CharSequence s, int start, int before,
+				int count) {
+			((SimpleAdapter) getListAdapter()).getFilter().filter(s);
+		}
 
 	};
 }

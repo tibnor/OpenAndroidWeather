@@ -45,6 +45,9 @@ import android.util.Log;
 public class WeatherNotificationService extends Service {
 
 	private static final String LOG_ID = "no.firestorm.weatherservice";
+	public static final String INTENT_EXTRA_ACTION = "action";
+	public static final int INTENT_EXTRA_ACTION_GET_TEMP = 1;
+	public static final int INTENT_EXTRA_ACTION_UPDATE_ALARM = 2;
 
 	@Override
 	public void onCreate() {
@@ -60,7 +63,19 @@ public class WeatherNotificationService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		showTemp();
+
+		switch (intent.getIntExtra(INTENT_EXTRA_ACTION,
+				INTENT_EXTRA_ACTION_GET_TEMP)) {
+		case INTENT_EXTRA_ACTION_GET_TEMP:
+			showTemp();
+			break;
+		case INTENT_EXTRA_ACTION_UPDATE_ALARM:
+			updateAlarm();
+			break;
+
+		default:
+			break;
+		}
 		return START_STICKY;
 	}
 
@@ -79,6 +94,15 @@ public class WeatherNotificationService extends Service {
 		ShowTempAsync tempTask = new ShowTempAsync();
 		tempTask.execute(stationId);
 
+	}
+
+	private void removeAlarm() {
+		final PendingIntent pendingIntent = PendingIntent.getService(this, 0,
+				new Intent(this, WeatherNotificationService.class),
+				PendingIntent.FLAG_UPDATE_CURRENT);
+		final AlarmManager alarm = (AlarmManager) this
+				.getSystemService(Context.ALARM_SERVICE);
+		alarm.cancel(pendingIntent);
 	}
 
 	private void setAlarm(long updateRate) {
@@ -107,17 +131,18 @@ public class WeatherNotificationService extends Service {
 		setAlarm(10);
 	}
 
-	private void setAlarm() {
+	private void updateAlarm() {
 		// Find update rate
 		SharedPreferences settings = getSharedPreferences(
 				WsKlimaProxy.PREFS_NAME, 0);
 		int updateRate = settings.getInt(WsKlimaProxy.PREFS_UPDATE_RATE_KEY,
 				WsKlimaProxy.PREFS_UPDATE_RATE_DEFAULT);
 
-		if (updateRate <= 0)
+		if (updateRate <= 0) {
+			removeAlarm();
 			return;
-
-		setAlarm(updateRate);
+		} else
+			setAlarm(updateRate);
 	}
 
 	private class ShowTempAsync extends AsyncTask<Integer, Void, Object> {
@@ -161,11 +186,11 @@ public class WeatherNotificationService extends Service {
 				final DateFormat df = DateFormat
 						.getTimeInstance(DateFormat.SHORT);
 				Context context = WeatherNotificationService.this;
-				contentText = String.format("%s %.1f °C  %s %s",
-						context.getString(R.string.temperatur_),
-						new Float(temperature.getValue()),
-						context.getString(R.string._tid_), df.format(time));
-				setAlarm();
+				contentText = String.format("%s %.1f °C  %s %s", context
+						.getString(R.string.temperatur_),
+						new Float(temperature.getValue()), context
+								.getString(R.string._tid_), df.format(time));
+				updateAlarm();
 
 			} else {
 				// Find icon

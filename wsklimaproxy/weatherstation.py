@@ -27,14 +27,29 @@ class WeatherStation(db.Model):
         if self.temperatureUpdated != None and updatetime < self.temperatureUpdated:
             return  """{"time":%d,"temperature":%s}""" % (time.mktime(self.temperatureUpdated.timetuple()), self.temperature);
         
-        updatetime = datetime.utcnow() + timedelta(minutes= -30);
-        if self.temperatureLastTry != None and updatetime < self.temperatureLastTry:
+        # return old data if the data is between 1 hour and 1 hour and 15 minutes. 
+        # And last try was within 5 minutes
+        minLastTryTime = datetime.utcnow() + timedelta(minutes= -5);
+        minDataTime = datetime.utcnow() + timedelta(minutes= -15, hours=-1);
+        if self.temperatureLastTry != None and minLastTryTime < self.temperatureLastTry \
+            and self.temperatureUpdated != None and minDataTime < self.temperatureUpdated:
+            if self.temperatureUpdated != None and self.temperature != None:
+                return  """{"time":%d,"temperature":%s}""" % (time.mktime(self.temperatureUpdated.timetuple()), self.temperature);
+            else:
+                return ""
+            
+        # return old data if the data is older than 1 hour and 15 minutes. 
+        # And last try was within 30 minutes
+        maxLastTryTime = datetime.utcnow() + timedelta(minutes= -30);
+        maxDataTime = datetime.utcnow() + timedelta(minutes= -15, hours=-1);
+        if self.temperatureLastTry != None and maxLastTryTime <= self.temperatureLastTry \
+            and self.temperatureUpdated != None and maxDataTime >= self.temperatureUpdated:
             if self.temperatureUpdated != None and self.temperature != None:
                 return  """{"time":%d,"temperature":%s}""" % (time.mktime(self.temperatureUpdated.timetuple()), self.temperature);
             else:
                 return ""
         
-        fromTime = datetime.utcnow() + timedelta(days= -1);
+        fromTime = datetime.utcnow() + timedelta(hours= -6);
         toTime = datetime.utcnow();
         hours = '00,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20,21,22,23';
         months = '1,2,3,4,5,6,7,8,9,10,11,12'
@@ -47,12 +62,14 @@ class WeatherStation(db.Model):
             if it.attributes.values()[0].value == 'ns2:no_met_metdata_TimeStamp':
                 fromStr = it.getElementsByTagName('from')[0].firstChild.data;
                 fromTime = datetime.strptime(fromStr, "%Y-%m-%dT%H:%M:%S.000Z")
-                if fromTime > fromTimeMax:
+                tempTemperature = it.getElementsByTagName('value')[0].firstChild.data;
+                if fromTime > fromTimeMax and tempTemperature != '-99999':
                     fromTimeMax = fromTime
-                    temperature = it.getElementsByTagName('value')[0].firstChild.data;
+                    temperature = tempTemperature;
         # Save
+        self.temperatureLastTry = datetime.utcnow();
         if temperature == None:
-            self.temperatureLastTry = datetime.utcnow();
+            self.temperatureUpdated = datetime.fromtimestamp(0)
             self.put();
             return "";
         self.temperature = float(temperature)

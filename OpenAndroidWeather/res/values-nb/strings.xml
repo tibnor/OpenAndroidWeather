@@ -4,8 +4,7 @@
 	<string name="choose_station">Velg stasjon</string>
 	<string name="Get_weather">Hent vær</string>
 	<string name="Update_rate">Updateringsintervall:</string>
-	<string name="app_name">FireStorm</string>
-	<string name="download_error">FireStorm: nedlastings feil</string>
+	<string name="download_error">Firestorm: nedlastings feil</string>
 	<string name="press_for_update">Trykk her for å prøve igjen</string>
 	<string name="temperatur_">Temperatur: </string>
 	<string name="_tid_"> Tid: </string>

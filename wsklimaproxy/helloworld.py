@@ -11,7 +11,12 @@ class MainPage(webapp.RequestHandler):
         stationId = self.request.get("st")
         station = WeatherStation.get_or_insert(stationId, id=int(stationId))
         self.response.headers['Content-Type'] = 'text/plain'
-        self.response.out.write(station.getTempNow())
+        responseText = station.getTempNow()
+        if responseText == "":
+            self.response.set_status(204)
+        else:
+            self.response.set_status(200)
+        self.response.out.write(responseText)
 
 
 application = webapp.WSGIApplication([('/temperature', MainPage)], debug=True)

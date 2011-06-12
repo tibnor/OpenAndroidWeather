@@ -4,8 +4,8 @@
 	<string name="choose_station">Choose station</string>
 	<string name="Get_weather">Get weather</string>
 	<string name="Update_rate">Update rate:</string>
-	<string name="app_name">FireStorm</string>
-	<string name="download_error">FireStorm: download error</string>
+	<string name="app_name">Firestorm</string>
+	<string name="download_error">Firestorm: download error</string>
 	<string name="press_for_update">Press here to try again</string>
 	<string name="temperatur_">Temperature: </string>
 	<string name="_tid_"> Time: </string>
