@@ -28,4 +28,11 @@
 	<string name="sort_by_name">Sorter etter navn</string>
 	<string name="sort_by_distance">Sorter etter avstand</string>
 	<string name="type_to_filter">Søk</string>
+		<string name="about">Om</string>
+	<string name="about_text">"""Firestorm henter data fra Norges Meteorologiske Institut, via. tjenesten http://eklima.met.no/wsKlima/. Men det er ikke noen tilknytning mellom Norges Meteorologiske Institut og utviklerne.
+	
+Programmet er et åpen kildekode prosjekt under GPL v3 og kildekoden kan hentes ned fra https://github.com/tibnor/OpenAndroidWeather.
+	
+Hvis du liker programmet er godt og ønsker videre utvikling vær snill å doner!  """</string>
+	<string name="donate">Doner</string>
 </resources>

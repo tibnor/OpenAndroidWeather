@@ -24,16 +24,12 @@ import no.firestorm.wsklima.WsKlimaProxy;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 
 public class BootIntentReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		SharedPreferences settings = context.getSharedPreferences(
-				WsKlimaProxy.PREFS_NAME, 0);
-		int updateRate = settings.getInt(WsKlimaProxy.PREFS_UPDATE_RATE_KEY,
-				WsKlimaProxy.PREFS_UPDATE_RATE_DEFAULT);
+		int updateRate = WsKlimaProxy.getUpdateRate(context);
 		if (updateRate > 0) {
 			final Intent serviceIntent = new Intent(context,
 					WeatherNotificationService.class);

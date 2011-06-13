@@ -26,10 +26,16 @@ import no.firestorm.ui.stationpicker.StationPicker;
 import no.firestorm.weathernotificatonservice.WeatherNotificationService;
 import no.firestorm.wsklima.WsKlimaProxy;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -59,10 +65,53 @@ public class Settings extends Activity {
 
 	}
 
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.settings, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.about:
+			openAboutBox();
+			break;
+		default:
+			break;
+		}
+		return super.onOptionsItemSelected(item);
+	}
+
+	private void openAboutBox() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setMessage(R.string.about_text)
+				.setCancelable(false)
+				.setNeutralButton("OK", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int id) {
+						dialog.cancel();
+					}
+				})
+				.setPositiveButton(R.string.donate,
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int id) {
+								dialog.cancel();
+								String url = "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=W66JKFZDLHFF4&lc=NO&item_name=firestorm&item_number=inapp&currency_code=NOK&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted";
+								Intent i = new Intent(Intent.ACTION_VIEW);
+								i.setData(Uri.parse(url));
+								startActivity(i);
+							}
+						}).setTitle(R.string.about);
+
+		AlertDialog alert = builder.create();
+		alert.show();
+	}
+
 	private void checkIfFirstRun() {
 		SharedPreferences settings = getSharedPreferences(PREF_NAME, 0);
-		boolean firstRun = settings.getBoolean(PREF_FIRST_RUN,true);
-		if (firstRun){
+		boolean firstRun = settings.getBoolean(PREF_FIRST_RUN, true);
+		if (firstRun) {
 			getWeather();
 			Editor edit = settings.edit();
 			edit.putBoolean(PREF_FIRST_RUN, false);
@@ -81,10 +130,7 @@ public class Settings extends Activity {
 		spinner.setOnItemSelectedListener(new UpdateRateSelectedListener());
 
 		// Find selected update rate
-		SharedPreferences settings = getSharedPreferences(
-				WsKlimaProxy.PREFS_NAME, 0);
-		int updateRate = settings.getInt(WsKlimaProxy.PREFS_UPDATE_RATE_KEY,
-				WsKlimaProxy.PREFS_UPDATE_RATE_DEFAULT);
+		int updateRate = WsKlimaProxy.getUpdateRate(this);
 		int[] updateRateArray = getResources().getIntArray(
 				R.array.Update_rate_values);
 		int id = Arrays.binarySearch(updateRateArray, updateRate);
@@ -118,11 +164,7 @@ public class Settings extends Activity {
 
 	private void setStationName() {
 		TextView stationNameView = (TextView) findViewById(R.id.StationName);
-		SharedPreferences settings = getSharedPreferences(
-				WsKlimaProxy.PREFS_NAME, 0);
-		String stationName = settings.getString(
-				WsKlimaProxy.PREFS_STATION_NAME_KEY,
-				WsKlimaProxy.PREFS_STATION_NAME_DEFAULT);
+		String stationName = WsKlimaProxy.getStationName(this);
 		stationNameView.setText(stationName);
 	}
 
@@ -143,13 +185,6 @@ public class Settings extends Activity {
 		}
 	}
 
-	public void updateAlarm() {
-		final Intent intent = new Intent(Settings.this,
-				WeatherNotificationService.class);
-		intent.putExtra(WeatherNotificationService.INTENT_EXTRA_ACTION,
-				WeatherNotificationService.INTENT_EXTRA_ACTION_UPDATE_ALARM);
-		startService(intent);
-	}
 
 	private void getWeather() {
 		final Intent intent = new Intent(Settings.this,
@@ -168,11 +203,7 @@ public class Settings extends Activity {
 			int updateRate = getResources().getIntArray(
 					R.array.Update_rate_values)[(int) id];
 
-			Editor settings = getSharedPreferences(WsKlimaProxy.PREFS_NAME, 0)
-					.edit();
-			settings.putInt(WsKlimaProxy.PREFS_UPDATE_RATE_KEY, updateRate);
-			settings.commit();
-			updateAlarm();
+			WsKlimaProxy.setUpdateRate(Settings.this, updateRate);
 
 		}
 

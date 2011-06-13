@@ -37,7 +37,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.util.Log;
@@ -85,14 +84,8 @@ public class WeatherNotificationService extends Service {
 	}
 
 	private void showTemp() {
-		// Find station id
-		SharedPreferences settings = getSharedPreferences(
-				WsKlimaProxy.PREFS_NAME, 0);
-		int stationId = settings.getInt(WsKlimaProxy.PREFS_STATION_ID_KEY,
-				WsKlimaProxy.PREFS_STATION_ID_DEFAULT);
-
 		ShowTempAsync tempTask = new ShowTempAsync();
-		tempTask.execute(stationId);
+		tempTask.execute();
 
 	}
 
@@ -133,10 +126,8 @@ public class WeatherNotificationService extends Service {
 
 	private void updateAlarm() {
 		// Find update rate
-		SharedPreferences settings = getSharedPreferences(
-				WsKlimaProxy.PREFS_NAME, 0);
-		int updateRate = settings.getInt(WsKlimaProxy.PREFS_UPDATE_RATE_KEY,
-				WsKlimaProxy.PREFS_UPDATE_RATE_DEFAULT);
+
+		int updateRate = WsKlimaProxy.getUpdateRate(this);
 
 		if (updateRate <= 0) {
 			removeAlarm();
@@ -145,15 +136,15 @@ public class WeatherNotificationService extends Service {
 			setAlarm(updateRate);
 	}
 
-	private class ShowTempAsync extends AsyncTask<Integer, Void, Object> {
+	
+	private class ShowTempAsync extends AsyncTask<Void, Void, Object> {
 
 		@Override
-		protected Object doInBackground(Integer... stationId) {
+		protected Object doInBackground(Void... stationId) {
 			// get temp
 			final WsKlimaProxy weatherProxy = new WsKlimaProxy();
 			try {
-				return weatherProxy.getTemperatureNowSmall(stationId[0]);
-				// return weatherProxy.getTemperatureNow(stationId[0], 3600);
+				return weatherProxy.getTemperatureNow(WeatherNotificationService.this);
 			} catch (NetworkErrorException e) {
 				return e;
 			} catch (HttpException e) {
@@ -169,11 +160,7 @@ public class WeatherNotificationService extends Service {
 			if (object instanceof WeatherElement) {
 				WeatherElement temperature = (WeatherElement) object;
 				// Find name
-				SharedPreferences settings = getSharedPreferences(
-						WsKlimaProxy.PREFS_NAME, 0);
-				String stationName = settings.getString(
-						WsKlimaProxy.PREFS_STATION_NAME_KEY,
-						WsKlimaProxy.PREFS_STATION_NAME_DEFAULT);
+				String stationName = WsKlimaProxy.getStationName(WeatherNotificationService.this);
 
 				// Find icon
 				icon = TempToDrawable.getDrawableFromTemp(Float
@@ -193,6 +180,7 @@ public class WeatherNotificationService extends Service {
 				updateAlarm();
 
 			} else {
+				// Error has occurred
 				// Find icon
 				icon = android.R.drawable.stat_notify_error;
 				// Set title

@@ -28,7 +28,6 @@ import no.firestorm.wsklima.database.WsKlimaDataBaseHelper;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences.Editor;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -176,11 +175,8 @@ public class StationPicker extends ListActivity {
 		id = station.getId();
 
 		// save
-		Editor settings = getSharedPreferences(WsKlimaProxy.PREFS_NAME, 0)
-				.edit();
-		settings.putInt(WsKlimaProxy.PREFS_STATION_ID_KEY, (int) id);
-		settings.putString(WsKlimaProxy.PREFS_STATION_NAME_KEY, name);
-		settings.commit();
+		WsKlimaProxy.setStationName(this,name, id);
+
 	}
 
 	private Location getCurrentLocation() {
