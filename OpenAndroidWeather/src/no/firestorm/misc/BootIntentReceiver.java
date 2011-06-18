@@ -29,7 +29,7 @@ public class BootIntentReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		int updateRate = WsKlimaProxy.getUpdateRate(context);
+		final int updateRate = WsKlimaProxy.getUpdateRate(context);
 		if (updateRate > 0) {
 			final Intent serviceIntent = new Intent(context,
 					WeatherNotificationService.class);

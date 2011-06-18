@@ -30,30 +30,6 @@ public class Station extends HashMap<String, String> implements
 	public static final String DISTANCE = "distance";
 	public static final String DIRECTION = "direction";
 
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public int getId() {
-		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
-	}
-
-	public float getDistanceToCurrentPosition() {
-		return distanceToCurrentPosition;
-	}
-
-	public float getBearingFromCurrentPotition() {
-		return bearingToCurrentPotition;
-	}
-
 	private String name;
 	private int id;
 	private float distanceToCurrentPosition;
@@ -63,29 +39,37 @@ public class Station extends HashMap<String, String> implements
 			final double longitude, Location currentPosition) {
 		super();
 		this.name = name;
-		this.put(NAME, name);
+		put(NAME, name);
 		this.id = id;
-		float[] result = new float[] { distanceToCurrentPosition,
+		final float[] result = new float[] { distanceToCurrentPosition,
 				bearingToCurrentPotition };
 		if (currentPosition != null) {
 			Location.distanceBetween(currentPosition.getLatitude(),
 					currentPosition.getLongitude(), latitude, longitude, result);
-			this.distanceToCurrentPosition = result[0];
-			this.bearingToCurrentPotition = result[1];
-			this.put(DIRECTION, getDirection());
-			this.put(DISTANCE, String.format("%.1f km",
-					this.distanceToCurrentPosition / 1000));
-		}
-		else{
-			this.distanceToCurrentPosition = 0;
-			this.bearingToCurrentPotition = 0;
-			this.put(DIRECTION, "");
-			this.put(DISTANCE, "");
+			distanceToCurrentPosition = result[0];
+			bearingToCurrentPotition = result[1];
+			put(DIRECTION, getDirection());
+			put(DISTANCE,
+					String.format("%.1f km", distanceToCurrentPosition / 1000));
+		} else {
+			distanceToCurrentPosition = 0;
+			bearingToCurrentPotition = 0;
+			put(DIRECTION, "");
+			put(DISTANCE, "");
 		}
 	}
 
+	@Override
+	public int compareTo(Station another) {
+		return (int) (distanceToCurrentPosition - another.distanceToCurrentPosition);
+	}
+
+	public float getBearingFromCurrentPotition() {
+		return bearingToCurrentPotition;
+	}
+
 	public String getDirection() {
-		float deg = bearingToCurrentPotition;
+		final float deg = bearingToCurrentPotition;
 		if ((deg > 0 && deg <= 22.5))
 			return "N";
 		else if (deg <= 22.5 + 45)
@@ -104,12 +88,26 @@ public class Station extends HashMap<String, String> implements
 			return "NW";
 		else
 			return "N";
-
 	}
 
-	@Override
-	public int compareTo(Station another) {
-		return (int) (distanceToCurrentPosition - another.distanceToCurrentPosition);
+	public float getDistanceToCurrentPosition() {
+		return distanceToCurrentPosition;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 }

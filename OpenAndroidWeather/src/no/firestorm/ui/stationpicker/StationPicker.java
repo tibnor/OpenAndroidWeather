@@ -50,32 +50,37 @@ public class StationPicker extends ListActivity {
 	List<Station> mStationsSortedByDistance = null;
 	boolean mSortByDistance = true;
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.stationslist);
-		setResult(RESULT_CANCELED);
-		updateAdapter();
-		setGetWeatherButton();
+	private final TextWatcher filterTextWatcher = new TextWatcher() {
 
-		ListView lw = getListView();
-		lw.setTextFilterEnabled(true);
+		@Override
+		public void afterTextChanged(Editable s) {
+		}
 
-		EditText filterText = (EditText) findViewById(R.id.search_box);
-		filterText.addTextChangedListener(filterTextWatcher);
+		@Override
+		public void beforeTextChanged(CharSequence s, int start, int count,
+				int after) {
+		}
 
+		@Override
+		public void onTextChanged(CharSequence s, int start, int before,
+				int count) {
+			((SimpleAdapter) getListAdapter()).getFilter().filter(s);
+		}
+
+	};
+
+	private Location getCurrentLocation() {
+		final LocationManager locMan = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		final List<String> locProviderNames = locMan.getProviders(true);
+		Location location = null;
+		for (final String locProvider : locProviderNames) {
+			location = locMan.getLastKnownLocation(locProvider);
+			if (location != null)
+				break;
+		}
+		return location;
 	}
-	
-	private void setGetWeatherButton() {
-		ImageButton chooseStationButton = (ImageButton) findViewById(R.id.get_weather);
-		chooseStationButton.setOnClickListener(new OnClickListener() {
 
-			public void onClick(View v) {
-				getWeather();
-			}
-		});
-	}
-	
 	private void getWeather() {
 		final Intent intent = new Intent(StationPicker.this,
 				WeatherNotificationService.class);
@@ -84,63 +89,38 @@ public class StationPicker extends ListActivity {
 		startService(intent);
 	}
 
-	private void updateAdapter() {
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.stationslist);
+		setResult(RESULT_CANCELED);
+		updateAdapter();
+		setGetWeatherButton();
 
-		// Get stations
-		WsKlimaDataBaseHelper dbhelper = new WsKlimaDataBaseHelper(this);
-		Location loc = getCurrentLocation();
-		if (loc == null) {
-			Toast toast = Toast.makeText(this,
-					R.string.error_could_not_find_your_position_,
-					Toast.LENGTH_SHORT);
-			toast.show();
-			mSortByDistance = false;
-		}
+		final ListView lw = getListView();
+		lw.setTextFilterEnabled(true);
 
-		if (mSortByDistance)
-			if (mStationsSortedByDistance == null) {
-				mStations = dbhelper.getStationsSortedByLocation(loc);
-				mStationsSortedByDistance = mStations;
-			} else
-				mStations = mStationsSortedByDistance;
-		else {
-			if (mStationsSortedAlphabetical == null) {
-				mStations = dbhelper.getStationsSortedAlphabetic(loc);
-				mStationsSortedAlphabetical = mStations;
-			} else
-				mStations = mStationsSortedAlphabetical;
-		}
-
-		// set adapter
-		String[] from = { Station.NAME, Station.DISTANCE, Station.DIRECTION };
-		int[] to = { R.id.StationName, R.id.Distance, R.id.Direction };
-		SimpleAdapter adapter = new SimpleAdapter(this, mStations,
-				R.layout.stationslist_row, from, to);
-
-		// Add to list view
-		setListAdapter(adapter);
+		final EditText filterText = (EditText) findViewById(R.id.search_box);
+		filterText.addTextChangedListener(filterTextWatcher);
 
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater inflater = getMenuInflater();
+		final MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.stationslist, menu);
 		return true;
 	}
 
 	@Override
-	public boolean onPrepareOptionsMenu(Menu menu) {
-		MenuItem item = menu.getItem(0);
-		if (!mSortByDistance) {
-			item.setTitle(R.string.sort_by_distance);
-			item.setIcon(android.R.drawable.ic_menu_sort_by_size);
-		} else {
-			item.setTitle(R.string.sort_by_name);
-			item.setIcon(android.R.drawable.ic_menu_sort_alphabetically);
-		}
+	protected void onListItemClick(ListView l, View v, int position, long id) {
+		super.onListItemClick(l, v, position, id);
+		// Save station
+		saveStation(id);
 
-		return super.onPrepareOptionsMenu(menu);
+		// Return
+		setResult(RESULT_OK);
+		finish();
 	}
 
 	@Override
@@ -157,57 +137,100 @@ public class StationPicker extends ListActivity {
 	}
 
 	@Override
-	protected void onListItemClick(ListView l, View v, int position, long id) {
-		super.onListItemClick(l, v, position, id);
-		// Save station
-		saveStation(id);
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		final MenuItem item = menu.getItem(0);
+		if (!mSortByDistance) {
+			item.setTitle(R.string.sort_by_distance);
+			item.setIcon(android.R.drawable.ic_menu_sort_by_size);
+		} else {
+			item.setTitle(R.string.sort_by_name);
+			item.setIcon(android.R.drawable.ic_menu_sort_alphabetically);
+		}
 
-		// Return
-		setResult(RESULT_OK);
-		finish();
+		return super.onPrepareOptionsMenu(menu);
 	}
 
 	private void saveStation(long id) {
-		SimpleAdapter adapter = (SimpleAdapter) getListView().getAdapter();
-		// Get name
-		Station station = (Station) adapter.getItem((int) id);
-		String name = station.getName();
+		final SimpleAdapter adapter = (SimpleAdapter) getListView()
+				.getAdapter();
+		final Station station = (Station) adapter.getItem((int) id);
 		id = station.getId();
+		if (id != WsKlimaProxy.FIND_NEAREST_STATION){
+		// Get name
+		final String name = station.getName();
 
 		// save
-		WsKlimaProxy.setStationName(this,name, id);
+		WsKlimaProxy.setStationName(this, name, id);
+		WsKlimaProxy.setUseNearestStation(this, false);
+		} else {
+			WsKlimaProxy.setUseNearestStation(this, true);
+		}
+		
+		
+		int updateRate = WsKlimaProxy.getUpdateRate(this);
+		
+		if (updateRate > 0) {
+			final Intent intent = new Intent(this,
+					WeatherNotificationService.class);
+			intent.putExtra(WeatherNotificationService.INTENT_EXTRA_ACTION,
+					WeatherNotificationService.INTENT_EXTRA_ACTION_GET_TEMP);
+			startService(intent);
+		}
 
 	}
 
-	private Location getCurrentLocation() {
-		LocationManager locMan = (LocationManager) this
-				.getSystemService(Context.LOCATION_SERVICE);
-//		Criteria locCriteria = new Criteria();
-//		locCriteria.setAccuracy(Criteria.ACCURACY_COARSE);
-//		List<String> locProviderNames = locMan.getProviders(locCriteria, true);
-		List<String> locProviderNames = locMan.getProviders(true);
-		Location location = null;
-		for (String locProvider : locProviderNames) {
-			location = locMan.getLastKnownLocation(locProvider);
-			if (location != null)
-				break;
-		}
-		return location;
+	private void setGetWeatherButton() {
+		final ImageButton chooseStationButton = (ImageButton) findViewById(R.id.get_weather);
+		chooseStationButton.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				getWeather();
+			}
+		});
 	}
 
-	private TextWatcher filterTextWatcher = new TextWatcher() {
+	private List<Station> addUseNearestStation(List<Station> stations) {
+		stations.add(0, new Station(this.getString(R.string.use_nearest_station),
+				WsKlimaProxy.FIND_NEAREST_STATION, 0, 0, null));
+		return stations;
+	}
 
-		public void afterTextChanged(Editable s) {
+	private void updateAdapter() {
+
+		// Get stations
+		final WsKlimaDataBaseHelper dbhelper = new WsKlimaDataBaseHelper(this);
+		final Location loc = getCurrentLocation();
+		if (loc == null) {
+			final Toast toast = Toast.makeText(this,
+					R.string.error_could_not_find_your_position_,
+					Toast.LENGTH_SHORT);
+			toast.show();
+			mSortByDistance = false;
 		}
 
-		public void beforeTextChanged(CharSequence s, int start, int count,
-				int after) {
-		}
+		if (mSortByDistance)
+			if (mStationsSortedByDistance == null) {
+				mStations = addUseNearestStation(dbhelper
+						.getStationsSortedByLocation(loc));
+				mStationsSortedByDistance = mStations;
+			} else
+				mStations = mStationsSortedByDistance;
+		else if (mStationsSortedAlphabetical == null) {
+			mStations = addUseNearestStation(dbhelper.getStationsSortedAlphabetic(loc));
+			mStationsSortedAlphabetical = mStations;
+		} else
+			mStations = mStationsSortedAlphabetical;
 
-		public void onTextChanged(CharSequence s, int start, int before,
-				int count) {
-			((SimpleAdapter) getListAdapter()).getFilter().filter(s);
-		}
+		// set adapter
+		final String[] from = { Station.NAME, Station.DISTANCE,
+				Station.DIRECTION };
+		final int[] to = { R.id.StationName, R.id.Distance, R.id.Direction };
+		final SimpleAdapter adapter = new SimpleAdapter(this, mStations,
+				R.layout.stationslist_row, from, to);
 
-	};
+		// Add to list view
+		setListAdapter(adapter);
+
+	}
 }

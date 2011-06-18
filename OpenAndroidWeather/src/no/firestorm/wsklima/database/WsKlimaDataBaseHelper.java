@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.List;
 
 import no.firestorm.ui.stationpicker.Station;
-
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -60,63 +59,69 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 		mContext = context;
 	}
 
-	@Override
-	public void onCreate(SQLiteDatabase db) {
-		db.execSQL(STATION_CREATE);
-
-		try {
-			// Open the file that is the first
-			// command line parameter
-			InputStream fstream = mContext.getAssets().open("stations.txt");
-			// Get the object of DataInputStream
-			DataInputStream in = new DataInputStream(fstream);
-			BufferedReader br = new BufferedReader(new InputStreamReader(in));
-			String strLine;
-			while ((strLine = br.readLine()) != null) {
-				db.execSQL(strLine);
-			}
-			in.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		
-	}
-
-	@Override
-	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		if (oldVersion<DATABASE_VERSION){
-			db.execSQL("DROP TABLE IF EXISTS "+STATIONS_TABLE_NAME);
-			onCreate(db);
-		}
-	}
-	
-	public List<Station> getStationsSortedByLocation(Location currentLocation) {
-		WsKlimaDataBaseHelper dbHelper = new WsKlimaDataBaseHelper(mContext);
-		SQLiteDatabase mDb = dbHelper.getReadableDatabase();
-		String[] select = { WsKlimaDataBaseHelper.STATIONS_ID,
+	public List<Station> getStationsSortedAlphabetic(Location currentLocation) {
+		final WsKlimaDataBaseHelper dbHelper = new WsKlimaDataBaseHelper(
+				mContext);
+		final SQLiteDatabase mDb = dbHelper.getReadableDatabase();
+		final String[] select = { WsKlimaDataBaseHelper.STATIONS_ID,
 				WsKlimaDataBaseHelper.STATIONS_NAME,
 				WsKlimaDataBaseHelper.STATIONS_LAT,
 				WsKlimaDataBaseHelper.STATIONS_LON };
-		String orderBy = WsKlimaDataBaseHelper.STATIONS_LAT;
-		Cursor c = mDb.query(WsKlimaDataBaseHelper.STATIONS_TABLE_NAME, select,
-				null, null, null, null, orderBy);
+		final String orderBy = WsKlimaDataBaseHelper.STATIONS_NAME;
+		final Cursor c = mDb.query(WsKlimaDataBaseHelper.STATIONS_TABLE_NAME,
+				select, null, null, null, null, orderBy);
 
-		List<Station> stationList = new ArrayList<Station>(c.getCount());
+		final List<Station> stationList = new ArrayList<Station>(c.getCount());
 
-		int nameCol = c
+		final int nameCol = c
 				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_NAME);
-		int idCol = c.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_ID);
-		int latCol = c
+		final int idCol = c
+				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_ID);
+		final int latCol = c
 				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_LAT);
-		int lonCol = c
+		final int lonCol = c
 				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_LON);
 
 		c.moveToFirst();
 		while (!c.isAfterLast()) {
-			Station station = new Station(c.getString(nameCol),
+			final Station station = new Station(c.getString(nameCol),
+					c.getInt(idCol), c.getDouble(latCol), c.getDouble(lonCol),
+					currentLocation);
+			stationList.add(station);
+			c.moveToNext();
+		}
+
+		c.close();
+		mDb.close();
+		return stationList;
+	}
+
+	public List<Station> getStationsSortedByLocation(Location currentLocation) {
+		final WsKlimaDataBaseHelper dbHelper = new WsKlimaDataBaseHelper(
+				mContext);
+		final SQLiteDatabase mDb = dbHelper.getReadableDatabase();
+		final String[] select = { WsKlimaDataBaseHelper.STATIONS_ID,
+				WsKlimaDataBaseHelper.STATIONS_NAME,
+				WsKlimaDataBaseHelper.STATIONS_LAT,
+				WsKlimaDataBaseHelper.STATIONS_LON };
+		final String orderBy = WsKlimaDataBaseHelper.STATIONS_LAT;
+		final Cursor c = mDb.query(WsKlimaDataBaseHelper.STATIONS_TABLE_NAME,
+				select, null, null, null, null, orderBy);
+
+		final List<Station> stationList = new ArrayList<Station>(c.getCount());
+
+		final int nameCol = c
+				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_NAME);
+		final int idCol = c
+				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_ID);
+		final int latCol = c
+				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_LAT);
+		final int lonCol = c
+				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_LON);
+
+		c.moveToFirst();
+		while (!c.isAfterLast()) {
+			final Station station = new Station(c.getString(nameCol),
 					c.getInt(idCol), c.getDouble(latCol), c.getDouble(lonCol),
 					currentLocation);
 			stationList.add(station);
@@ -128,40 +133,38 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 		Collections.sort(stationList);
 		return stationList;
 	}
-	
-	public List<Station> getStationsSortedAlphabetic(Location currentLocation) {
-		WsKlimaDataBaseHelper dbHelper = new WsKlimaDataBaseHelper(mContext);
-		SQLiteDatabase mDb = dbHelper.getReadableDatabase();
-		String[] select = { WsKlimaDataBaseHelper.STATIONS_ID,
-				WsKlimaDataBaseHelper.STATIONS_NAME,
-				WsKlimaDataBaseHelper.STATIONS_LAT,
-				WsKlimaDataBaseHelper.STATIONS_LON };
-		String orderBy = WsKlimaDataBaseHelper.STATIONS_NAME;
-		Cursor c = mDb.query(WsKlimaDataBaseHelper.STATIONS_TABLE_NAME, select,
-				null, null, null, null, orderBy);
 
-		List<Station> stationList = new ArrayList<Station>(c.getCount());
+	@Override
+	public void onCreate(SQLiteDatabase db) {
+		db.execSQL(STATION_CREATE);
 
-		int nameCol = c
-				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_NAME);
-		int idCol = c.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_ID);
-		int latCol = c
-				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_LAT);
-		int lonCol = c
-				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_LON);
-
-		c.moveToFirst();
-		while (!c.isAfterLast()) {
-			Station station = new Station(c.getString(nameCol),
-					c.getInt(idCol), c.getDouble(latCol), c.getDouble(lonCol),
-					currentLocation);
-			stationList.add(station);
-			c.moveToNext();
+		try {
+			// Open the file that is the first
+			// command line parameter
+			final InputStream fstream = mContext.getAssets().open(
+					"stations.txt");
+			// Get the object of DataInputStream
+			final DataInputStream in = new DataInputStream(fstream);
+			final BufferedReader br = new BufferedReader(new InputStreamReader(
+					in));
+			String strLine;
+			while ((strLine = br.readLine()) != null)
+				db.execSQL(strLine);
+			in.close();
+		} catch (final FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (final IOException e) {
+			e.printStackTrace();
 		}
 
-		c.close();
-		mDb.close();
-		return stationList;
+	}
+
+	@Override
+	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+		if (oldVersion < DATABASE_VERSION) {
+			db.execSQL("DROP TABLE IF EXISTS " + STATIONS_TABLE_NAME);
+			onCreate(db);
+		}
 	}
 
 }

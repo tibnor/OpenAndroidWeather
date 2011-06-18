@@ -36,10 +36,13 @@ public class WsKlimaProxy {
 	static final Integer PREFS_LAST_WEATHER_DEFAULT = null;
 	static final String PREFS_LAST_UPDATE_TIME_KEY = "last_update_time";
 	static final long PREFS_LAST_UPDATE_TIME_DEFAULT = 0l;
+	static final String PREFS_USE_NEAREST_STATION_KEY = "use_nearest_station";
+	static final boolean PREFS_USE_NEAREST_STATION_DEFAULT = false;
 	// @SuppressWarnings("unused")
 	private static final String LOG_ID = "no.weather.weatherProxy.wsKlima.WsKlimaProxy";
 	public static final String PREFS_UPDATE_RATE_KEY = "update_rate";
 	public static final int PREFS_UPDATE_RATE_DEFAULT = 60;
+	public static final int FIND_NEAREST_STATION = -100;
 
 	/**
 	 * @param weather
@@ -57,46 +60,78 @@ public class WsKlimaProxy {
 		return result;
 	}
 
-	public static Float getLastTemperature(Context context) {
-		return null;
+	public static String getLastTemperature(Context context) {
+		final SharedPreferences settings = context.getSharedPreferences(
+				PREFS_NAME, 0);
+		final String key = PREFS_LAST_WEATHER_KEY;
+		final String defaultV = "empty";
+		final String result = settings.getString(key, defaultV);
+		if (result == defaultV)
+			return null;
+		else
+			return result;
+	}
+
+	public static boolean getUseNearestStation(Context context) {
+		final SharedPreferences settings = context.getSharedPreferences(
+				WsKlimaProxy.PREFS_NAME, 0);
+		return settings.getBoolean(PREFS_USE_NEAREST_STATION_KEY,
+				PREFS_USE_NEAREST_STATION_DEFAULT);
+
 	}
 
 	public static Date getLastUpdateTime(Context context) {
-		return null;
+		final SharedPreferences settings = context.getSharedPreferences(
+				WsKlimaProxy.PREFS_NAME, 0);
+		final long result = settings.getLong(PREFS_LAST_UPDATE_TIME_KEY, 0l);
+		if (result == 0l)
+			return null;
+		else
+			return new Date(result);
 	}
 
 	public static int getStationId(Context context) {
-		SharedPreferences settings = context.getSharedPreferences(
+		final SharedPreferences settings = context.getSharedPreferences(
 				WsKlimaProxy.PREFS_NAME, 0);
 		return settings.getInt(WsKlimaProxy.PREFS_STATION_ID_KEY,
 				WsKlimaProxy.PREFS_STATION_ID_DEFAULT);
 	}
 
 	public static String getStationName(Context context) {
-		SharedPreferences settings = context.getSharedPreferences(
+		final SharedPreferences settings = context.getSharedPreferences(
 				WsKlimaProxy.PREFS_NAME, 0);
 		return settings.getString(WsKlimaProxy.PREFS_STATION_NAME_KEY,
 				WsKlimaProxy.PREFS_STATION_NAME_DEFAULT);
 	}
 
 	public static int getUpdateRate(Context context) {
-		SharedPreferences settings = context.getSharedPreferences(
+		final SharedPreferences settings = context.getSharedPreferences(
 				WsKlimaProxy.PREFS_NAME, 0);
 		return settings
 				.getInt(PREFS_UPDATE_RATE_KEY, PREFS_UPDATE_RATE_DEFAULT);
 	}
 
 	public static void setStationName(Context context, String name, long id) {
-		Editor settings = context.getSharedPreferences(WsKlimaProxy.PREFS_NAME,
-				0).edit();
+		SharedPreferences preferences = context.getSharedPreferences(
+				WsKlimaProxy.PREFS_NAME, 0);
+		final Editor settings = preferences.edit();
 		settings.putInt(WsKlimaProxy.PREFS_STATION_ID_KEY, (int) id);
 		settings.putString(WsKlimaProxy.PREFS_STATION_NAME_KEY, name);
+		settings.remove(PREFS_LAST_UPDATE_TIME_KEY);
+		settings.remove(PREFS_LAST_WEATHER_KEY);
+		settings.commit();
+	}
+	
+	public static void setUseNearestStation(Context context, boolean useNearestStation) {
+		final Editor settings = context.getSharedPreferences(
+				WsKlimaProxy.PREFS_NAME, 0).edit();
+		settings.putBoolean(WsKlimaProxy.PREFS_USE_NEAREST_STATION_KEY, useNearestStation);
 		settings.commit();
 	}
 
 	public static void setUpdateRate(Context context, int updateRate) {
-		Editor settings = context.getSharedPreferences(WsKlimaProxy.PREFS_NAME,
-				0).edit();
+		final Editor settings = context.getSharedPreferences(
+				WsKlimaProxy.PREFS_NAME, 0).edit();
 		settings.putInt(WsKlimaProxy.PREFS_UPDATE_RATE_KEY, updateRate);
 		settings.commit();
 		updateAlarm(context);
@@ -113,12 +148,16 @@ public class WsKlimaProxy {
 	public WeatherElement getTemperatureNow(Context context)
 			throws NetworkErrorException, HttpException {
 		try {
-			WeatherElement result = getTemperatureNow(getStationId(context));
-			setLastTemperature(context,result.getValue(),result.getFrom());
+			final WeatherElement result = getTemperatureNow(getStationId(context));
+
+			// Save if data
+			if (result != null)
+				setLastTemperature(context, result.getValue(), result.getFrom());
+
 			return result;
-		} catch (NetworkErrorException e) {
+		} catch (final NetworkErrorException e) {
 			throw e;
-		} catch (HttpException e) {
+		} catch (final HttpException e) {
 			throw e;
 		}
 	}
@@ -129,7 +168,7 @@ public class WsKlimaProxy {
 		try {
 			url = new URI("http://wsklimaproxy.appspot.com/temperature?st="
 					+ station);
-		} catch (URISyntaxException e) {
+		} catch (final URISyntaxException e) {
 			// Shuld not happend
 			e.printStackTrace();
 			return null;
@@ -140,27 +179,37 @@ public class WsKlimaProxy {
 		final HttpGet request = new HttpGet(url);
 
 		try {
-			HttpResponse response = client.execute(request);
+			final HttpResponse response = client.execute(request);
+			int status = response.getStatusLine().getStatusCode();
 			final HttpEntity r_entity = response.getEntity();
-			final String xmlString = EntityUtils.toString(r_entity);
-			JSONObject val = new JSONObject(xmlString);
-			Date time = new Date(val.getLong("time") * 1000);
-			return new WeatherElement(time, time, WeatherType.temperature,
-					val.getString("temperature"));
-		} catch (IOException e) {
+			if (status == 200) {
+				final String xmlString = EntityUtils.toString(r_entity);
+				final JSONObject val = new JSONObject(xmlString);
+				final Date time = new Date(val.getLong("time") * 1000);
+				return new WeatherElement(time, time, WeatherType.temperature,
+						val.getString("temperature"));
+			} else if (status == 204) {
+				if (r_entity == null)
+					return null;
+				else
+					throw new HttpException();
+			} else {
+				throw new NetworkErrorException();
+			}
+		} catch (final IOException e) {
 			throw new NetworkErrorException(e);
-		} catch (JSONException e) {
+		} catch (final JSONException e) {
 			throw new HttpException();
 		}
 	}
 
 	private void setLastTemperature(Context context, String value, Date time) {
-		Editor settings = context.getSharedPreferences(WsKlimaProxy.PREFS_NAME,
-				0).edit();
-		settings.putLong(WsKlimaProxy.PREFS_LAST_UPDATE_TIME_KEY, time.getTime());
+		final Editor settings = context.getSharedPreferences(
+				WsKlimaProxy.PREFS_NAME, 0).edit();
+		settings.putLong(WsKlimaProxy.PREFS_LAST_UPDATE_TIME_KEY,
+				time.getTime());
 		settings.putString(PREFS_LAST_WEATHER_KEY, value);
 		settings.commit();
 	}
-
 
 }

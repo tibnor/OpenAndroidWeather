@@ -47,10 +47,65 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 public class Settings extends Activity {
+	public class UpdateRateSelectedListener implements OnItemSelectedListener {
+		@Override
+		public void onItemSelected(AdapterView<?> parent, View view, int pos,
+				long id) {
+
+			// Get update rate in minutes
+			final int updateRate = getResources().getIntArray(
+					R.array.Update_rate_values)[(int) id];
+
+			WsKlimaProxy.setUpdateRate(Settings.this, updateRate);
+
+		}
+
+		@Override
+		public void onNothingSelected(AdapterView<?> parent) {
+		}
+
+	}
+
 	private static final int ACTIVITY_CHOOSE_STATION = 1;
 	public static final String LOG_ID = "no.firestorm.settings";
 	private static final String PREF_NAME = "first app run";
+
 	private static final String PREF_FIRST_RUN = "first app run";
+
+	private void checkIfFirstRun() {
+		final SharedPreferences settings = getSharedPreferences(PREF_NAME, 0);
+		final boolean firstRun = settings.getBoolean(PREF_FIRST_RUN, true);
+		if (firstRun) {
+			getWeather();
+			final Editor edit = settings.edit();
+			edit.putBoolean(PREF_FIRST_RUN, false);
+			edit.commit();
+		}
+	}
+
+	private void getWeather() {
+		final Intent intent = new Intent(Settings.this,
+				WeatherNotificationService.class);
+		intent.putExtra(WeatherNotificationService.INTENT_EXTRA_ACTION,
+				WeatherNotificationService.INTENT_EXTRA_ACTION_GET_TEMP);
+		startService(intent);
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		// Handle chosen station
+		switch (requestCode) {
+		case ACTIVITY_CHOOSE_STATION:
+			// Update station name if changed
+			if (resultCode == RESULT_OK)
+				setStationName();
+			// getWeather();
+			break;
+		default:
+			break;
+		}
+	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +122,7 @@ public class Settings extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater inflater = getMenuInflater();
+		final MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.settings, menu);
 		return true;
 	}
@@ -85,75 +140,36 @@ public class Settings extends Activity {
 	}
 
 	private void openAboutBox() {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setMessage(R.string.about_text)
 				.setCancelable(false)
 				.setNeutralButton("OK", new DialogInterface.OnClickListener() {
+					@Override
 					public void onClick(DialogInterface dialog, int id) {
 						dialog.cancel();
 					}
 				})
 				.setPositiveButton(R.string.donate,
 						new DialogInterface.OnClickListener() {
+							@Override
 							public void onClick(DialogInterface dialog, int id) {
 								dialog.cancel();
-								String url = "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=W66JKFZDLHFF4&lc=NO&item_name=firestorm&item_number=inapp&currency_code=NOK&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted";
-								Intent i = new Intent(Intent.ACTION_VIEW);
+								final String url = "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=W66JKFZDLHFF4&lc=NO&item_name=firestorm&item_number=inapp&currency_code=NOK&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted";
+								final Intent i = new Intent(Intent.ACTION_VIEW);
 								i.setData(Uri.parse(url));
 								startActivity(i);
 							}
 						}).setTitle(R.string.about);
 
-		AlertDialog alert = builder.create();
+		final AlertDialog alert = builder.create();
 		alert.show();
 	}
 
-	private void checkIfFirstRun() {
-		SharedPreferences settings = getSharedPreferences(PREF_NAME, 0);
-		boolean firstRun = settings.getBoolean(PREF_FIRST_RUN, true);
-		if (firstRun) {
-			getWeather();
-			Editor edit = settings.edit();
-			edit.putBoolean(PREF_FIRST_RUN, false);
-			edit.commit();
-		}
-	}
-
-	private void setUpdateRateSpinner() {
-		// Add spinner
-		Spinner spinner = (Spinner) findViewById(R.id.updateRateSpinner);
-		ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
-				this, R.array.Update_rates,
-				android.R.layout.simple_spinner_item);
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		spinner.setAdapter(adapter);
-		spinner.setOnItemSelectedListener(new UpdateRateSelectedListener());
-
-		// Find selected update rate
-		int updateRate = WsKlimaProxy.getUpdateRate(this);
-		int[] updateRateArray = getResources().getIntArray(
-				R.array.Update_rate_values);
-		int id = Arrays.binarySearch(updateRateArray, updateRate);
-		if (id >= 0)
-			spinner.setSelection(id);
-		else
-			spinner.setSelection(0);
-	}
-
-	private void setGetWeatherButton() {
-		ImageButton chooseStationButton = (ImageButton) findViewById(R.id.get_weather);
-		chooseStationButton.setOnClickListener(new OnClickListener() {
-
-			public void onClick(View v) {
-				getWeather();
-			}
-		});
-	}
-
 	private void setChooseStationButtion() {
-		Button chooseStationButton = (Button) findViewById(R.id.choose_station);
+		final Button chooseStationButton = (Button) findViewById(R.id.choose_station);
 		chooseStationButton.setOnClickListener(new OnClickListener() {
 
+			@Override
 			public void onClick(View v) {
 				final Intent intent = new Intent(Settings.this,
 						StationPicker.class);
@@ -162,55 +178,48 @@ public class Settings extends Activity {
 		});
 	}
 
+	private void setGetWeatherButton() {
+		final ImageButton chooseStationButton = (ImageButton) findViewById(R.id.get_weather);
+		chooseStationButton.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				getWeather();
+			}
+		});
+	}
+
 	private void setStationName() {
-		TextView stationNameView = (TextView) findViewById(R.id.StationName);
-		String stationName = WsKlimaProxy.getStationName(this);
+		final TextView stationNameView = (TextView) findViewById(R.id.StationName);
+		String stationName;
+		if(WsKlimaProxy.getUseNearestStation(this)){
+			stationName = getString(R.string.use_nearest_station);
+		} else {
+			stationName = WsKlimaProxy.getStationName(this);
+		}
+
 		stationNameView.setText(stationName);
 	}
 
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-		// Handle chosen station
-		switch (requestCode) {
-		case ACTIVITY_CHOOSE_STATION:
-			// Update station name if changed
-			if (resultCode == RESULT_OK) {
-				setStationName();
-				// getWeather();
-			}
-			break;
-		default:
-			break;
-		}
-	}
+	private void setUpdateRateSpinner() {
+		// Add spinner
+		final Spinner spinner = (Spinner) findViewById(R.id.updateRateSpinner);
+		final ArrayAdapter<CharSequence> adapter = ArrayAdapter
+				.createFromResource(this, R.array.Update_rates,
+						android.R.layout.simple_spinner_item);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		spinner.setAdapter(adapter);
+		spinner.setOnItemSelectedListener(new UpdateRateSelectedListener());
 
-
-	private void getWeather() {
-		final Intent intent = new Intent(Settings.this,
-				WeatherNotificationService.class);
-		intent.putExtra(WeatherNotificationService.INTENT_EXTRA_ACTION,
-				WeatherNotificationService.INTENT_EXTRA_ACTION_GET_TEMP);
-		startService(intent);
-	}
-
-	public class UpdateRateSelectedListener implements OnItemSelectedListener {
-		@Override
-		public void onItemSelected(AdapterView<?> parent, View view, int pos,
-				long id) {
-
-			// Get update rate in minutes
-			int updateRate = getResources().getIntArray(
-					R.array.Update_rate_values)[(int) id];
-
-			WsKlimaProxy.setUpdateRate(Settings.this, updateRate);
-
-		}
-
-		@Override
-		public void onNothingSelected(AdapterView<?> parent) {
-		}
-
+		// Find selected update rate
+		final int updateRate = WsKlimaProxy.getUpdateRate(this);
+		final int[] updateRateArray = getResources().getIntArray(
+				R.array.Update_rate_values);
+		final int id = Arrays.binarySearch(updateRateArray, updateRate);
+		if (id >= 0)
+			spinner.setSelection(id);
+		else
+			spinner.setSelection(0);
 	}
 
 }
