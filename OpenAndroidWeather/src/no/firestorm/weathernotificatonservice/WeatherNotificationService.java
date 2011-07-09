@@ -141,8 +141,13 @@ public class WeatherNotificationService extends Service {
 				criteria.setAccuracy(Criteria.ACCURACY_COARSE);
 				String provider = locMan.getBestProvider(criteria, true);
 				UpdateStation updateStation = new UpdateStation(this);
-				locMan.requestLocationUpdates(provider, 0, 0, updateStation);
-				stationReady = false;
+				if (provider != null){
+					locMan.requestLocationUpdates(provider, 0, 0, updateStation);
+					stationReady = false;
+				} else {
+					this.onPostExecute(new NoLocationException(null));
+					this.cancel(false);
+				}
 			}
 		}
 
