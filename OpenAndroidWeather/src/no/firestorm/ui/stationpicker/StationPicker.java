@@ -44,6 +44,9 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
+/**
+ * Activity for selecting and saving station
+ */
 public class StationPicker extends ListActivity {
 	List<Station> mStations;
 	List<Station> mStationsSortedAlphabetical = null;
@@ -160,7 +163,7 @@ public class StationPicker extends ListActivity {
 		final String name = station.getName();
 
 		// save
-		WsKlimaProxy.setStationName(this, name, id);
+		WsKlimaProxy.setStation(this, name, (int) id);
 		WsKlimaProxy.setUseNearestStation(this, false);
 		} else {
 			WsKlimaProxy.setUseNearestStation(this, true);

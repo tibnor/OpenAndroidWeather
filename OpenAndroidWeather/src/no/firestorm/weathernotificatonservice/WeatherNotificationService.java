@@ -21,6 +21,8 @@ package no.firestorm.weathernotificatonservice;
 
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import no.firestorm.R;
 import no.firestorm.misc.TempToDrawable;
@@ -47,11 +49,26 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
 import android.widget.RemoteViews;
 
+/**
+ * Updates notification if extra intent is INTENT_EXTRA_ACTION_GET_TEMP, 
+ * for updating the notification or INTENT_EXTRA_ACTION_UPDATE_ALARM for
+ * setting the alarm for the next time the notification should be updated.
+ *  
+ * Start service for updating notification by:
+ * 
+ * @code final Intent intent = new Intent(this,
+ *       WeatherNotificationService.class);
+ *       intent.putExtra(WeatherNotificationService.INTENT_EXTRA_ACTION,
+ *       WeatherNotificationService.INTENT_EXTRA_ACTION_GET_TEMP);
+ *       startService(intent);
+ * 
+ * @endcode
+ */
 public class WeatherNotificationService extends Service {
-
+	private Set<Integer> mStartIdsShowTemp = new HashSet<Integer>();
+	
 	private class UpdateStation implements LocationListener {
 		private ShowTempAsync object = null;
 
@@ -66,7 +83,7 @@ public class WeatherNotificationService extends Service {
 				WsKlimaDataBaseHelper db = new WsKlimaDataBaseHelper(context);
 				Station station = db.getStationsSortedByLocation(location).get(
 						0);
-				WsKlimaProxy.setStationName(context, station.getName(),
+				WsKlimaProxy.setStation(context, station.getName(),
 						station.getId());
 				// Remove listener
 				removeFromBroadcaster();
@@ -115,7 +132,7 @@ public class WeatherNotificationService extends Service {
 			// TODO Auto-generated method stub
 			super.onPreExecute();
 			Context context = WeatherNotificationService.this;
-			if (WsKlimaProxy.getUseNearestStation(context)) {
+			if (WsKlimaProxy.isUsingNearestStation(context)) {
 				// find nearest station
 				// find current position
 				LocationManager locMan = (LocationManager) context
@@ -134,9 +151,7 @@ public class WeatherNotificationService extends Service {
 			synchronized (this) {
 				if (!stationReady) {
 					try {
-						 this.wait(2 * 60 * 1000);
-						// TODO change back
-						//this.wait(1);
+						this.wait(2 * 60 * 1000);
 					} catch (InterruptedException e) {
 						return new NoLocationException(e);
 					}
@@ -180,7 +195,7 @@ public class WeatherNotificationService extends Service {
 				// Set title
 				tickerText = stationName;
 				contentTitle = stationName;
-				contentTime = df.format(temperature.getFrom());
+				contentTime = df.format(temperature.getDate());
 
 				final Context context = WeatherNotificationService.this;
 				contentText = String.format("%s %.1f °C", context
@@ -223,7 +238,7 @@ public class WeatherNotificationService extends Service {
 							.getLastUpdateTime(WeatherNotificationService.this);
 					if (lastTime != null) {
 						Float temperatureF = Float.parseFloat(WsKlimaProxy
-								.getLastTemperature(context));
+								.getSavedLastTemperature(context));
 						contentText = String.format("%s %.1f °C %s %s",
 								context.getString(R.string.last_temperature),
 								temperatureF,
@@ -266,14 +281,28 @@ public class WeatherNotificationService extends Service {
 			final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 			mNotificationManager.notify(1, notification);
 
-			WeatherNotificationService.this.stopSelf();
+			for (Integer startId : mStartIdsShowTemp) {
+				WeatherNotificationService.this.stopSelf(startId);	
+			}
+
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static final String LOG_ID = "no.firestorm.weatherservice";
+	/**
+	 * Key for specifying action when starting the service @see WeatherNotificationService 
+	 */
 	public static final String INTENT_EXTRA_ACTION = "action";
+	/**
+	 * If INTENT_EXTRA_ACTION parameter in startup intent is set to this, the
+	 * service update the notification.
+	 */
 	public static final int INTENT_EXTRA_ACTION_GET_TEMP = 1;
-
+	/**
+	 * If INTENT_EXTRA_ACTION parameter in startup intent is set to this, the
+	 * service update the alarm for updating the notification.
+	 */
 	public static final int INTENT_EXTRA_ACTION_UPDATE_ALARM = 2;
 
 	@Override
@@ -283,21 +312,22 @@ public class WeatherNotificationService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-
 		switch (intent.getIntExtra(INTENT_EXTRA_ACTION,
 				INTENT_EXTRA_ACTION_GET_TEMP)) {
 		case INTENT_EXTRA_ACTION_GET_TEMP:
+			mStartIdsShowTemp.add(startId);
 			showTemp();
-			Log.d(LOG_ID, "show temp");
 			break;
 		case INTENT_EXTRA_ACTION_UPDATE_ALARM:
 			updateAlarm();
+			this.stopSelf(startId);
 			break;
 
 		default:
 			break;
 		}
-		return START_STICKY;
+
+		return START_REDELIVER_INTENT;
 	}
 
 	private void removeAlarm() {

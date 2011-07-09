@@ -19,6 +19,10 @@
 
 package no.firestorm.wsklima;
 
+/**
+ * Weather types that are measured
+ */
 public enum WeatherType {
+	/** Temperature measured in Celsius */
 	temperature
 }

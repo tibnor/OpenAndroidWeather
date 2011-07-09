@@ -25,6 +25,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+
+/**
+ * Receive intent when phone has booted and start service.
+ */
 public class BootIntentReceiver extends BroadcastReceiver {
 
 	@Override

@@ -40,5 +40,7 @@ If you like the app and want further development please donate!"""</string>
 	<string name="try_another_station">This station has no data, try another station.</string>
 	<string name="last_temperature">Last temperature</string>
 	<string name="use_nearest_station">Use nearest station</string>
+	<string name="rate">Rate app</string>
+	<string name="rate_full">Rate the app in Android Market</string>
 	<string name="location_error">Firestorm: Could not find your location</string>
 </resources>

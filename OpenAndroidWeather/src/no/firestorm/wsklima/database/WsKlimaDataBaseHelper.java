@@ -38,27 +38,47 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.location.Location;
 
+/**
+ * Database with all stations that gives hourly measurements of temperature.
+ *
+ */
 public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 	@SuppressWarnings("unused")
 	private static final String LOG_ID = "no.firestorm.db";
 	private static final String DATABASE_NAME = "stations.db";
 	private static Context mContext;
 	private static final int DATABASE_VERSION = 4;
+	/** Name of the table for stations	 */
 	public static final String STATIONS_TABLE_NAME = "stations";
+	/** Column name for station id	*/
 	public static final String STATIONS_ID = "_id";
+	/** Column name for station name	*/
 	public static final String STATIONS_NAME = "name";
+	/** Column name for the longitude of the station	*/
 	public static final String STATIONS_LON = "lon";
+	/** Column name for the latitude of the station	*/
 	public static final String STATIONS_LAT = "lat";
 	private static final String STATION_CREATE = "CREATE TABLE IF NOT EXISTS "
 			+ STATIONS_TABLE_NAME + " (" + STATIONS_ID
 			+ " INTEGER PRIMARY KEY," + STATIONS_NAME + " TEXT," + STATIONS_LAT
 			+ " REAL," + STATIONS_LON + " REAL)";
 
+	/**
+	 * Construct the database helper
+	 * @param context
+	 */
 	public WsKlimaDataBaseHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 		mContext = context;
 	}
 
+	/**
+	 * Gets a list of all stations sorted alphabetically
+	 * 
+	 * @param currentLocation location of the user, to be used for calculating
+	 * of the direction
+	 * @return list of stations sorted alphabetically
+	 */
 	public List<Station> getStationsSortedAlphabetic(Location currentLocation) {
 		final WsKlimaDataBaseHelper dbHelper = new WsKlimaDataBaseHelper(
 				mContext);
@@ -96,6 +116,13 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 		return stationList;
 	}
 
+	/**
+	 * Gets a list of all stations sorted by distance from user
+	 * 
+	 * @param currentLocation location of the user, to be used for calculating
+	 * of the direction
+	 * @return list of stations sorted by distance from user
+	 */
 	public List<Station> getStationsSortedByLocation(Location currentLocation) {
 		final WsKlimaDataBaseHelper dbHelper = new WsKlimaDataBaseHelper(
 				mContext);

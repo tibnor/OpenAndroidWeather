@@ -46,7 +46,14 @@ import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+/**
+ * Startup activity
+ * 
+ */
 public class Settings extends Activity {
+	/**
+	 * Callback class for update rate scroller
+	 */
 	public class UpdateRateSelectedListener implements OnItemSelectedListener {
 		@Override
 		public void onItemSelected(AdapterView<?> parent, View view, int pos,
@@ -61,13 +68,14 @@ public class Settings extends Activity {
 		}
 
 		@Override
-		public void onNothingSelected(AdapterView<?> parent) {
+		public void onNothingSelected(AdapterView<?> arg0) {
 		}
 
 	}
 
 	private static final int ACTIVITY_CHOOSE_STATION = 1;
-	public static final String LOG_ID = "no.firestorm.settings";
+	@SuppressWarnings("unused")
+	private static final String LOG_ID = "no.firestorm.settings";
 	private static final String PREF_NAME = "first app run";
 
 	private static final String PREF_FIRST_RUN = "first app run";
@@ -117,7 +125,19 @@ public class Settings extends Activity {
 		setChooseStationButtion();
 		setGetWeatherButton();
 		setUpdateRateSpinner();
+		setRateButton();
 
+	}
+
+	private void setRateButton() {
+		final Button rateButton = (Button) findViewById(R.id.rate);
+		rateButton.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				openRateWindow();
+			}
+		});
 	}
 
 	@Override
@@ -133,16 +153,26 @@ public class Settings extends Activity {
 		case R.id.about:
 			openAboutBox();
 			break;
+		case R.id.rate:
+			openRateWindow();
+			break;
 		default:
 			break;
 		}
 		return super.onOptionsItemSelected(item);
 	}
 
+	private void openRateWindow() {
+		Intent goToMarket = null;
+		goToMarket = new Intent(Intent.ACTION_VIEW,
+				Uri.parse("market://details?id=no.firestorm"));
+		startActivity(goToMarket);
+	}
+
 	private void openAboutBox() {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setMessage(R.string.about_text)
-				.setCancelable(false)
+				.setCancelable(true)
 				.setNeutralButton("OK", new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int id) {
@@ -192,7 +222,7 @@ public class Settings extends Activity {
 	private void setStationName() {
 		final TextView stationNameView = (TextView) findViewById(R.id.StationName);
 		String stationName;
-		if(WsKlimaProxy.getUseNearestStation(this)){
+		if (WsKlimaProxy.isUsingNearestStation(this)) {
 			stationName = getString(R.string.use_nearest_station);
 		} else {
 			stationName = WsKlimaProxy.getStationName(this);
@@ -206,7 +236,7 @@ public class Settings extends Activity {
 		final Spinner spinner = (Spinner) findViewById(R.id.updateRateSpinner);
 		final ArrayAdapter<CharSequence> adapter = ArrayAdapter
 				.createFromResource(this, R.array.Update_rates,
-						android.R.layout.simple_spinner_item);
+						R.layout.updaterate_spinner_view);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		spinner.setAdapter(adapter);
 		spinner.setOnItemSelectedListener(new UpdateRateSelectedListener());

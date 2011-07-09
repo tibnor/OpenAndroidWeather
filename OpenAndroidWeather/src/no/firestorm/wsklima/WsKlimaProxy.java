@@ -23,9 +23,24 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.util.Log;
 
+/** Proxy for getting weather measurements from met.no and storing relevant info.
+ * 
+ * Gets weather measurements indirectly from http://eklima.met.no/wsKlima/ via a 
+ * proxy on http://wsklimaproxy.appspot.com/, this to minimize the data downloaded to
+ * the device. If the USE_NEAREST_STATION is set to true, the proxy will first check the 
+ * position of the device, find the nearest station and then download weather from it.
+ * 
+ * It's also storing some relevant data:
+ *  - Last measurement and the time it was measured
+ *  - Selected station
+ *  - If user want to get weather from the nearest station
+ *   
+ */
 public class WsKlimaProxy {
+	/**
+	 * The name of the provider
+	 */
 	public final static String PROVIDER = "Meteorologisk institutt";
 	static final String PREFS_NAME = "no.WsKlimaProxy";
 	static final String PREFS_STATION_ID_KEY = "station_id";
@@ -37,11 +52,10 @@ public class WsKlimaProxy {
 	static final String PREFS_LAST_UPDATE_TIME_KEY = "last_update_time";
 	static final long PREFS_LAST_UPDATE_TIME_DEFAULT = 0l;
 	static final String PREFS_USE_NEAREST_STATION_KEY = "use_nearest_station";
-	static final boolean PREFS_USE_NEAREST_STATION_DEFAULT = false;
-	// @SuppressWarnings("unused")
-	private static final String LOG_ID = "no.weather.weatherProxy.wsKlima.WsKlimaProxy";
-	public static final String PREFS_UPDATE_RATE_KEY = "update_rate";
-	public static final int PREFS_UPDATE_RATE_DEFAULT = 60;
+	static final boolean PREFS_USE_NEAREST_STATION_DEFAULT = true;
+	private static final String PREFS_UPDATE_RATE_KEY = "update_rate";
+	private static final int PREFS_UPDATE_RATE_DEFAULT = 60;
+	/** Station id to use if the user wants to get the nearest station and not a specific station */
 	public static final int FIND_NEAREST_STATION = -100;
 
 	/**
@@ -53,14 +67,21 @@ public class WsKlimaProxy {
 		long latestTime = 0l;
 		WeatherElement result = null;
 		for (final WeatherElement weatherElement : weather)
-			if (weatherElement.getFrom().getTime() > latestTime) {
-				latestTime = weatherElement.getFrom().getTime();
+			if (weatherElement.getTime() > latestTime) {
+				latestTime = weatherElement.getDate().getTime();
 				result = weatherElement;
 			}
 		return result;
 	}
 
-	public static String getLastTemperature(Context context) {
+	/** Get saved last temperature. If there has been any successfully downloads
+	 * of temperature since the station was set, it returns the last measurement of 
+	 * temperature. It does not download any new temperature.
+	 * 
+	 * @param context
+	 * @return last downloaded temperature
+	 */
+	public static String getSavedLastTemperature(Context context) {
 		final SharedPreferences settings = context.getSharedPreferences(
 				PREFS_NAME, 0);
 		final String key = PREFS_LAST_WEATHER_KEY;
@@ -72,7 +93,12 @@ public class WsKlimaProxy {
 			return result;
 	}
 
-	public static boolean getUseNearestStation(Context context) {
+	/**
+	 *  Check if the user want measurements from the nearest station
+	 * @param context
+	 * @return true if the user want measurements from the nearest station
+	 */
+	public static boolean isUsingNearestStation(Context context) {
 		final SharedPreferences settings = context.getSharedPreferences(
 				WsKlimaProxy.PREFS_NAME, 0);
 		return settings.getBoolean(PREFS_USE_NEAREST_STATION_KEY,
@@ -80,6 +106,10 @@ public class WsKlimaProxy {
 
 	}
 
+	/** Gets the date when the last downloaded measurement was measured.
+	 * @param context
+	 * @return time for last measurement
+	 */
 	public static Date getLastUpdateTime(Context context) {
 		final SharedPreferences settings = context.getSharedPreferences(
 				WsKlimaProxy.PREFS_NAME, 0);
@@ -90,6 +120,11 @@ public class WsKlimaProxy {
 			return new Date(result);
 	}
 
+	/** Gets the station id for where the measurement is taken. If 
+	 * the user want the nearest station this return the last used station.
+	 * @param context
+	 * @return station id
+	 */
 	public static int getStationId(Context context) {
 		final SharedPreferences settings = context.getSharedPreferences(
 				WsKlimaProxy.PREFS_NAME, 0);
@@ -97,6 +132,11 @@ public class WsKlimaProxy {
 				WsKlimaProxy.PREFS_STATION_ID_DEFAULT);
 	}
 
+	/** Gets the station name for where the measurement is taken. If 
+	 * the user want the nearest station this return the last used station.
+	 * @param context
+	 * @return station name
+	 */
 	public static String getStationName(Context context) {
 		final SharedPreferences settings = context.getSharedPreferences(
 				WsKlimaProxy.PREFS_NAME, 0);
@@ -104,6 +144,13 @@ public class WsKlimaProxy {
 				WsKlimaProxy.PREFS_STATION_NAME_DEFAULT);
 	}
 
+	/** Gets how often the user wants to update the notification, the alarm is
+	 * handeled in WeatherNotificationService.
+	 * TODO: move to WeatherNotificationService
+	 * 
+	 * @param context
+	 * @return interval in minutes between each update
+	 */
 	public static int getUpdateRate(Context context) {
 		final SharedPreferences settings = context.getSharedPreferences(
 				WsKlimaProxy.PREFS_NAME, 0);
@@ -111,9 +158,24 @@ public class WsKlimaProxy {
 				.getInt(PREFS_UPDATE_RATE_KEY, PREFS_UPDATE_RATE_DEFAULT);
 	}
 
-	public static void setStationName(Context context, String name, long id) {
+	/** Set the station to be used for updating measurement and delete saved measurement.
+	 * If the id is the same as before, nothing is done.
+	 * NOTE: {@link WsKlimaProxy#setUseNearestStation(Context, boolean)} must also be set. 
+	 * 
+	 * 
+	 * @param context
+	 * @param name
+	 * @param id
+	 */
+	public static void setStation(Context context, String name, int id) {
 		SharedPreferences preferences = context.getSharedPreferences(
 				WsKlimaProxy.PREFS_NAME, 0);
+		
+		// Do nothing if ids are equal
+		int oldId = preferences.getInt(PREFS_STATION_ID_KEY, PREFS_STATION_ID_DEFAULT);
+		if (oldId == id)
+			return;
+		
 		final Editor settings = preferences.edit();
 		settings.putInt(WsKlimaProxy.PREFS_STATION_ID_KEY, (int) id);
 		settings.putString(WsKlimaProxy.PREFS_STATION_NAME_KEY, name);
@@ -122,6 +184,10 @@ public class WsKlimaProxy {
 		settings.commit();
 	}
 	
+	/** Set if the user wants to use the nearest station when updating measurement.
+	 * @param context
+	 * @param useNearestStation
+	 */
 	public static void setUseNearestStation(Context context, boolean useNearestStation) {
 		final Editor settings = context.getSharedPreferences(
 				WsKlimaProxy.PREFS_NAME, 0).edit();
@@ -129,6 +195,10 @@ public class WsKlimaProxy {
 		settings.commit();
 	}
 
+	/** Set how often {@link WeatherNotificationService} should update the notification
+	 * @param context
+	 * @param updateRate in minutes
+	 */
 	public static void setUpdateRate(Context context, int updateRate) {
 		final Editor settings = context.getSharedPreferences(
 				WsKlimaProxy.PREFS_NAME, 0).edit();
@@ -145,6 +215,19 @@ public class WsKlimaProxy {
 		context.startService(intent);
 	}
 
+	/** Gets the latest temperature from selected station.
+	 * 
+	 * NOTE: If user wants to use the nearest station, it must be found first and updated
+	 * in {@link #setStation(Context, String, int)}
+	 * This is not done automatically!
+	 * 
+	 * TODO: check if the user wants to use the nearest station
+	 * 
+	 * @param context
+	 * @return the latest temperature
+	 * @throws NetworkErrorException
+	 * @throws HttpException
+	 */
 	public WeatherElement getTemperatureNow(Context context)
 			throws NetworkErrorException, HttpException {
 		try {
@@ -152,7 +235,7 @@ public class WsKlimaProxy {
 
 			// Save if data
 			if (result != null)
-				setLastTemperature(context, result.getValue(), result.getFrom());
+				setLastTemperature(context, result.getValue(), result.getDate());
 
 			return result;
 		} catch (final NetworkErrorException e) {
@@ -173,7 +256,7 @@ public class WsKlimaProxy {
 			e.printStackTrace();
 			return null;
 		}
-		Log.v(LOG_ID, "url: " + url.toString());
+		//Log.v(LOG_ID, "url: " + url.toString());
 
 		final HttpClient client = new DefaultHttpClient();
 		final HttpGet request = new HttpGet(url);
@@ -186,7 +269,7 @@ public class WsKlimaProxy {
 				final String xmlString = EntityUtils.toString(r_entity);
 				final JSONObject val = new JSONObject(xmlString);
 				final Date time = new Date(val.getLong("time") * 1000);
-				return new WeatherElement(time, time, WeatherType.temperature,
+				return new WeatherElement(time, WeatherType.temperature,
 						val.getString("temperature"));
 			} else if (status == 204) {
 				if (r_entity == null)
@@ -203,6 +286,11 @@ public class WsKlimaProxy {
 		}
 	}
 
+	/** Save the last measurements
+	 * @param context
+	 * @param value
+	 * @param time
+	 */
 	private void setLastTemperature(Context context, String value, Date time) {
 		final Editor settings = context.getSharedPreferences(
 				WsKlimaProxy.PREFS_NAME, 0).edit();

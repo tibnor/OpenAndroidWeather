@@ -23,11 +23,17 @@ import java.util.HashMap;
 
 import android.location.Location;
 
+/**
+ * Weather station, with name, id and position
+ */
 public class Station extends HashMap<String, String> implements
 		Comparable<Station> {
 	private static final long serialVersionUID = -1194829286083817084L;
+	/** Key in map for station name */
 	public static final String NAME = "name";
+	/** Key in map for distance between current position and station */
 	public static final String DISTANCE = "distance";
+	/** Key in map for direction from current position to station */
 	public static final String DIRECTION = "direction";
 
 	private String name;
@@ -35,6 +41,14 @@ public class Station extends HashMap<String, String> implements
 	private float distanceToCurrentPosition;
 	private float bearingToCurrentPotition;
 
+	/**
+	 * @param name of station
+	 * @param id of station given by met.no 
+	 * @param latitude
+	 * @param longitude
+	 * @param currentPosition of user for calculation of distance and heading 
+	 * between currentPosition and station
+	 */
 	public Station(String name, int id, final double latitude,
 			final double longitude, Location currentPosition) {
 		super();
@@ -59,18 +73,35 @@ public class Station extends HashMap<String, String> implements
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
 	@Override
 	public int compareTo(Station another) {
 		return (int) (distanceToCurrentPosition - another.distanceToCurrentPosition);
 	}
 
-	public float getBearingFromCurrentPotition() {
+	/**
+	 * @return Direction from currentPosition to station in degrees
+	 */
+	public float getBearingFromCurrentPosition() {
 		return bearingToCurrentPotition;
 	}
 
+	/**
+	 * @return Direction from currentPosition to station in text
+	 */
 	public String getDirection() {
 		final float deg = bearingToCurrentPotition;
-		if ((deg > 0 && deg <= 22.5))
+		if (deg <= 22.5 - 180)
+			return "S";
+		else if (deg <= 22.5 - 135)
+			return "SW";
+		else if (deg <= 22.5 - 90)
+			return "W";
+		else if (deg <= 22.5 - 45)
+			return "NW";
+		else if (deg <= 22.5)
 			return "N";
 		else if (deg <= 22.5 + 45)
 			return "NE";
@@ -90,22 +121,38 @@ public class Station extends HashMap<String, String> implements
 			return "N";
 	}
 
+	
+	/**
+	 * @return distance between current position and station
+	 */
 	public float getDistanceToCurrentPosition() {
 		return distanceToCurrentPosition;
 	}
 
+	/**
+	 * @return id used by met.no 
+	 */
 	public int getId() {
 		return id;
 	}
 
+	/**
+	 * @return name of station
+	 */
 	public String getName() {
 		return name;
 	}
 
+	/**
+	 * @param id used by met.no 
+	 */
 	public void setId(int id) {
 		this.id = id;
 	}
 
+	/**
+	 * @param name of station
+	 */
 	public void setName(String name) {
 		this.name = name;
 	}

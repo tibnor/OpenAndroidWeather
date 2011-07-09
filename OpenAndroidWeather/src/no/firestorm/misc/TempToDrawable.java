@@ -24,6 +24,9 @@ import java.util.Map;
 
 import no.firestorm.R;
 
+/**
+ * Convert temperature to desired icon
+ */
 public final class TempToDrawable {
 	private static final Map<Float, Integer> tempDrawable = new HashMap<Float, Integer>();
 
@@ -136,6 +139,10 @@ public final class TempToDrawable {
 		tempDrawable.put(50.0f, R.drawable.t50);
 	}
 
+	/**
+	 * @param temp Temperature to be displayed
+	 * @return icon with desired temperature
+	 */
 	public static int getDrawableFromTemp(float temp) {
 		return tempDrawable.get((float) Math.round(temp));
 	}
