@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 import no.firestorm.weathernotificatonservice.WeatherNotificationService;
+import no.firestorm.wsklima.database.WsKlimaDataBaseHelper;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
@@ -231,7 +232,7 @@ public class WsKlimaProxy {
 	public WeatherElement getTemperatureNow(Context context)
 			throws NetworkErrorException, HttpException {
 		try {
-			final WeatherElement result = getTemperatureNow(getStationId(context));
+			final WeatherElement result = getTemperatureNow(getStationId(context),context);
 
 			// Save if data
 			if (result != null)
@@ -245,7 +246,7 @@ public class WsKlimaProxy {
 		}
 	}
 
-	WeatherElement getTemperatureNow(Integer station) throws HttpException,
+	WeatherElement getTemperatureNow(Integer station, Context context) throws HttpException,
 			NetworkErrorException {
 		URI url;
 		try {
@@ -269,14 +270,24 @@ public class WsKlimaProxy {
 				final String xmlString = EntityUtils.toString(r_entity);
 				final JSONObject val = new JSONObject(xmlString);
 				final Date time = new Date(val.getLong("time") * 1000);
+				final boolean isReliable = val.getBoolean("reliable");
+				// If not reliable save it in db
+				if (!isReliable) {
+					WsKlimaDataBaseHelper db = new WsKlimaDataBaseHelper(context);
+					db.setIsReliable(station, isReliable);
+				}
 				return new WeatherElement(time, WeatherType.temperature,
 						val.getString("temperature"));
 			} else if (status == 204) {
+				WsKlimaDataBaseHelper db = new WsKlimaDataBaseHelper(context);
+				db.setIsReliable(station, false);
 				if (r_entity == null)
 					return null;
 				else
 					throw new HttpException();
 			} else {
+				WsKlimaDataBaseHelper db = new WsKlimaDataBaseHelper(context);
+				db.setIsReliable(station, false);
 				throw new NetworkErrorException();
 			}
 		} catch (final IOException e) {

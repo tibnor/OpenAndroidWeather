@@ -88,9 +88,9 @@ class WeatherStation(db.Model):
         if self.temperatureUpdated != None and self.temperature != None:
             text =  """{"time":%d,"temperature":%s""" % (time.mktime(self.temperatureUpdated.timetuple()), self.temperature);
             if self.timesNotUpdated >= 1:
-                text += """,reliable=false"""
+                text += ""","reliable":false"""
             else:
-                text += """,reliable=true"""
+                text += ""","reliable":true"""
             text += "}"
             self.status = 200
         else:

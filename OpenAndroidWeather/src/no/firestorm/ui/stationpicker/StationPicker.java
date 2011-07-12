@@ -74,7 +74,7 @@ public class StationPicker extends ListActivity {
 
 	private List<Station> addUseNearestStation(List<Station> stations) {
 		stations.add(0, new Station(this.getString(R.string.use_nearest_station),
-				WsKlimaProxy.FIND_NEAREST_STATION, 0, 0, null));
+				WsKlimaProxy.FIND_NEAREST_STATION, 0, 0, null,true));
 		return stations;
 	}
 
@@ -215,12 +215,12 @@ public class StationPicker extends ListActivity {
 		if (mSortByDistance)
 			if (mStationsSortedByDistance == null) {
 				mStations = addUseNearestStation(dbhelper
-						.getStationsSortedByLocation(loc));
+						.getStationsSortedByLocation(loc,true));
 				mStationsSortedByDistance = mStations;
 			} else
 				mStations = mStationsSortedByDistance;
 		else if (mStationsSortedAlphabetical == null) {
-			mStations = addUseNearestStation(dbhelper.getStationsSortedAlphabetic(loc));
+			mStations = addUseNearestStation(dbhelper.getStationsSortedAlphabetic(loc,true));
 			mStationsSortedAlphabetical = mStations;
 		} else
 			mStations = mStationsSortedAlphabetical;

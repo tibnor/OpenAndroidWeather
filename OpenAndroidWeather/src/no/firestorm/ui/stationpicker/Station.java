@@ -21,6 +21,9 @@ package no.firestorm.ui.stationpicker;
 
 import java.util.HashMap;
 
+import no.firestorm.wsklima.database.WsKlimaDataBaseHelper;
+
+import android.content.Context;
 import android.location.Location;
 
 /**
@@ -40,21 +43,28 @@ public class Station extends HashMap<String, String> implements
 	private int id;
 	private float distanceToCurrentPosition;
 	private float bearingToCurrentPotition;
+	private boolean isReliable = true;
 
 	/**
-	 * @param name of station
-	 * @param id of station given by met.no 
+	 * @param name
+	 *            of station
+	 * @param id
+	 *            of station given by met.no
 	 * @param latitude
 	 * @param longitude
-	 * @param currentPosition of user for calculation of distance and heading 
-	 * between currentPosition and station
+	 * @param currentPosition
+	 *            of user for calculation of distance and heading between
+	 *            currentPosition and station
+	 * @param isReliable
+	 *            is true if station delivers data each hour
 	 */
 	public Station(String name, int id, final double latitude,
-			final double longitude, Location currentPosition) {
+			final double longitude, Location currentPosition, boolean isReliable) {
 		super();
 		this.name = name;
 		put(NAME, name);
 		this.id = id;
+		this.isReliable = isReliable;
 		final float[] result = new float[] { distanceToCurrentPosition,
 				bearingToCurrentPotition };
 		if (currentPosition != null) {
@@ -73,7 +83,9 @@ public class Station extends HashMap<String, String> implements
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
 	@Override
@@ -121,7 +133,6 @@ public class Station extends HashMap<String, String> implements
 			return "N";
 	}
 
-	
 	/**
 	 * @return distance between current position and station
 	 */
@@ -130,7 +141,7 @@ public class Station extends HashMap<String, String> implements
 	}
 
 	/**
-	 * @return id used by met.no 
+	 * @return id used by met.no
 	 */
 	public int getId() {
 		return id;
@@ -144,17 +155,38 @@ public class Station extends HashMap<String, String> implements
 	}
 
 	/**
-	 * @param id used by met.no 
+	 * @param id
+	 *            used by met.no
 	 */
 	public void setId(int id) {
 		this.id = id;
 	}
 
 	/**
-	 * @param name of station
+	 * @param name
+	 *            of station
 	 */
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	/**
+	 * @param isReliable
+	 *            the isReliable to set
+	 * @param context
+	 *            needed for updating of the database
+	 */
+	public void setIsReliable(boolean isReliable, Context context) {
+		WsKlimaDataBaseHelper db = new WsKlimaDataBaseHelper(context);
+		db.setIsReliable(id, isReliable);
+		this.isReliable = isReliable;
+	}
+
+	/**
+	 * @return the isReliable
+	 */
+	public boolean isReliable() {
+		return isReliable;
 	}
 
 }

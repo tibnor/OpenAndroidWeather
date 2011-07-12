@@ -78,7 +78,7 @@ public class WeatherNotificationService extends IntentService {
 			if (location.getAccuracy() < 3000) {
 				Context context = WeatherNotificationService.this;
 				WsKlimaDataBaseHelper db = new WsKlimaDataBaseHelper(context);
-				Station station = db.getStationsSortedByLocation(location).get(
+				Station station = db.getStationsSortedByLocation(location,true).get(
 						0);
 				WsKlimaProxy.setStation(context, station.getName(),
 						station.getId());

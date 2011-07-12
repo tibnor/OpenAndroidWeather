@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.List;
 
 import no.firestorm.ui.stationpicker.Station;
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -40,31 +41,35 @@ import android.location.Location;
 
 /**
  * Database with all stations that gives hourly measurements of temperature.
- *
+ * 
  */
 public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 	@SuppressWarnings("unused")
 	private static final String LOG_ID = "no.firestorm.db";
 	private static final String DATABASE_NAME = "stations.db";
 	private static Context mContext;
-	private static final int DATABASE_VERSION = 4;
-	/** Name of the table for stations	 */
+	private static final int DATABASE_VERSION = 8;
+	/** Name of the table for stations */
 	public static final String STATIONS_TABLE_NAME = "stations";
-	/** Column name for station id	*/
+	/** Column name for station id */
 	public static final String STATIONS_ID = "_id";
-	/** Column name for station name	*/
+	/** Column name for station name */
 	public static final String STATIONS_NAME = "name";
-	/** Column name for the longitude of the station	*/
+	/** Column name for the longitude of the station */
 	public static final String STATIONS_LON = "lon";
-	/** Column name for the latitude of the station	*/
+	/** Column name for the latitude of the station */
 	public static final String STATIONS_LAT = "lat";
+	/** Column name for indicating if station is reliable */
+	public static final String STATIONS_RELIABLE = "reliable";
 	private static final String STATION_CREATE = "CREATE TABLE IF NOT EXISTS "
 			+ STATIONS_TABLE_NAME + " (" + STATIONS_ID
 			+ " INTEGER PRIMARY KEY," + STATIONS_NAME + " TEXT," + STATIONS_LAT
-			+ " REAL," + STATIONS_LON + " REAL)";
+			+ " REAL," + STATIONS_LON + " REAL," + STATIONS_RELIABLE
+			+ " INTEGER)";
 
 	/**
 	 * Construct the database helper
+	 * 
 	 * @param context
 	 */
 	public WsKlimaDataBaseHelper(Context context) {
@@ -75,21 +80,31 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 	/**
 	 * Gets a list of all stations sorted alphabetically
 	 * 
-	 * @param currentLocation location of the user, to be used for calculating
-	 * of the direction
+	 * @param currentLocation
+	 *            location of the user, to be used for calculating of the
+	 *            direction
+	 * @param showOnlyReliableStations list only reliable stations
 	 * @return list of stations sorted alphabetically
 	 */
-	public List<Station> getStationsSortedAlphabetic(Location currentLocation) {
+	public List<Station> getStationsSortedAlphabetic(Location currentLocation,
+			boolean showOnlyReliableStations) {
 		final WsKlimaDataBaseHelper dbHelper = new WsKlimaDataBaseHelper(
 				mContext);
 		final SQLiteDatabase mDb = dbHelper.getReadableDatabase();
 		final String[] select = { WsKlimaDataBaseHelper.STATIONS_ID,
 				WsKlimaDataBaseHelper.STATIONS_NAME,
 				WsKlimaDataBaseHelper.STATIONS_LAT,
-				WsKlimaDataBaseHelper.STATIONS_LON };
+				WsKlimaDataBaseHelper.STATIONS_LON,
+				WsKlimaDataBaseHelper.STATIONS_RELIABLE };
 		final String orderBy = WsKlimaDataBaseHelper.STATIONS_NAME;
+
+		String where = null;
+		if (showOnlyReliableStations) {
+			where = STATIONS_RELIABLE + " = 1";
+		}
+
 		final Cursor c = mDb.query(WsKlimaDataBaseHelper.STATIONS_TABLE_NAME,
-				select, null, null, null, null, orderBy);
+				select, where, null, null, null, orderBy);
 
 		final List<Station> stationList = new ArrayList<Station>(c.getCount());
 
@@ -101,12 +116,14 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_LAT);
 		final int lonCol = c
 				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_LON);
+		final int reliableCol = c
+				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_RELIABLE);
 
 		c.moveToFirst();
 		while (!c.isAfterLast()) {
 			final Station station = new Station(c.getString(nameCol),
 					c.getInt(idCol), c.getDouble(latCol), c.getDouble(lonCol),
-					currentLocation);
+					currentLocation, c.getInt(reliableCol) > 0);
 			stationList.add(station);
 			c.moveToNext();
 		}
@@ -119,21 +136,32 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 	/**
 	 * Gets a list of all stations sorted by distance from user
 	 * 
-	 * @param currentLocation location of the user, to be used for calculating
-	 * of the direction
+	 * @param currentLocation
+	 *            location of the user, to be used for calculating of the
+	 *            direction
+	 * @param showOnlyReliableStations
+	 *            only list station with isReliable set to true
 	 * @return list of stations sorted by distance from user
 	 */
-	public List<Station> getStationsSortedByLocation(Location currentLocation) {
+	public List<Station> getStationsSortedByLocation(Location currentLocation,
+			boolean showOnlyReliableStations) {
 		final WsKlimaDataBaseHelper dbHelper = new WsKlimaDataBaseHelper(
 				mContext);
 		final SQLiteDatabase mDb = dbHelper.getReadableDatabase();
 		final String[] select = { WsKlimaDataBaseHelper.STATIONS_ID,
 				WsKlimaDataBaseHelper.STATIONS_NAME,
 				WsKlimaDataBaseHelper.STATIONS_LAT,
-				WsKlimaDataBaseHelper.STATIONS_LON };
+				WsKlimaDataBaseHelper.STATIONS_LON,
+				WsKlimaDataBaseHelper.STATIONS_RELIABLE };
 		final String orderBy = WsKlimaDataBaseHelper.STATIONS_LAT;
+
+		String where = null;
+		if (showOnlyReliableStations) {
+			where = STATIONS_RELIABLE + " = 1";
+		}
+
 		final Cursor c = mDb.query(WsKlimaDataBaseHelper.STATIONS_TABLE_NAME,
-				select, null, null, null, null, orderBy);
+				select, where, null, null, null, orderBy);
 
 		final List<Station> stationList = new ArrayList<Station>(c.getCount());
 
@@ -145,12 +173,14 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_LAT);
 		final int lonCol = c
 				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_LON);
+		final int reliableCol = c
+				.getColumnIndexOrThrow(WsKlimaDataBaseHelper.STATIONS_RELIABLE);
 
 		c.moveToFirst();
 		while (!c.isAfterLast()) {
 			final Station station = new Station(c.getString(nameCol),
 					c.getInt(idCol), c.getDouble(latCol), c.getDouble(lonCol),
-					currentLocation);
+					currentLocation, c.getInt(reliableCol) > 0);
 			stationList.add(station);
 			c.moveToNext();
 		}
@@ -194,4 +224,16 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 		}
 	}
 
+	/** Change if the station is reliable
+	 * @param stationId station id
+	 * @param isReliable true if the station is reliable
+	 */
+	public void setIsReliable(int stationId, boolean isReliable) {
+		final SQLiteDatabase mDb = getWritableDatabase();
+		ContentValues values = new ContentValues();
+		values.put(STATIONS_RELIABLE, isReliable);
+		String whereClause = STATIONS_ID + " = "+ stationId;
+		mDb.update(STATIONS_TABLE_NAME, values, whereClause, null);
+		mDb.close();
+	}
 }
