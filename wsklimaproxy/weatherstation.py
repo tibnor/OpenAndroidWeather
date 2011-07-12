@@ -23,6 +23,7 @@ class WeatherStation(db.Model):
     temperature = db.FloatProperty()
     temperatureUpdated = db.DateTimeProperty()
     temperatureExpires = db.DateTimeProperty()
+    timesNotUpdated = db.IntegerProperty(default = 0)
     status = int
 
     
@@ -54,7 +55,8 @@ class WeatherStation(db.Model):
         now = datetime.utcnow()
         fromTime = fromTimeMax
         if (fromTime is None or fromTime < now + timedelta(hours= -2)):
-            # If no result or older than two hours, set expiration to 30 minutes from now
+            # If no result or result older than two hours, set expiration to 30 minutes from now
+            self.timesNotUpdated += 1 
             self.temperatureExpires = now + timedelta(minutes=30);
         elif (fromTime < now + timedelta(minutes= -50)):
             # If between 50 minute and 2 hours set to 2 minutes 
@@ -84,7 +86,12 @@ class WeatherStation(db.Model):
     def tempToJson(self):
         text = None
         if self.temperatureUpdated != None and self.temperature != None:
-            text =  """{"time":%d,"temperature":%s}""" % (time.mktime(self.temperatureUpdated.timetuple()), self.temperature);
+            text =  """{"time":%d,"temperature":%s""" % (time.mktime(self.temperatureUpdated.timetuple()), self.temperature);
+            if self.timesNotUpdated >= 1:
+                text += """,reliable=false"""
+            else:
+                text += """,reliable=true"""
+            text += "}"
             self.status = 200
         else:
             text = ""

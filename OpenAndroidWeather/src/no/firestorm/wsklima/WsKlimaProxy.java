@@ -74,6 +74,20 @@ public class WsKlimaProxy {
 		return result;
 	}
 
+	/** Gets the date when the last downloaded measurement was measured.
+	 * @param context
+	 * @return time for last measurement
+	 */
+	public static Date getLastUpdateTime(Context context) {
+		final SharedPreferences settings = context.getSharedPreferences(
+				WsKlimaProxy.PREFS_NAME, 0);
+		final long result = settings.getLong(PREFS_LAST_UPDATE_TIME_KEY, 0l);
+		if (result == 0l)
+			return null;
+		else
+			return new Date(result);
+	}
+
 	/** Get saved last temperature. If there has been any successfully downloads
 	 * of temperature since the station was set, it returns the last measurement of 
 	 * temperature. It does not download any new temperature.
@@ -91,33 +105,6 @@ public class WsKlimaProxy {
 			return null;
 		else
 			return result;
-	}
-
-	/**
-	 *  Check if the user want measurements from the nearest station
-	 * @param context
-	 * @return true if the user want measurements from the nearest station
-	 */
-	public static boolean isUsingNearestStation(Context context) {
-		final SharedPreferences settings = context.getSharedPreferences(
-				WsKlimaProxy.PREFS_NAME, 0);
-		return settings.getBoolean(PREFS_USE_NEAREST_STATION_KEY,
-				PREFS_USE_NEAREST_STATION_DEFAULT);
-
-	}
-
-	/** Gets the date when the last downloaded measurement was measured.
-	 * @param context
-	 * @return time for last measurement
-	 */
-	public static Date getLastUpdateTime(Context context) {
-		final SharedPreferences settings = context.getSharedPreferences(
-				WsKlimaProxy.PREFS_NAME, 0);
-		final long result = settings.getLong(PREFS_LAST_UPDATE_TIME_KEY, 0l);
-		if (result == 0l)
-			return null;
-		else
-			return new Date(result);
 	}
 
 	/** Gets the station id for where the measurement is taken. If 
@@ -158,6 +145,19 @@ public class WsKlimaProxy {
 				.getInt(PREFS_UPDATE_RATE_KEY, PREFS_UPDATE_RATE_DEFAULT);
 	}
 
+	/**
+	 *  Check if the user want measurements from the nearest station
+	 * @param context
+	 * @return true if the user want measurements from the nearest station
+	 */
+	public static boolean isUsingNearestStation(Context context) {
+		final SharedPreferences settings = context.getSharedPreferences(
+				WsKlimaProxy.PREFS_NAME, 0);
+		return settings.getBoolean(PREFS_USE_NEAREST_STATION_KEY,
+				PREFS_USE_NEAREST_STATION_DEFAULT);
+
+	}
+
 	/** Set the station to be used for updating measurement and delete saved measurement.
 	 * If the id is the same as before, nothing is done.
 	 * NOTE: {@link WsKlimaProxy#setUseNearestStation(Context, boolean)} must also be set. 
@@ -184,17 +184,6 @@ public class WsKlimaProxy {
 		settings.commit();
 	}
 	
-	/** Set if the user wants to use the nearest station when updating measurement.
-	 * @param context
-	 * @param useNearestStation
-	 */
-	public static void setUseNearestStation(Context context, boolean useNearestStation) {
-		final Editor settings = context.getSharedPreferences(
-				WsKlimaProxy.PREFS_NAME, 0).edit();
-		settings.putBoolean(WsKlimaProxy.PREFS_USE_NEAREST_STATION_KEY, useNearestStation);
-		settings.commit();
-	}
-
 	/** Set how often {@link WeatherNotificationService} should update the notification
 	 * @param context
 	 * @param updateRate in minutes
@@ -205,6 +194,17 @@ public class WsKlimaProxy {
 		settings.putInt(WsKlimaProxy.PREFS_UPDATE_RATE_KEY, updateRate);
 		settings.commit();
 		updateAlarm(context);
+	}
+
+	/** Set if the user wants to use the nearest station when updating measurement.
+	 * @param context
+	 * @param useNearestStation
+	 */
+	public static void setUseNearestStation(Context context, boolean useNearestStation) {
+		final Editor settings = context.getSharedPreferences(
+				WsKlimaProxy.PREFS_NAME, 0).edit();
+		settings.putBoolean(WsKlimaProxy.PREFS_USE_NEAREST_STATION_KEY, useNearestStation);
+		settings.commit();
 	}
 
 	private static void updateAlarm(Context context) {

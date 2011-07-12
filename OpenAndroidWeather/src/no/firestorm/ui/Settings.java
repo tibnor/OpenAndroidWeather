@@ -31,6 +31,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
@@ -77,18 +78,34 @@ public class Settings extends Activity {
 	@SuppressWarnings("unused")
 	private static final String LOG_ID = "no.firestorm.settings";
 	private static final String PREF_NAME = "first app run";
+	private static final String PREF_FIRST_RUN_NEW_VERSION = "last run version";
 
-	private static final String PREF_FIRST_RUN = "first app run";
-
+	/**
+	 * Check if the app has been runned in the current version before, if not 
+	 * the notification is updated
+	 */
 	private void checkIfFirstRun() {
 		final SharedPreferences settings = getSharedPreferences(PREF_NAME, 0);
-		final boolean firstRun = settings.getBoolean(PREF_FIRST_RUN, true);
-		if (firstRun) {
-			getWeather();
-			final Editor edit = settings.edit();
-			edit.putBoolean(PREF_FIRST_RUN, false);
-			edit.commit();
+		// Check if first run with this version
+		final int lastVersionRun = settings.getInt(PREF_FIRST_RUN_NEW_VERSION,
+				0);
+		int currentVersion;
+		try {
+			currentVersion = getPackageManager().getPackageInfo(
+					getPackageName(), 0).versionCode;
+			if (lastVersionRun < currentVersion) {
+				// Update weather
+				getWeather();
+				// Save the new version number
+				final Editor edit = settings.edit();
+				edit.putInt(PREF_FIRST_RUN_NEW_VERSION, currentVersion);
+				edit.commit();
+			}
+		} catch (NameNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+
 	}
 
 	private void getWeather() {
@@ -129,17 +146,6 @@ public class Settings extends Activity {
 
 	}
 
-	private void setRateButton() {
-		final Button rateButton = (Button) findViewById(R.id.rate);
-		rateButton.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				openRateWindow();
-			}
-		});
-	}
-
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		final MenuInflater inflater = getMenuInflater();
@@ -160,13 +166,6 @@ public class Settings extends Activity {
 			break;
 		}
 		return super.onOptionsItemSelected(item);
-	}
-
-	private void openRateWindow() {
-		Intent goToMarket = null;
-		goToMarket = new Intent(Intent.ACTION_VIEW,
-				Uri.parse("market://details?id=no.firestorm"));
-		startActivity(goToMarket);
 	}
 
 	private void openAboutBox() {
@@ -195,6 +194,13 @@ public class Settings extends Activity {
 		alert.show();
 	}
 
+	private void openRateWindow() {
+		Intent goToMarket = null;
+		goToMarket = new Intent(Intent.ACTION_VIEW,
+				Uri.parse("market://details?id=no.firestorm"));
+		startActivity(goToMarket);
+	}
+
 	private void setChooseStationButtion() {
 		final Button chooseStationButton = (Button) findViewById(R.id.choose_station);
 		chooseStationButton.setOnClickListener(new OnClickListener() {
@@ -215,6 +221,17 @@ public class Settings extends Activity {
 			@Override
 			public void onClick(View v) {
 				getWeather();
+			}
+		});
+	}
+
+	private void setRateButton() {
+		final Button rateButton = (Button) findViewById(R.id.rate);
+		rateButton.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				openRateWindow();
 			}
 		});
 	}

@@ -72,6 +72,12 @@ public class StationPicker extends ListActivity {
 
 	};
 
+	private List<Station> addUseNearestStation(List<Station> stations) {
+		stations.add(0, new Station(this.getString(R.string.use_nearest_station),
+				WsKlimaProxy.FIND_NEAREST_STATION, 0, 0, null));
+		return stations;
+	}
+
 	private Location getCurrentLocation() {
 		final LocationManager locMan = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		final List<String> locProviderNames = locMan.getProviders(true);
@@ -191,12 +197,6 @@ public class StationPicker extends ListActivity {
 				getWeather();
 			}
 		});
-	}
-
-	private List<Station> addUseNearestStation(List<Station> stations) {
-		stations.add(0, new Station(this.getString(R.string.use_nearest_station),
-				WsKlimaProxy.FIND_NEAREST_STATION, 0, 0, null));
-		return stations;
 	}
 
 	private void updateAdapter() {

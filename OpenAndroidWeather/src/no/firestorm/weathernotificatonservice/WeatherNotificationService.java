@@ -21,8 +21,6 @@ package no.firestorm.weathernotificatonservice;
 
 import java.text.DateFormat;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 import no.firestorm.R;
 import no.firestorm.misc.TempToDrawable;
@@ -36,26 +34,25 @@ import org.apache.http.HttpException;
 
 import android.accounts.NetworkErrorException;
 import android.app.AlarmManager;
+import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.IBinder;
+import android.os.Looper;
 import android.widget.RemoteViews;
 
 /**
- * Updates notification if extra intent is INTENT_EXTRA_ACTION_GET_TEMP, 
- * for updating the notification or INTENT_EXTRA_ACTION_UPDATE_ALARM for
- * setting the alarm for the next time the notification should be updated.
- *  
+ * Updates notification if extra intent is INTENT_EXTRA_ACTION_GET_TEMP, for
+ * updating the notification or INTENT_EXTRA_ACTION_UPDATE_ALARM for setting the
+ * alarm for the next time the notification should be updated.
+ * 
  * Start service for updating notification by:
  * 
  * @code final Intent intent = new Intent(this,
@@ -66,16 +63,16 @@ import android.widget.RemoteViews;
  * 
  * @endcode
  */
-public class WeatherNotificationService extends Service {
-	private Set<Integer> mStartIdsShowTemp = new HashSet<Integer>();
-	
+public class WeatherNotificationService extends IntentService {
+
+	/**
+	 * Listen for location updates, when accuracy is within 3000m it will find
+	 * the closest station and set it in WsKlimaProxy. Remove itself as a
+	 * location listener and set stationReady=true, before it notify the
+	 * service.
+	 * 
+	 */
 	private class UpdateStation implements LocationListener {
-		private ShowTempAsync object = null;
-
-		public UpdateStation(ShowTempAsync object) {
-			this.object = object;
-		}
-
 		@Override
 		public void onLocationChanged(Location location) {
 			if (location.getAccuracy() < 3000) {
@@ -87,14 +84,25 @@ public class WeatherNotificationService extends Service {
 						station.getId());
 				// Remove listener
 				removeFromBroadcaster();
-				if (object != null) {
-					synchronized (object) {
-						object.setStationReady(true);
-						object.notify();
-					}
+
+				synchronized (WeatherNotificationService.this) {
+					WeatherNotificationService.this.setIsUpdateStationCompleted(true);
+					WeatherNotificationService.this.notify();
 				}
 			}
 
+		}
+
+		@Override
+		public void onProviderDisabled(String provider) {
+		}
+
+		@Override
+		public void onProviderEnabled(String provider) {
+		}
+
+		@Override
+		public void onStatusChanged(String provider, int status, Bundle extras) {
 		}
 
 		public void removeFromBroadcaster() {
@@ -104,235 +112,243 @@ public class WeatherNotificationService extends Service {
 			locManager.removeUpdates(this);
 		}
 
-		@Override
-		public void onProviderDisabled(String provider) {
-			// TODO Auto-generated method stub
-			// throw new UnsupportedOperationException("Not implemented!");
-		}
-
-		@Override
-		public void onProviderEnabled(String provider) {
-			// TODO Auto-generated method stub
-			// throw new UnsupportedOperationException("Not implemented!");
-		}
-
-		@Override
-		public void onStatusChanged(String provider, int status, Bundle extras) {
-			// TODO Auto-generated method stub
-			// throw new UnsupportedOperationException("Not implemented!");
-		}
-
 	}
 
-	private class ShowTempAsync extends AsyncTask<Void, Void, Object> {
-		Boolean stationReady = true;
-
-		@Override
-		protected void onPreExecute() {
-			// TODO Auto-generated method stub
-			super.onPreExecute();
-			Context context = WeatherNotificationService.this;
-			if (WsKlimaProxy.isUsingNearestStation(context)) {
-				// find nearest station
-				// find current position
-				LocationManager locMan = (LocationManager) context
-						.getSystemService(LOCATION_SERVICE);
-				Criteria criteria = new Criteria();
-				criteria.setAccuracy(Criteria.ACCURACY_COARSE);
-				String provider = locMan.getBestProvider(criteria, true);
-				UpdateStation updateStation = new UpdateStation(this);
-				if (provider != null){
-					locMan.requestLocationUpdates(provider, 0, 0, updateStation);
-					stationReady = false;
-				} else {
-					this.onPostExecute(new NoLocationException(null));
-					this.cancel(false);
-				}
-			}
-		}
-
-		@Override
-		protected Object doInBackground(Void... dummy) {
-			synchronized (this) {
-				if (!stationReady) {
-					try {
-						this.wait(2 * 60 * 1000);
-					} catch (InterruptedException e) {
-						return new NoLocationException(e);
-					}
-				}
-				if (!stationReady)
-					return new NoLocationException(null);
-			}
-			// get temp
-			final WsKlimaProxy weatherProxy = new WsKlimaProxy();
-			try {
-				return weatherProxy
-						.getTemperatureNow(WeatherNotificationService.this);
-			} catch (final NetworkErrorException e) {
-				return e;
-			} catch (final HttpException e) {
-				return e;
-			}
-		}
-
-		void setStationReady(boolean ready) {
-			stationReady = ready;
-		}
-
-		@Override
-		protected void onPostExecute(Object object) {
-			super.onPostExecute(object);
-			int tickerIcon, contentIcon;
-			CharSequence tickerText, contentTitle, contentText, contentTime;
-			final DateFormat df = DateFormat.getTimeInstance(DateFormat.SHORT);
-			if (object instanceof WeatherElement) {
-				// Has data
-				final WeatherElement temperature = (WeatherElement) object;
-				// Find name
-				final String stationName = WsKlimaProxy
-						.getStationName(WeatherNotificationService.this);
-
-				// Find icon
-				tickerIcon = TempToDrawable.getDrawableFromTemp(Float
-						.valueOf(temperature.getValue()));
-				contentIcon = tickerIcon;
-				// Set title
-				tickerText = stationName;
-				contentTitle = stationName;
-				contentTime = df.format(temperature.getDate());
-
-				final Context context = WeatherNotificationService.this;
-				contentText = String.format("%s %.1f °C", context
-						.getString(R.string.temperatur_),
-						new Float(temperature.getValue()));
-				updateAlarm();
-
-			} else {
-				// Find icon
-				contentIcon = android.R.drawable.stat_notify_error;
-				Context context = WeatherNotificationService.this;
-				contentTime = df.format(new Date());
-
-				if (object == null) {
-					// No data
-					// Set text
-					tickerText = context.getText(R.string.no_available_data);
-					contentTitle = context.getText(R.string.no_available_data);
-					contentText = context
-							.getString(R.string.try_another_station);
-					tickerIcon = android.R.drawable.stat_notify_error;
-				} else {
-					Exception e = (Exception) object;
-					if (e instanceof NoLocationException) {
-						tickerText = WeatherNotificationService.this
-								.getString(R.string.location_error);
-						contentTitle = WeatherNotificationService.this
-								.getString(R.string.location_error);
-					} else {
-
-						// Network error has occurred
-						// Set title
-						tickerText = WeatherNotificationService.this
-								.getString(R.string.download_error);
-						contentTitle = WeatherNotificationService.this
-								.getString(R.string.download_error);
-					}
-
-					Date lastTime = WsKlimaProxy
-							.getLastUpdateTime(WeatherNotificationService.this);
-					if (lastTime != null) {
-						Float temperatureF = Float.parseFloat(WsKlimaProxy
-								.getSavedLastTemperature(context));
-						contentText = String.format("%s %.1f °C %s %s",
-								context.getString(R.string.last_temperature),
-								temperatureF,
-								context.getString(R.string._tid_),
-								df.format(lastTime));
-						tickerIcon = TempToDrawable
-								.getDrawableFromTemp(temperatureF);
-
-					} else {
-						contentText = WeatherNotificationService.this
-								.getString(R.string.press_for_update);
-						tickerIcon = android.R.drawable.stat_notify_error;
-					}
-					setShortAlarm();
-				}
-			}
-
-			final long when = System.currentTimeMillis();
-			// Make notification
-			final Notification notification = new Notification(tickerIcon,
-					tickerText, when);
-			notification.flags = Notification.FLAG_ONGOING_EVENT;
-			final Intent notificationIntent = new Intent(
-					WeatherNotificationService.this,
-					WeatherNotificationService.class);
-			final PendingIntent contentIntent = PendingIntent.getService(
-					WeatherNotificationService.this, 0, notificationIntent, 0);
-
-			RemoteViews contentView = new RemoteViews(getPackageName(),
-					R.layout.weathernotification);
-			contentView.setImageViewResource(R.id.icon, contentIcon);
-			contentView.setTextViewText(R.id.title, contentTitle);
-			contentView.setTextViewText(R.id.text, contentText);
-			contentView.setTextViewText(R.id.title, contentTitle);
-			contentView.setTextViewText(R.id.time, contentTime);
-			// contentView.setTextViewText(R.id.text,
-			// "Hello, this message is in a custom expanded view");
-			notification.contentView = contentView;
-			notification.contentIntent = contentIntent;
-			final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-			mNotificationManager.notify(1, notification);
-
-			for (Integer startId : mStartIdsShowTemp) {
-				WeatherNotificationService.this.stopSelf(startId);	
-			}
-
-		}
-	}
+	/**
+	 * Used to check if the update of station is completed, updateStation set it to true when completed
+	 */
+	private Boolean isUpdateStationCompleted = true;
 
 	@SuppressWarnings("unused")
 	private static final String LOG_ID = "no.firestorm.weatherservice";
+
 	/**
-	 * Key for specifying action when starting the service @see WeatherNotificationService 
+	 * Key for specifying action when starting the service @see
+	 * WeatherNotificationService
 	 */
 	public static final String INTENT_EXTRA_ACTION = "action";
+
 	/**
 	 * If INTENT_EXTRA_ACTION parameter in startup intent is set to this, the
 	 * service update the notification.
 	 */
 	public static final int INTENT_EXTRA_ACTION_GET_TEMP = 1;
+
 	/**
 	 * If INTENT_EXTRA_ACTION parameter in startup intent is set to this, the
 	 * service update the alarm for updating the notification.
 	 */
 	public static final int INTENT_EXTRA_ACTION_UPDATE_ALARM = 2;
 
-	@Override
-	public IBinder onBind(Intent intent) {
-		return null;
+	/**
+	 * 
+	 */
+	public WeatherNotificationService() {
+		super("WeatherNotifivationService");
 	}
 
+	/**
+	 * @param name
+	 */
+	public WeatherNotificationService(String name) {
+		super(name);
+	}
+
+	/**
+	 * Downloads weather data
+	 * 
+	 * @return temperature
+	 * @throws NetworkErrorException
+	 *             if download problem
+	 * @throws HttpException
+	 *             if download problem
+	 * @throws NoLocationException
+	 *             if location provider does not give any location to
+	 *             UpdateStation in two minutes
+	 */
+	protected WeatherElement getWeatherData() throws NetworkErrorException,
+			HttpException, NoLocationException {
+
+		// Wait for location update
+		synchronized (this) {
+			if (!isUpdateStationCompleted) {
+				try {
+					this.wait(2 * 60 * 1000);
+				} catch (InterruptedException e) {
+					throw new NoLocationException(e);
+				}
+				if (!isUpdateStationCompleted)
+					throw new NoLocationException(null);
+			}
+
+		}
+
+		// get temp
+		final WsKlimaProxy weatherProxy = new WsKlimaProxy();
+		return weatherProxy.getTemperatureNow(WeatherNotificationService.this);
+	}
+
+	/**
+	 * Shows a notification with information about the error, either NoLocation
+	 * or DownloadError (default)
+	 * 
+	 * @param e
+	 *            Exception
+	 */
+	private void makeNotification(Exception e) {
+		int tickerIcon, contentIcon;
+		CharSequence tickerText, contentTitle, contentText, contentTime;
+		final DateFormat df = DateFormat.getTimeInstance(DateFormat.SHORT);
+		contentIcon = android.R.drawable.stat_notify_error;
+		Context context = WeatherNotificationService.this;
+		contentTime = df.format(new Date());
+
+		if (e instanceof NoLocationException) {
+			tickerText = WeatherNotificationService.this
+					.getString(R.string.location_error);
+			contentTitle = WeatherNotificationService.this
+					.getString(R.string.location_error);
+		} else {
+
+			// Network error has occurred
+			// Set title
+			tickerText = WeatherNotificationService.this
+					.getString(R.string.download_error);
+			contentTitle = WeatherNotificationService.this
+					.getString(R.string.download_error);
+		}
+
+		Date lastTime = WsKlimaProxy
+				.getLastUpdateTime(WeatherNotificationService.this);
+		if (lastTime != null) {
+			Float temperatureF = Float.parseFloat(WsKlimaProxy
+					.getSavedLastTemperature(context));
+			contentText = String.format("%s %.1f °C %s %s",
+					context.getString(R.string.last_temperature), temperatureF,
+					context.getString(R.string._tid_), df.format(lastTime));
+			tickerIcon = TempToDrawable.getDrawableFromTemp(temperatureF);
+
+		} else {
+			contentText = WeatherNotificationService.this
+					.getString(R.string.press_for_update);
+			tickerIcon = android.R.drawable.stat_notify_error;
+		}
+
+		// Set an alarm for a update within a short time
+		setShortAlarm();
+
+		makeNotification(tickerIcon, contentIcon, tickerText, contentTitle,
+				contentText, contentTime);
+
+	}
+	/**
+	 * Make notification and post it to the NotificationManager
+	 * 
+	 * @param tickerIcon
+	 *            Icon shown in notification bar
+	 * @param contentIcon
+	 *            Icon shown in notification
+	 * @param tickerText
+	 *            Text shown in notification bar
+	 * @param contentTitle
+	 *            Title shown in notification
+	 * @param contentText
+	 *            Description shown in notification
+	 * @param contentTime
+	 *            Time shown in notification
+	 */
+	private void makeNotification(int tickerIcon, int contentIcon,
+			CharSequence tickerText, CharSequence contentTitle,
+			CharSequence contentText, CharSequence contentTime) {
+		final long when = System.currentTimeMillis();
+		// Make notification
+		final Notification notification = new Notification(tickerIcon,
+				tickerText, when);
+		notification.flags = Notification.FLAG_ONGOING_EVENT;
+		final Intent notificationIntent = new Intent(
+				WeatherNotificationService.this,
+				WeatherNotificationService.class);
+		final PendingIntent contentIntent = PendingIntent.getService(
+				WeatherNotificationService.this, 0, notificationIntent, 0);
+
+		RemoteViews contentView = new RemoteViews(getPackageName(),
+				R.layout.weathernotification);
+		contentView.setImageViewResource(R.id.icon, contentIcon);
+		contentView.setTextViewText(R.id.title, contentTitle);
+		contentView.setTextViewText(R.id.text, contentText);
+		contentView.setTextViewText(R.id.title, contentTitle);
+		contentView.setTextViewText(R.id.time, contentTime);
+		notification.contentView = contentView;
+		notification.contentIntent = contentIntent;
+
+		// Post notification
+		final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		mNotificationManager.notify(1, notification);
+	}
+	/**
+	 * Display a notification with temperature
+	 * 
+	 * @param weather
+	 *            Weather element to with data to be shown in notification, if
+	 *            null a message for that say that this station does not provide
+	 *            data will be shown
+	 */
+	private void makeNotification(WeatherElement weather) {
+		int tickerIcon, contentIcon;
+		CharSequence tickerText, contentTitle, contentText, contentTime;
+		final DateFormat df = DateFormat.getTimeInstance(DateFormat.SHORT);
+		if (weather != null) {
+			// Has data
+			final WeatherElement temperature = (WeatherElement) weather;
+			// Find name
+			final String stationName = WsKlimaProxy
+					.getStationName(WeatherNotificationService.this);
+
+			// Find icon
+			tickerIcon = TempToDrawable.getDrawableFromTemp(Float
+					.valueOf(temperature.getValue()));
+			contentIcon = tickerIcon;
+			// Set title
+			tickerText = stationName;
+			contentTitle = stationName;
+			contentTime = df.format(temperature.getDate());
+
+			final Context context = WeatherNotificationService.this;
+			contentText = String.format("%s %.1f °C", context
+					.getString(R.string.temperatur_),
+					new Float(temperature.getValue()));
+			updateAlarm();
+
+		} else {
+			// No data
+			contentIcon = android.R.drawable.stat_notify_error;
+			Context context = WeatherNotificationService.this;
+			contentTime = df.format(new Date());
+			tickerText = context.getText(R.string.no_available_data);
+			contentTitle = context.getText(R.string.no_available_data);
+			contentText = context.getString(R.string.try_another_station);
+			tickerIcon = android.R.drawable.stat_notify_error;
+
+		}
+
+		makeNotification(tickerIcon, contentIcon, tickerText, contentTitle,
+				contentText, contentTime);
+
+	}
 	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
+	protected void onHandleIntent(Intent intent) {
 		switch (intent.getIntExtra(INTENT_EXTRA_ACTION,
 				INTENT_EXTRA_ACTION_GET_TEMP)) {
 		case INTENT_EXTRA_ACTION_GET_TEMP:
-			mStartIdsShowTemp.add(startId);
 			showTemp();
 			break;
 		case INTENT_EXTRA_ACTION_UPDATE_ALARM:
 			updateAlarm();
-			this.stopSelf(startId);
 			break;
-
 		default:
+			showTemp();
 			break;
 		}
-
-		return START_REDELIVER_INTENT;
 	}
 
 	private void removeAlarm() {
@@ -343,6 +359,12 @@ public class WeatherNotificationService extends Service {
 		alarm.cancel(pendingIntent);
 	}
 
+	/**
+	 * Set alarm
+	 * 
+	 * @param updateRate
+	 *            in minutes
+	 */
 	private void setAlarm(long updateRate) {
 		// Set alarm
 		final PendingIntent pendingIntent = PendingIntent.getService(this, 0,
@@ -364,16 +386,38 @@ public class WeatherNotificationService extends Service {
 		alarm.set(AlarmManager.RTC, triggerAtTime, pendingIntent);
 	}
 
+	/**
+	 * @param ready If true UpdateStation has completed
+	 */
+	private void setIsUpdateStationCompleted(boolean ready) {
+		isUpdateStationCompleted = ready;
+	}
+
 	private void setShortAlarm() {
 		setAlarm(10);
 	}
 
-	private void showTemp() {
-		final ShowTempAsync tempTask = new ShowTempAsync();
-		tempTask.execute();
+	/**
+	 * Update the temperature
+	 */
+	void showTemp() {
+		try {
+			updateLocation();
+			WeatherElement returnValue = getWeatherData();
+			makeNotification(returnValue);
+		} catch (NetworkErrorException e) {
+			makeNotification(e);
+		} catch (HttpException e) {
+			makeNotification(e);
+		} catch (NoLocationException e) {
+			makeNotification(e);
+		}
 
 	}
 
+	/**
+	 * Set alarm for next time the notification should be updated
+	 */
 	private void updateAlarm() {
 		// Find update rate
 
@@ -384,6 +428,36 @@ public class WeatherNotificationService extends Service {
 			return;
 		} else
 			setAlarm(updateRate);
+	}
+
+	/**
+	 * If isUsingNearestStation is false, it doesn't do anything. If true it
+	 * register an UpdateStation to listen for location update.
+	 * 
+	 * @see UpdateStation
+	 * 
+	 * @throws NoLocationException
+	 *             if no provider is available
+	 */
+	private void updateLocation() throws NoLocationException {
+		Context context = this;
+		if (WsKlimaProxy.isUsingNearestStation(context)) {
+			// find nearest station
+			// find current position
+			LocationManager locMan = (LocationManager) context
+					.getSystemService(LOCATION_SERVICE);
+			Criteria criteria = new Criteria();
+			criteria.setPowerRequirement(Criteria.POWER_LOW);
+			String provider = locMan.getBestProvider(criteria, true);
+			UpdateStation updateStation = new UpdateStation();
+			if (provider != null) {
+				isUpdateStationCompleted = false;
+				locMan.requestLocationUpdates(provider, 0, 0, updateStation,
+						Looper.getMainLooper());
+			} else {
+				throw new NoLocationException(null);
+			}
+		}
 	}
 
 }
