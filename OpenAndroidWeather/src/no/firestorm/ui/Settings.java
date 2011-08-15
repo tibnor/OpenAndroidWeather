@@ -64,7 +64,7 @@ public class Settings extends Activity {
 			final int updateRate = getResources().getIntArray(
 					R.array.Update_rate_values)[(int) id];
 
-			WsKlimaProxy.setUpdateRate(Settings.this, updateRate);
+			WeatherNotificationService.Settings.setUpdateRate(Settings.this, updateRate);
 
 		}
 
@@ -239,10 +239,10 @@ public class Settings extends Activity {
 	private void setStationName() {
 		final TextView stationNameView = (TextView) findViewById(R.id.StationName);
 		String stationName;
-		if (WsKlimaProxy.isUsingNearestStation(this)) {
+		if (WeatherNotificationService.Settings.isUsingNearestStation(this)) {
 			stationName = getString(R.string.use_nearest_station);
 		} else {
-			stationName = WsKlimaProxy.getStationName(this);
+			stationName = WeatherNotificationService.Settings.getStationName(this);
 		}
 
 		stationNameView.setText(stationName);
@@ -259,7 +259,7 @@ public class Settings extends Activity {
 		spinner.setOnItemSelectedListener(new UpdateRateSelectedListener());
 
 		// Find selected update rate
-		final int updateRate = WsKlimaProxy.getUpdateRate(this);
+		final int updateRate = WeatherNotificationService.Settings.getUpdateRate(this);
 		final int[] updateRateArray = getResources().getIntArray(
 				R.array.Update_rate_values);
 		final int id = Arrays.binarySearch(updateRateArray, updateRate);

@@ -103,7 +103,10 @@ public class StationPicker extends ListActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.stationslist);
 		setResult(RESULT_CANCELED);
+		
+		// Insert station
 		updateAdapter();
+		
 		setGetWeatherButton();
 
 		final ListView lw = getListView();
@@ -169,14 +172,14 @@ public class StationPicker extends ListActivity {
 		final String name = station.getName();
 
 		// save
-		WsKlimaProxy.setStation(this, name, (int) id);
-		WsKlimaProxy.setUseNearestStation(this, false);
+		WeatherNotificationService.Settings.setStation(this, name, (int) id);
+		WeatherNotificationService.Settings.setUseNearestStation(this, false);
 		} else {
-			WsKlimaProxy.setUseNearestStation(this, true);
+			WeatherNotificationService.Settings.setUseNearestStation(this, true);
 		}
 		
 		
-		int updateRate = WsKlimaProxy.getUpdateRate(this);
+		int updateRate = WeatherNotificationService.Settings.getUpdateRate(this);
 		
 		if (updateRate > 0) {
 			final Intent intent = new Intent(this,

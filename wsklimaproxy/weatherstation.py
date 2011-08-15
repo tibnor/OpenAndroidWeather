@@ -23,19 +23,25 @@ class WeatherStation(db.Model):
     temperature = db.FloatProperty()
     temperatureUpdated = db.DateTimeProperty()
     temperatureExpires = db.DateTimeProperty()
-    timesNotUpdated = db.IntegerProperty(default = 0)
+    timesNotUpdated = db.IntegerProperty(default=0)
     status = int
 
     
-    def getTempNow(self):
+    def getTempNow(self):        
+        if self.timesNotUpdated >= 10:
+            return self.tempToJson()
+        
         now = datetime.utcnow();
+        
         if (self.temperatureExpires is not None and self.temperatureExpires > now):
             return self.tempToJson()
         
+
         
-        fromTime = datetime.utcnow() + timedelta(hours= -6);
-        toTime = datetime.utcnow();
-        hours = '00,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20,21,22,23';
+        
+        fromTime = datetime.utcnow() + timedelta(hours= -1);
+        toTime = datetime.utcnow()
+        hours = str(fromTime.hour) + "," + str(toTime.hour)
         months = '1,2,3,4,5,6,7,8,9,10,11,12'
         elements = 'TA'
         dom = getMetData('2', fromTime, toTime, self._id, elements, hours, months)
@@ -76,7 +82,7 @@ class WeatherStation(db.Model):
         text = self.tempToJson();
         return text;
     
-    def saveToMemcach(self, text,status):
+    def saveToMemcach(self, text, status):
         if not memcache.set("tempJSON:" + str(self.id), text, time.mktime(self.temperatureExpires.timetuple())):
             logging.error("memcach not working") 
         if not memcache.set("tempStatus:" + str(self.id), status, time.mktime(self.temperatureExpires.timetuple())):
@@ -85,18 +91,14 @@ class WeatherStation(db.Model):
     
     def tempToJson(self):
         text = None
-        if self.temperatureUpdated != None and self.temperature != None:
-            text =  """{"time":%d,"temperature":%s""" % (time.mktime(self.temperatureUpdated.timetuple()), self.temperature);
-            if self.timesNotUpdated >= 1:
-                text += ""","reliable":false"""
-            else:
-                text += ""","reliable":true"""
-            text += "}"
+        if self.temperatureUpdated != None and self.temperature != None and self.timesNotUpdated < 10:
+            text = """{"time":%d,"temperature":%s""" % (time.mktime(self.temperatureUpdated.timetuple()), self.temperature);
+            text += ""","reliable":true}"""
             self.status = 200
         else:
             text = ""
             self.status = 204
-        self.saveToMemcach(text,self.status)
+        self.saveToMemcach(text, self.status)
         return text
     
     def getStatus(self):

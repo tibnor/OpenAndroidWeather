@@ -20,9 +20,24 @@ class MainPage(webapp.RequestHandler):
         self.response.set_status(status)
         self.response.headers['Content-Type'] = 'text/plain'
         self.response.out.write(text)
+        
+class BlackList(webapp.RequestHandler):
+    def get(self):
+        query = WeatherStation.all()
+        query.filter('timesNotUpdated >=', 10)
+        text = "{\"station\":["
+        if query.count(1)>0:
+            for station in query:
+                text += str(station.id) + ","
+            text = text.replace(' ', '')[:-1]
+        
+        
+        text += "]}"   
+        
+        self.response.out.write(text)
 
 
-application = webapp.WSGIApplication([('/temperature', MainPage)], debug=True)
+application = webapp.WSGIApplication([('/temperature', MainPage),('/blacklist',BlackList)], debug=True)
 
 
 def main():
