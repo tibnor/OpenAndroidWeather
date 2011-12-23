@@ -9,11 +9,11 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="24"
+   width="32"
    height="38"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.2 r9819"
    sodipodi:docname="cold.svg"
    inkscape:export-filename="/home/torstein/workspace/OpenAndroidWeather/tempicon/t_11.png"
    inkscape:export-xdpi="90"
@@ -28,15 +28,15 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:zoom="11.2"
-     inkscape:cx="32.652279"
+     inkscape:cx="16.937993"
      inkscape:cy="14.192293"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1550"
-     inkscape:window-height="871"
+     inkscape:window-width="1600"
+     inkscape:window-height="876"
      inkscape:window-x="0"
-     inkscape:window-y="0"
+     inkscape:window-y="1048"
      inkscape:window-maximized="1"
      showguides="true"
      inkscape:guide-bbox="true" />
@@ -60,17 +60,17 @@
     <flowRoot
        xml:space="preserve"
        id="flowRoot2985"
-       style="font-size:13.00004958999999971px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#008080;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans Bold"
+       style="font-size:13.00004959px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#008080;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans Bold"
        transform="matrix(1.5195332,0,0,1.5195216,-181.54586,879.80197)"><flowRegion
          id="flowRegion2987"><rect
            id="rect2989"
-           width="24.905487"
-           height="15.035103"
-           x="114.57835"
-           y="94.854851"
-           style="font-size:13.00004958999999971px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#008080;fill-opacity:1;font-family:Sans;-inkscape-font-specification:Sans Bold"
+           width="48.87899"
+           height="19.324522"
+           x="102.59158"
+           y="91.094269"
+           style="font-size:13.00004959px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#008080;fill-opacity:1;font-family:Sans;-inkscape-font-specification:Sans Bold"
            ry="0" /></flowRegion><flowPara
          id="flowPara3929"
-         style="font-size:13.16198729999999983px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#008080;font-family:Ubuntu;-inkscape-font-specification:Ubuntu">
+         style="font-size:21.05917931px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#34b4e3;fill-opacity:1;font-family:Roboto;-inkscape-font-specification:Roboto">
 55</flowPara></flowRoot>  </g>
 </svg>

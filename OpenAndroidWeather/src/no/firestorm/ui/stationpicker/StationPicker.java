@@ -23,6 +23,7 @@ import java.util.List;
 
 import no.firestorm.R;
 import no.firestorm.weathernotificatonservice.WeatherNotificationService;
+import no.firestorm.weathernotificatonservice.WeatherNotificationSettings;
 import no.firestorm.wsklima.WsKlimaProxy;
 import no.firestorm.wsklima.database.WsKlimaDataBaseHelper;
 import android.app.ListActivity;
@@ -73,8 +74,9 @@ public class StationPicker extends ListActivity {
 	};
 
 	private List<Station> addUseNearestStation(List<Station> stations) {
-		stations.add(0, new Station(this.getString(R.string.use_nearest_station),
-				WsKlimaProxy.FIND_NEAREST_STATION, 0, 0, null,true));
+		stations.add(0,
+				new Station(this.getString(R.string.use_nearest_station),
+						WsKlimaProxy.FIND_NEAREST_STATION, 0, 0, null, true));
 		return stations;
 	}
 
@@ -103,10 +105,10 @@ public class StationPicker extends ListActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.stationslist);
 		setResult(RESULT_CANCELED);
-		
+
 		// Insert station
 		updateAdapter();
-		
+
 		setGetWeatherButton();
 
 		final ListView lw = getListView();
@@ -167,20 +169,18 @@ public class StationPicker extends ListActivity {
 				.getAdapter();
 		final Station station = (Station) adapter.getItem((int) id);
 		id = station.getId();
-		if (id != WsKlimaProxy.FIND_NEAREST_STATION){
-		// Get name
-		final String name = station.getName();
+		if (id != WsKlimaProxy.FIND_NEAREST_STATION) {
+			// Get name
+			final String name = station.getName();
 
-		// save
-		WeatherNotificationService.Settings.setStation(this, name, (int) id);
-		WeatherNotificationService.Settings.setUseNearestStation(this, false);
-		} else {
-			WeatherNotificationService.Settings.setUseNearestStation(this, true);
-		}
-		
-		
-		int updateRate = WeatherNotificationService.Settings.getUpdateRate(this);
-		
+			// save
+			WeatherNotificationSettings.setStation(this, name, (int) id);
+			WeatherNotificationSettings.setUseNearestStation(this, false);
+		} else
+			WeatherNotificationSettings.setUseNearestStation(this, true);
+
+		final int updateRate = WeatherNotificationSettings.getUpdateRate(this);
+
 		if (updateRate > 0) {
 			final Intent intent = new Intent(this,
 					WeatherNotificationService.class);
@@ -218,12 +218,13 @@ public class StationPicker extends ListActivity {
 		if (mSortByDistance)
 			if (mStationsSortedByDistance == null) {
 				mStations = addUseNearestStation(dbhelper
-						.getStationsSortedByLocation(loc,true));
+						.getStationsSortedByLocation(loc, true));
 				mStationsSortedByDistance = mStations;
 			} else
 				mStations = mStationsSortedByDistance;
 		else if (mStationsSortedAlphabetical == null) {
-			mStations = addUseNearestStation(dbhelper.getStationsSortedAlphabetic(loc,true));
+			mStations = addUseNearestStation(dbhelper
+					.getStationsSortedAlphabetic(loc, true));
 			mStationsSortedAlphabetical = mStations;
 		} else
 			mStations = mStationsSortedAlphabetical;

@@ -20,11 +20,10 @@
 package no.firestorm.misc;
 
 import no.firestorm.weathernotificatonservice.WeatherNotificationService;
-import no.firestorm.wsklima.WsKlimaProxy;
+import no.firestorm.weathernotificatonservice.WeatherNotificationSettings;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-
 
 /**
  * Receive intent when phone has booted and start service.
@@ -33,7 +32,8 @@ public class BootIntentReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		final int updateRate = WeatherNotificationService.Settings.getUpdateRate(context);
+		final int updateRate = WeatherNotificationSettings
+				.getUpdateRate(context);
 		if (updateRate > 0) {
 			final Intent serviceIntent = new Intent(context,
 					WeatherNotificationService.class);

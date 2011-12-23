@@ -5,14 +5,13 @@ from weatherstation import WeatherStation
 
 
 
-
 class MainPage(webapp.RequestHandler):
     
     def get(self):
         stationId = int(self.request.get("st"))
-        status = None
-        text = memcache.get("tempJSON:"+str(id))
-        if text is None:
+        status = int(memcache.get("tempStatus:"+str(stationId)))
+        text = memcache.get("tempJSON:"+str(stationId))
+        if text is None or status is None:
             station = WeatherStation.get_or_insert(str(stationId), id=stationId)
             text = station.getTempNow()
             status = station.getStatus()
@@ -24,7 +23,7 @@ class MainPage(webapp.RequestHandler):
 class BlackList(webapp.RequestHandler):
     def get(self):
         query = WeatherStation.all()
-        query.filter('timesNotUpdated >=', 10)
+        query.filter('timesNotUpdated >=', 200)
         text = "{\"station\":["
         if query.count(1)>0:
             for station in query:
@@ -35,9 +34,15 @@ class BlackList(webapp.RequestHandler):
         text += "]}"   
         
         self.response.out.write(text)
+        
+class FlushMemcache(webapp.RequestHandler):
+    def get(self):
+        if memcache.flush_all():
+            self.response.out.write("success")
+        
 
 
-application = webapp.WSGIApplication([('/temperature', MainPage),('/blacklist',BlackList)], debug=True)
+application = webapp.WSGIApplication([('/temperature', MainPage),('/blacklist',BlackList),('/flushmemcache',FlushMemcache)], debug=True)
 
 
 def main():
@@ -45,12 +50,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
-
-
-        
-
-
-    
-        
-        

@@ -24,7 +24,7 @@ import java.util.Arrays;
 import no.firestorm.R;
 import no.firestorm.ui.stationpicker.StationPicker;
 import no.firestorm.weathernotificatonservice.WeatherNotificationService;
-import no.firestorm.wsklima.WsKlimaProxy;
+import no.firestorm.weathernotificatonservice.WeatherNotificationSettings;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -43,6 +43,9 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -64,7 +67,8 @@ public class Settings extends Activity {
 			final int updateRate = getResources().getIntArray(
 					R.array.Update_rate_values)[(int) id];
 
-			WeatherNotificationService.Settings.setUpdateRate(Settings.this, updateRate);
+			WeatherNotificationSettings
+					.setUpdateRate(Settings.this, updateRate);
 
 		}
 
@@ -81,7 +85,7 @@ public class Settings extends Activity {
 	private static final String PREF_FIRST_RUN_NEW_VERSION = "last run version";
 
 	/**
-	 * Check if the app has been runned in the current version before, if not 
+	 * Check if the app has been runned in the current version before, if not
 	 * the notification is updated
 	 */
 	private void checkIfFirstRun() {
@@ -101,7 +105,7 @@ public class Settings extends Activity {
 				edit.putInt(PREF_FIRST_RUN_NEW_VERSION, currentVersion);
 				edit.commit();
 			}
-		} catch (NameNotFoundException e) {
+		} catch (final NameNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -143,6 +147,7 @@ public class Settings extends Activity {
 		setGetWeatherButton();
 		setUpdateRateSpinner();
 		setRateButton();
+		setDownloadOnlyOnWifi();
 
 	}
 
@@ -214,6 +219,23 @@ public class Settings extends Activity {
 		});
 	}
 
+	private void setDownloadOnlyOnWifi() {
+		final CheckBox checkbox = (CheckBox) findViewById(R.id.only_download_on_wifi);
+
+		final boolean checked = WeatherNotificationSettings
+				.getDownloadOnlyOnWifi(Settings.this);
+		checkbox.setChecked(checked);
+		checkbox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				WeatherNotificationSettings.setDownloadOnlyOnWifi(
+						Settings.this, isChecked);
+			}
+		});
+	}
+
 	private void setGetWeatherButton() {
 		final ImageButton chooseStationButton = (ImageButton) findViewById(R.id.get_weather);
 		chooseStationButton.setOnClickListener(new OnClickListener() {
@@ -239,11 +261,10 @@ public class Settings extends Activity {
 	private void setStationName() {
 		final TextView stationNameView = (TextView) findViewById(R.id.StationName);
 		String stationName;
-		if (WeatherNotificationService.Settings.isUsingNearestStation(this)) {
+		if (WeatherNotificationSettings.isUsingNearestStation(this))
 			stationName = getString(R.string.use_nearest_station);
-		} else {
-			stationName = WeatherNotificationService.Settings.getStationName(this);
-		}
+		else
+			stationName = WeatherNotificationSettings.getStationName(this);
 
 		stationNameView.setText(stationName);
 	}
@@ -259,7 +280,7 @@ public class Settings extends Activity {
 		spinner.setOnItemSelectedListener(new UpdateRateSelectedListener());
 
 		// Find selected update rate
-		final int updateRate = WeatherNotificationService.Settings.getUpdateRate(this);
+		final int updateRate = WeatherNotificationSettings.getUpdateRate(this);
 		final int[] updateRateArray = getResources().getIntArray(
 				R.array.Update_rate_values);
 		final int id = Arrays.binarySearch(updateRateArray, updateRate);
@@ -268,5 +289,4 @@ public class Settings extends Activity {
 		else
 			spinner.setSelection(0);
 	}
-
 }

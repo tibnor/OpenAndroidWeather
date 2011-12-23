@@ -4,7 +4,7 @@
 	<string name="choose_station">Velg stasjon</string>
 	<string name="Get_weather">Hent vær</string>
 	<string name="Update_rate">Oppdateringsintervall:</string>
-	<string name="download_error">Firestorm: Nedlastingsfeil</string>
+	<string name="download_error">Feil: Nedlastingsfeil</string>
 	<string name="press_for_update">Trykk her for å prøve igjen</string>
 	<string name="temperatur_">Temperatur: </string>
 	<string name="_tid_"> Tid: </string>
@@ -29,7 +29,7 @@
 	<string name="sort_by_distance">Sorter etter avstand</string>
 	<string name="type_to_filter">Søk</string>
 	<string name="about">Om</string>
-	<string name="about_text">"""Firestorm henter data fra Norges Meteorologiske Institut, via. tjenesten http://eklima.met.no/wsKlima/. Men det er ikke noen tilknytning mellom Norges Meteorologiske Institut og utviklerne.
+	<string name="about_text">"""Norske Temperaturer henter data fra Norges Meteorologiske Institut, via. tjenesten http://eklima.met.no/wsKlima/. Men det er ikke noen tilknytning mellom Norges Meteorologiske Institut og utviklerne.
 
 Programmet er et åpen kildekode prosjekt under GPL v3 og kildekoden kan hentes ned fra https://github.com/tibnor/OpenAndroidWeather.
 
@@ -40,7 +40,8 @@ Hvis du liker programmet er godt og ønsker videre utvikling vær snill ådoner!
 		stasjon.</string>
 	<string name="last_temperature">Forrige temperatur:</string>
 	<string name="use_nearest_station">Bruk nærmeste stasjon</string>
-	<string name="location_error">Firestorm: Kunne ikke finne din posisjon</string>
+	<string name="location_error">Feil: Kunne ikke finne din posisjon</string>
 	<string name="rate">Gi omtale</string>
 	<string name="rate_full">Gi omtale i Android Market</string>
+		<string name="only_download_on_wifi">Last bare ned via WiFi</string>
 </resources>

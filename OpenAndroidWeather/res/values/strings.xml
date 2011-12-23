@@ -4,8 +4,8 @@
 	<string name="choose_station">Choose station</string>
 	<string name="Get_weather">Get weather</string>
 	<string name="Update_rate">Update rate:</string>
-	<string name="app_name">Firestorm</string>
-	<string name="download_error">Firestorm: download error</string>
+	<string name="app_name">Norske Temperaturer</string>
+	<string name="download_error">Error: download error</string>
 	<string name="press_for_update">Press here to try again</string>
 	<string name="temperatur_">Temperature: </string>
 	<string name="_tid_"> Time: </string>
@@ -30,7 +30,7 @@
 	<string name="sort_by_distance">Sort by distance</string>
 	<string name="type_to_filter">Search</string>
 	<string name="about">About</string>
-	<string name="about_text">"""Firestorm retrieves data from the Norwegian Meteorological Institute, via. the service eklima.met.no/wsKlima/. But there is no relationship between the Norwegian Meteorological Institute and developers.
+	<string name="about_text">"""Norske Temperaturer retrieves data from the Norwegian Meteorological Institute, via. the service eklima.met.no/wsKlima/. But there is no relationship between the Norwegian Meteorological Institute and developers.
 
 The program is an open source project under GPL v3 and source code can be downloaded from github.com/tibnor/OpenAndroidWeather.
 
@@ -42,5 +42,6 @@ If you like the app and want further development please donate!"""</string>
 	<string name="use_nearest_station">Use nearest station</string>
 	<string name="rate">Rate app</string>
 	<string name="rate_full">Rate the app in Android Market</string>
-	<string name="location_error">Firestorm: Could not find your location</string>
+	<string name="location_error">Error: Could not find your location</string>
+	<string name="only_download_on_wifi">Only download on Wifi</string>
 </resources>

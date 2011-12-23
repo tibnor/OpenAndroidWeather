@@ -6,6 +6,8 @@ import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
 
+import no.firestorm.misc.CheckInternetStatus;
+import no.firestorm.weathernotificatonservice.WeatherNotificationSettings;
 import no.firestorm.wsklima.database.WsKlimaDataBaseHelper;
 
 import org.apache.http.HttpEntity;
@@ -63,7 +65,6 @@ public class WsKlimaProxy {
 		return result;
 	}
 
-
 	/**
 	 * Gets the latest temperature from selected station.
 	 * 
@@ -80,9 +81,17 @@ public class WsKlimaProxy {
 	 */
 	public WeatherElement getTemperatureNow(Integer station, Context context)
 			throws HttpException, NetworkErrorException {
+
+		// Check if it's in download on wifi only mode, if so check if wifi is
+		// connected,
+		// if not throw an error
+		if (WeatherNotificationSettings.getDownloadOnlyOnWifi(context))
+			if (!CheckInternetStatus.isWifiConnected(context))
+				throw new NetworkErrorException();
+
 		URI url;
 		try {
-			url = new URI("http://23.wsklimaproxy.appspot.com/temperature?st="
+			url = new URI("http://wsklimaproxy.appspot.com/temperature?st="
 					+ station);
 		} catch (final URISyntaxException e) {
 			// Should not happen
@@ -96,7 +105,7 @@ public class WsKlimaProxy {
 
 		try {
 			final HttpResponse response = client.execute(request);
-			int status = response.getStatusLine().getStatusCode();
+			final int status = response.getStatusLine().getStatusCode();
 			final HttpEntity r_entity = response.getEntity();
 			if (status == 200) {
 				final String xmlString = EntityUtils.toString(r_entity);
@@ -105,7 +114,7 @@ public class WsKlimaProxy {
 				final boolean isReliable = val.getBoolean("reliable");
 				// If not reliable save it in db
 				if (!isReliable) {
-					WsKlimaDataBaseHelper db = new WsKlimaDataBaseHelper(
+					final WsKlimaDataBaseHelper db = new WsKlimaDataBaseHelper(
 							context);
 					db.setIsReliable(station, isReliable);
 				}
@@ -114,22 +123,19 @@ public class WsKlimaProxy {
 			} else if (status == 204) {
 
 				if (r_entity == null) {
-					WsKlimaDataBaseHelper db = new WsKlimaDataBaseHelper(
+					final WsKlimaDataBaseHelper db = new WsKlimaDataBaseHelper(
 							context);
 					db.setIsReliable(station, false);
 					return null;
 				} else
 					throw new HttpException();
-			} else {
+			} else
 				throw new NetworkErrorException();
-			}
 		} catch (final IOException e) {
 			throw new NetworkErrorException(e);
 		} catch (final JSONException e) {
 			throw new HttpException();
 		}
 	}
-
-
 
 }

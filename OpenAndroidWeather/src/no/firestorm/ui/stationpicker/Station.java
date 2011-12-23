@@ -22,7 +22,6 @@ package no.firestorm.ui.stationpicker;
 import java.util.HashMap;
 
 import no.firestorm.wsklima.database.WsKlimaDataBaseHelper;
-
 import android.content.Context;
 import android.location.Location;
 
@@ -155,19 +154,18 @@ public class Station extends HashMap<String, String> implements
 	}
 
 	/**
+	 * @return the isReliable
+	 */
+	public boolean isReliable() {
+		return isReliable;
+	}
+
+	/**
 	 * @param id
 	 *            used by met.no
 	 */
 	public void setId(int id) {
 		this.id = id;
-	}
-
-	/**
-	 * @param name
-	 *            of station
-	 */
-	public void setName(String name) {
-		this.name = name;
 	}
 
 	/**
@@ -177,16 +175,17 @@ public class Station extends HashMap<String, String> implements
 	 *            needed for updating of the database
 	 */
 	public void setIsReliable(boolean isReliable, Context context) {
-		WsKlimaDataBaseHelper db = new WsKlimaDataBaseHelper(context);
+		final WsKlimaDataBaseHelper db = new WsKlimaDataBaseHelper(context);
 		db.setIsReliable(id, isReliable);
 		this.isReliable = isReliable;
 	}
 
 	/**
-	 * @return the isReliable
+	 * @param name
+	 *            of station
 	 */
-	public boolean isReliable() {
-		return isReliable;
+	public void setName(String name) {
+		this.name = name;
 	}
 
 }

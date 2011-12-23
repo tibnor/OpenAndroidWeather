@@ -6,6 +6,7 @@ from google.appengine.api import memcache
 import logging
 import time
 
+
 def getMetData(timeserietypeID, fromTime, toTime, stations, elements, hours, months):
     url = "http://eklima.met.no/metdata/MetDataService?invoke=getMetData&timeserietypeID=" \
         + timeserietypeID + "&format=&from=" + fromTime.strftime('%Y-%m-%d')\
@@ -28,7 +29,7 @@ class WeatherStation(db.Model):
 
     
     def getTempNow(self):        
-        if self.timesNotUpdated >= 10:
+        if self.timesNotUpdated >= 200:
             return self.tempToJson()
         
         now = datetime.utcnow();
@@ -83,7 +84,7 @@ class WeatherStation(db.Model):
         return text;
     
     def saveToMemcach(self, text, status):
-        if not memcache.set("tempJSON:" + str(self.id), text, time.mktime(self.temperatureExpires.timetuple())):
+        if not memcache.set("tempJSON:" + str(self.id), text,time.mktime(self.temperatureExpires.timetuple())):
             logging.error("memcach not working") 
         if not memcache.set("tempStatus:" + str(self.id), status, time.mktime(self.temperatureExpires.timetuple())):
             logging.error("memcach not working") 
@@ -91,7 +92,7 @@ class WeatherStation(db.Model):
     
     def tempToJson(self):
         text = None
-        if self.temperatureUpdated != None and self.temperature != None and self.timesNotUpdated < 10:
+        if self.temperatureUpdated != None and self.temperature != None and self.timesNotUpdated < 200:
             text = """{"time":%d,"temperature":%s""" % (time.mktime(self.temperatureUpdated.timetuple()), self.temperature);
             text += ""","reliable":true}"""
             self.status = 200

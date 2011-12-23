@@ -48,7 +48,7 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 	private static final String LOG_ID = "no.firestorm.db";
 	private static final String DATABASE_NAME = "stations.db";
 	private static Context mContext;
-	private static final int DATABASE_VERSION = 9;
+	private static final int DATABASE_VERSION = 10;
 	/** Name of the table for stations */
 	public static final String STATIONS_TABLE_NAME = "stations";
 	/** Column name for station id */
@@ -83,7 +83,8 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 	 * @param currentLocation
 	 *            location of the user, to be used for calculating of the
 	 *            direction
-	 * @param showOnlyReliableStations list only reliable stations
+	 * @param showOnlyReliableStations
+	 *            list only reliable stations
 	 * @return list of stations sorted alphabetically
 	 */
 	public List<Station> getStationsSortedAlphabetic(Location currentLocation,
@@ -99,9 +100,8 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 		final String orderBy = WsKlimaDataBaseHelper.STATIONS_NAME;
 
 		String where = null;
-		if (showOnlyReliableStations) {
+		if (showOnlyReliableStations)
 			where = STATIONS_RELIABLE + " = 1";
-		}
 
 		final Cursor c = mDb.query(WsKlimaDataBaseHelper.STATIONS_TABLE_NAME,
 				select, where, null, null, null, orderBy);
@@ -156,9 +156,8 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 		final String orderBy = WsKlimaDataBaseHelper.STATIONS_LAT;
 
 		String where = null;
-		if (showOnlyReliableStations) {
+		if (showOnlyReliableStations)
 			where = STATIONS_RELIABLE + " = 1";
-		}
 
 		final Cursor c = mDb.query(WsKlimaDataBaseHelper.STATIONS_TABLE_NAME,
 				select, where, null, null, null, orderBy);
@@ -224,15 +223,19 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 		}
 	}
 
-	/** Change if the station is reliable
-	 * @param stationId station id
-	 * @param isReliable true if the station is reliable
+	/**
+	 * Change if the station is reliable
+	 * 
+	 * @param stationId
+	 *            station id
+	 * @param isReliable
+	 *            true if the station is reliable
 	 */
 	public void setIsReliable(int stationId, boolean isReliable) {
 		final SQLiteDatabase mDb = getWritableDatabase();
-		ContentValues values = new ContentValues();
+		final ContentValues values = new ContentValues();
 		values.put(STATIONS_RELIABLE, isReliable);
-		String whereClause = STATIONS_ID + " = "+ stationId;
+		final String whereClause = STATIONS_ID + " = " + stationId;
 		mDb.update(STATIONS_TABLE_NAME, values, whereClause, null);
 		mDb.close();
 	}

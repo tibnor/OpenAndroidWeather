@@ -6,6 +6,9 @@ Created on May 29, 2011
 from xml.dom.minidom import parse
 import urllib
 import json
+import sys 
+reload(sys) 
+sys.setdefaultencoding( "utf-8" ) 
 
 #conn = sqlite3.connect('stations.db')
 #c = conn.cursor();

@@ -1,0 +1,23 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:soundEffectsEnabled="true"
+    android:background="#ff111111">
+
+    <TextView
+        android:id="@+id/icon"
+        android:layout_width="@android:dimen/notification_large_icon_width"
+        android:layout_height="@android:dimen/notification_large_icon_height"
+        android:background="@drawable/notify_panel_notification_icon_bg_tile"
+        android:gravity="center_vertical|center_horizontal"
+        android:scaleType="center"
+        android:text="-15.2 °C"
+        android:singleLine="true"
+        android:textAppearance="@style/newTextAppearance.StatusBar.Icon" android:textSize="15sp" android:textStyle="bold"/>
+
+    <include layout="@layout/status_bar_latest_event_content_large_icon" 
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        />
+</LinearLayout>
