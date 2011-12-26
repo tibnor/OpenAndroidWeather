@@ -47,14 +47,21 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import com.google.ads.AdRequest;
+import com.google.ads.AdSize;
+import com.google.ads.AdView;
 
 /**
  * Startup activity
  * 
  */
 public class Settings extends Activity {
+	private AdView adView;
+	
 	/**
 	 * Callback class for update rate scroller
 	 */
@@ -148,8 +155,9 @@ public class Settings extends Activity {
 		setUpdateRateSpinner();
 		setRateButton();
 		setDownloadOnlyOnWifi();
-
 	}
+
+	
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {

@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ads="http://schemas.android.com/apk/lib/com.google.ads"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+<LinearLayout 
 	android:layout_width="fill_parent" android:layout_height="fill_parent"
-	android:orientation="vertical">
+	android:orientation="vertical" android:id="@+id/mainLayout">
 	<include layout="@layout/header" android:layout_width="fill_parent"
 		android:layout_height="wrap_content" />
 	<TextView android:layout_width="wrap_content"
@@ -27,3 +32,21 @@
 	<Button android:text="@string/rate_full" android:layout_width="fill_parent"
 		android:id="@+id/rate" android:layout_height="wrap_content"></Button>
 </LinearLayout>
+
+  <com.google.ads.AdView
+      android:id="@+id/adView"
+      style="@style/Theme.Tasks"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignParentBottom="true"
+      android:layout_gravity="bottom|center_horizontal"
+      ads:adSize="BANNER"
+      ads:adUnitId="a14ef8e2d06d8c7"
+      android:gravity="bottom"
+      ads:loadAdOnCreate="true"
+      ads:backgroundColor="#FFFFFF" 
+ads:primaryTextColor="#000000" 
+ads:secondaryTextColor="#333333"
+      ads:testDevices="TEST_EMULATOR|18972EB57725E02348B9EE5B1C9DD7B0" />
+
+</RelativeLayout>
