@@ -47,6 +47,6 @@
       ads:backgroundColor="#FFFFFF" 
 ads:primaryTextColor="#000000" 
 ads:secondaryTextColor="#333333"
-      ads:testDevices="TEST_EMULATOR|18972EB57725E02348B9EE5B1C9DD7B0" />
+      ads:testDevices="TEST_EMULATOR" />
 
 </RelativeLayout>
