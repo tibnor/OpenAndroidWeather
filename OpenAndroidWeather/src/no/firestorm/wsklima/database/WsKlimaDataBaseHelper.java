@@ -48,7 +48,7 @@ public class WsKlimaDataBaseHelper extends SQLiteOpenHelper {
 	private static final String LOG_ID = "no.firestorm.db";
 	private static final String DATABASE_NAME = "stations.db";
 	private static Context mContext;
-	private static final int DATABASE_VERSION = 10;
+	private static final int DATABASE_VERSION = 11;
 	/** Name of the table for stations */
 	public static final String STATIONS_TABLE_NAME = "stations";
 	/** Column name for station id */

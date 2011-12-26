@@ -36,7 +36,7 @@ The program is an open source project under GPL v3 and source code can be downlo
 
 If you like the app and want further development please donate!"""</string>
 	<string name="donate">Donate</string>
-	<string name="no_available_data">No available data</string>
+	<string name="no_available_data">No data available</string>
 	<string name="try_another_station">This station has no data, try another station.</string>
 	<string name="last_temperature">Last temperature</string>
 	<string name="use_nearest_station">Use nearest station</string>

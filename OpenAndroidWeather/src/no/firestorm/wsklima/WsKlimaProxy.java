@@ -72,7 +72,6 @@ public class WsKlimaProxy {
 	 * and updated in {@link #setStation(Context, String, int)} This is not done
 	 * automatically!
 	 * 
-	 * TODO: check if the user wants to use the nearest station
 	 * 
 	 * @param context
 	 * @return the latest temperature
@@ -121,14 +120,18 @@ public class WsKlimaProxy {
 				return new WeatherElement(time, WeatherType.temperature,
 						val.getString("temperature"));
 			} else if (status == 204) {
-
+				// Currently no data but the station is reliable
 				if (r_entity == null) {
+					return null;
+				} else
+					throw new HttpException();
+			} else if (status == 410) {
+				// Station is not reliable
 					final WsKlimaDataBaseHelper db = new WsKlimaDataBaseHelper(
 							context);
 					db.setIsReliable(station, false);
 					return null;
-				} else
-					throw new HttpException();
+
 			} else
 				throw new NetworkErrorException();
 		} catch (final IOException e) {

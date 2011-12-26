@@ -28,18 +28,19 @@ class WeatherStation(db.Model):
     status = int
 
     
-    def getTempNow(self):        
+    def getTempNow(self):  
+        # Check if station is not blacklisted     
         if self.timesNotUpdated >= 200:
             return self.tempToJson()
         
+
+        # Check if data has exipred
         now = datetime.utcnow();
-        
         if (self.temperatureExpires is not None and self.temperatureExpires > now):
             return self.tempToJson()
         
 
-        
-        
+        #Get data
         fromTime = datetime.utcnow() + timedelta(hours= -1);
         toTime = datetime.utcnow()
         hours = str(fromTime.hour) + "," + str(toTime.hour)
@@ -59,6 +60,7 @@ class WeatherStation(db.Model):
                     temperature = tempTemperature;
         
         # Save
+        # Calculate expiration time
         now = datetime.utcnow()
         fromTime = fromTimeMax
         if (fromTime is None or fromTime < now + timedelta(hours= -2)):
@@ -75,7 +77,7 @@ class WeatherStation(db.Model):
             self.temperatureExpires = expire
             
             
-       
+       # Save temperature
         if temperature is not None:
             self.temperature = float(temperature)
             self.temperatureUpdated = fromTimeMax
@@ -96,6 +98,9 @@ class WeatherStation(db.Model):
             text = """{"time":%d,"temperature":%s""" % (time.mktime(self.temperatureUpdated.timetuple()), self.temperature);
             text += ""","reliable":true}"""
             self.status = 200
+        elif self.timesNotUpdated >= 200: 
+            text = ""
+            self.status = 410
         else:
             text = ""
             self.status = 204

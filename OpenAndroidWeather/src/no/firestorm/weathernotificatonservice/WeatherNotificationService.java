@@ -21,15 +21,14 @@ package no.firestorm.weathernotificatonservice;
 
 import java.text.DateFormat;
 import java.util.Date;
-import java.util.List;
 
 import no.firestorm.R;
 import no.firestorm.misc.CheckInternetStatus;
 import no.firestorm.misc.TempToDrawable;
 import no.firestorm.ui.stationpicker.Station;
+import no.firestorm.wsklima.GetWeather;
 import no.firestorm.wsklima.WeatherElement;
 import no.firestorm.wsklima.WsKlimaProxy;
-import no.firestorm.wsklima.database.WsKlimaDataBaseHelper;
 import no.firestorm.wsklima.exception.NoLocationException;
 
 import org.apache.http.HttpException;
@@ -42,16 +41,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.location.Criteria;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Build;
-import android.os.Bundle;
-import android.os.Looper;
-import android.util.Log;
 import android.widget.RemoteViews;
 
 /**
@@ -70,69 +60,6 @@ import android.widget.RemoteViews;
  * @endcode
  */
 public class WeatherNotificationService extends IntentService {
-	/**
-	 * Listen for location updates, when accuracy is better than the distance
-	 * between the two closes stations, it will find the closest station and set
-	 * it in WsKlimaProxy. Remove itself as a location listener and set
-	 * stationReady=true, before it notify the service.
-	 * 
-	 */
-	private class UpdateStation implements LocationListener {
-		// Last location
-		Location mLocation = null;
-
-		@Override
-		public void onLocationChanged(Location location) {
-			mLocation = location;
-
-			if (isAccurateEnough(location))
-				try {
-					saveStation(location);
-				} catch (final NoLocationException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} finally {
-					// Remove listener
-					removeFromBroadcaster();
-				}
-
-		}
-
-		@Override
-		public void onProviderDisabled(String provider) {
-		}
-
-		@Override
-		public void onProviderEnabled(String provider) {
-		}
-
-		@Override
-		public void onStatusChanged(String provider, int status, Bundle extras) {
-		}
-
-		public void removeFromBroadcaster() {
-			final Context context = WeatherNotificationService.this;
-			final LocationManager locManager = (LocationManager) context
-					.getSystemService(LOCATION_SERVICE);
-			locManager.removeUpdates(this);
-		}
-
-		public void stop() throws NoLocationException {
-			saveStation(mLocation);
-			removeFromBroadcaster();
-		}
-
-	}
-
-	private final static int LOCATION_MAX_AGE = 5 * 60 * 1000;
-
-	private Float accuracyDemand = Float.MAX_VALUE;
-
-	/**
-	 * Used to check if the update of station is completed, updateStation set it
-	 * to true when completed
-	 */
-	private Boolean isUpdateStationCompleted = true;
 
 	@SuppressWarnings("unused")
 	private static final String LOG_ID = "no.firestorm.weatherservice";
@@ -183,22 +110,6 @@ public class WeatherNotificationService extends IntentService {
 				InternetEnabledIntentReceiver.setEnableReciver(context, true);
 	}
 
-	private Location getLastLocation() {
-		final LocationManager locman = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-		final List<String> providers = locman.getAllProviders();
-
-		for (final String p : providers) {
-			final Location loc = locman.getLastKnownLocation(p);
-			if (loc != null) {
-				final long age = System.currentTimeMillis() - loc.getTime();
-				if (age < LOCATION_MAX_AGE && isAccurateEnough(loc))
-					return loc;
-			}
-		}
-		return null;
-
-	}
-
 	/**
 	 * Downloads weather data If isUsingNearestStation is false, it doesn't do
 	 * update station. If true it update the station.
@@ -216,44 +127,37 @@ public class WeatherNotificationService extends IntentService {
 	 */
 	protected WeatherElement getWeatherData() throws HttpException,
 			NoLocationException, NetworkErrorException {
-
-		// Update station
-		updateStation();
-
 		final Context context = this;
+		boolean isUsingClosestStation = WeatherNotificationSettings
+				.isUsingNearestStation(context);
+
+		WeatherElement weather = null;
 		// get temp
-		final WsKlimaProxy weatherProxy = new WsKlimaProxy();
-		WeatherElement result;
 		try {
-			result = weatherProxy.getTemperatureNow(
-					WeatherNotificationSettings.getStationId(context), context);
+			if (isUsingClosestStation) {
+				GetWeather getWeather = new GetWeather(this);
+				weather  = getWeather.getWeatherElement();
+				Station station = getWeather.getStation();
+				WeatherNotificationSettings.setStation(context,
+						station.getName(), station.getId());
+			} else {
+				int stationId = WeatherNotificationSettings.getStationId(context);
+				WsKlimaProxy proxy = new WsKlimaProxy();
+				weather = proxy.getTemperatureNow(stationId, context);
+			}
+
 		} catch (final NetworkErrorException e) {
 			// Add an receiver thats waits on connection
 			addConnectionChangedReceiver();
 			throw e;
 		}
+
+		
 		// Save if data
-		if (result != null)
+		if (weather != null)
 			WeatherNotificationSettings.setLastTemperature(context,
-					result.getValue(), result.getDate());
-		return result;
-	}
-
-	private boolean isAccurateEnough(Location location) {
-		// Check if location is within accuracy demand
-		if (location.getAccuracy() < accuracyDemand) {
-			// update accuracy demand
-			final Context context = WeatherNotificationService.this;
-			final WsKlimaDataBaseHelper db = new WsKlimaDataBaseHelper(context);
-			final List<Station> stations = db.getStationsSortedByLocation(
-					location, true);
-			accuracyDemand = stations.get(1).getDistanceToCurrentPosition()
-					- stations.get(0).getDistanceToCurrentPosition();
-
-			if (location.getAccuracy() < accuracyDemand)
-				return true;
-		}
-		return false;
+					weather.getValue(), weather.getDate());
+		return weather;
 	}
 
 	/**
@@ -333,7 +237,8 @@ public class WeatherNotificationService extends IntentService {
 	 */
 	private void makeNotification(int tickerIcon, int contentIcon,
 			CharSequence tickerText, CharSequence contentTitle,
-			CharSequence contentText, CharSequence contentTime, long when2, Float temperature) {
+			CharSequence contentText, CharSequence contentTime, long when2,
+			Float temperature) {
 		final long when = System.currentTimeMillis();
 		// Make notification
 		Notification notification = null;
@@ -345,7 +250,6 @@ public class WeatherNotificationService extends IntentService {
 				WeatherNotificationService.this, 0, notificationIntent, 0);
 
 		// Check if Notification.Builder exists (11+)
-		Class<?>[] classes = Notification.class.getClasses();
 		if (Build.VERSION.SDK_INT >= 11) {
 			// Honeycomb ++
 			NotificationBuilder builder = new NotificationBuilder(this);
@@ -358,7 +262,8 @@ public class WeatherNotificationService extends IntentService {
 			builder.setOngoing(true);
 			builder.setContentIntent(contentIntent);
 			if (temperature != null)
-				builder.makeContentView(contentTitle,contentText,when2,temperature,tickerIcon);
+				builder.makeContentView(contentTitle, contentText, when2,
+						temperature, tickerIcon);
 			notification = builder.getNotification();
 		} else {
 			// Gingerbread --
@@ -434,7 +339,7 @@ public class WeatherNotificationService extends IntentService {
 		}
 
 		makeNotification(tickerIcon, contentIcon, tickerText, contentTitle,
-				contentText, contentTime, when,temperatureF);
+				contentText, contentTime, when, temperatureF);
 
 	}
 
@@ -462,25 +367,6 @@ public class WeatherNotificationService extends IntentService {
 		alarm.cancel(pendingIntent);
 	}
 
-	private void saveStation(Location location) throws NoLocationException {
-		if (location != null) {
-			final Context context = WeatherNotificationService.this;
-			final WsKlimaDataBaseHelper db = new WsKlimaDataBaseHelper(context);
-			final List<Station> stations = db.getStationsSortedByLocation(
-					location, true);
-			final Station station = stations.get(0);
-			WeatherNotificationSettings.setStation(context, station.getName(),
-					station.getId());
-
-			synchronized (WeatherNotificationService.this) {
-				WeatherNotificationService.this
-						.setIsUpdateStationCompleted(true);
-				WeatherNotificationService.this.notify();
-			}
-		} else
-			throw new NoLocationException();
-	}
-
 	/**
 	 * Set alarm
 	 * 
@@ -506,14 +392,6 @@ public class WeatherNotificationService extends IntentService {
 			triggerAtTime = now + updateRate * 60000;
 
 		alarm.set(AlarmManager.RTC, triggerAtTime, pendingIntent);
-	}
-
-	/**
-	 * @param ready
-	 *            If true UpdateStation has completed
-	 */
-	private void setIsUpdateStationCompleted(boolean ready) {
-		isUpdateStationCompleted = ready;
 	}
 
 	private void setShortAlarm() {
@@ -573,50 +451,6 @@ public class WeatherNotificationService extends IntentService {
 				setAlarm(updateRate);
 			else
 				setShortAlarm();
-		}
-	}
-
-	private void updateStation() throws NoLocationException {
-		final Context context = this;
-		if (WeatherNotificationSettings.isUsingNearestStation(context)) {
-			// Check old results
-			final Location loc = getLastLocation();
-			if (loc != null) {
-				saveStation(loc);
-				return;
-			}
-
-			// Find location provider
-			final LocationManager locMan = (LocationManager) context
-					.getSystemService(LOCATION_SERVICE);
-			final Criteria criteria = new Criteria();
-			criteria.setPowerRequirement(Criteria.POWER_LOW);
-			final String provider = locMan.getBestProvider(criteria, true);
-
-			if (provider != null) {
-				// Register provider
-				isUpdateStationCompleted = false;
-				final UpdateStation updateStation = new UpdateStation();
-				locMan.requestLocationUpdates(provider, 0, 0, updateStation,
-						Looper.getMainLooper());
-
-				// Wait for the updating of station to complete
-				synchronized (this) {
-					if (!isUpdateStationCompleted) {
-						try {
-							this.wait(2 * 60 * 1000);
-						} catch (final InterruptedException e) {
-							// If it did not get a good enough accuracy within 2
-							// minutes, use the latest one
-							updateStation.stop();
-						}
-						if (!isUpdateStationCompleted)
-							updateStation.stop();
-					}
-
-				}
-			} else
-				throw new NoLocationException(null);
 		}
 	}
 
