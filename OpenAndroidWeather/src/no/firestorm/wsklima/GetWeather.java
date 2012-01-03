@@ -131,6 +131,12 @@ public class GetWeather implements UpdateLocationListener {
 					}
 				}
 			}
+			
+			loc = getLocation.getLocation();
+			if (loc == null) {
+				throw new NoLocationException(null);
+			} else 
+				mLocation = loc;
 
 		} else
 			throw new NoLocationException(null);
