@@ -7,6 +7,7 @@ from xml.dom.minidom import parse
 import urllib
 import json
 import sys 
+from gettypes import Station
 reload(sys) 
 sys.setdefaultencoding( "utf-8" ) 
 

@@ -23,6 +23,7 @@ import java.util.Arrays;
 
 import no.firestorm.R;
 import no.firestorm.ui.stationpicker.StationPicker;
+import no.firestorm.ui.weatherreport.WeatherReportActivity;
 import no.firestorm.weathernotificatonservice.WeatherNotificationService;
 import no.firestorm.weathernotificatonservice.WeatherNotificationSettings;
 import android.app.Activity;
@@ -61,7 +62,7 @@ import com.google.ads.AdView;
  */
 public class Settings extends Activity {
 	private AdView adView;
-	
+
 	/**
 	 * Callback class for update rate scroller
 	 */
@@ -155,9 +156,8 @@ public class Settings extends Activity {
 		setUpdateRateSpinner();
 		setRateButton();
 		setDownloadOnlyOnWifi();
+		setWeatherReportButton();
 	}
-
-	
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -212,6 +212,19 @@ public class Settings extends Activity {
 		goToMarket = new Intent(Intent.ACTION_VIEW,
 				Uri.parse("market://details?id=no.firestorm"));
 		startActivity(goToMarket);
+	}
+
+	private void setWeatherReportButton() {
+		final Button chooseStationButton = (Button) findViewById(R.id.weather_report);
+		chooseStationButton.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				final Intent intent = new Intent(Settings.this,
+						WeatherReportActivity.class);
+				startActivity(intent);
+			}
+		});
 	}
 
 	private void setChooseStationButtion() {
