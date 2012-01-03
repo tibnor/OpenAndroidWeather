@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ads="http://schemas.android.com/apk/lib/com.google.ads"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="vertical" >
+
+        <include
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            layout="@layout/header" />
+
+        <TableLayout
+            android:id="@+id/tableLayout1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" >
+
+                <RelativeLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:padding="10dp" >
+
+                    <TextView
+                        android:id="@+id/name"
+                        style="@style/weatherreportitem.title"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="Station" >
+                    </TextView>
+
+                    <TextView
+                        android:id="@+id/value"
+                        style="@style/weatherreportitem.value"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:layout_below="@id/name"
+                        android:text="Kjeller" >
+                    </TextView>
+                </RelativeLayout>
+
+                <RelativeLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:padding="10dp" >
+
+                    <TextView
+                        android:id="@+id/name"
+                        style="@style/weatherreportitem.title"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="Updated" >
+                    </TextView>
+
+                    <TextView
+                        android:id="@+id/value"
+                        style="@style/weatherreportitem.value"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:layout_below="@id/name"
+                        android:text="22:10" >
+                    </TextView>
+                </RelativeLayout>
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" >
+
+                <RelativeLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:padding="10dp" >
+
+                    <TextView
+                        android:id="@+id/name"
+                        style="@style/weatherreportitem.title"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="Temperature" >
+                    </TextView>
+
+                    <TextView
+                        android:id="@+id/value"
+                        style="@style/weatherreportitem.value"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:layout_below="@id/name"
+                        android:text="-20.0 °C" >
+                    </TextView>
+                </RelativeLayout>
+
+                <RelativeLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:padding="10dp" >
+
+                    <TextView
+                        android:id="@+id/name"
+                        style="@style/weatherreportitem.title"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Min/max temperature (12h)" >
+                    </TextView>
+
+                    <LinearLayout
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/name" >
+
+                        <TextView
+                            android:id="@+id/value"
+                            style="@style/weatherreportitem.value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@id/name"
+                            android:layout_weight="1"
+                            android:text="-20.0 °C" >
+                        </TextView>
+
+                        <TextView
+                            android:id="@+id/value"
+                            style="@style/weatherreportitem.value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="/" >
+                        </TextView>
+
+                        <TextView
+                            android:id="@+id/value"
+                            style="@style/weatherreportitem.value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="-20.0 °C" >
+                        </TextView>
+                    </LinearLayout>
+                </RelativeLayout>
+            </TableRow>
+
+            <TableRow
+                android:id="@+id/tableRow1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" >
+
+                <RelativeLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:padding="10dp" >
+
+                    <TextView
+                        android:id="@+id/name"
+                        style="@style/weatherreportitem.title"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="Wind speed" >
+                    </TextView>
+
+                    <TextView
+                        android:id="@+id/value"
+                        style="@style/weatherreportitem.value"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:layout_below="@id/name"
+                        android:text="10.0 m/s" >
+                    </TextView>
+                </RelativeLayout>
+
+                <RelativeLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:padding="10dp" >
+
+                    <TextView
+                        android:id="@+id/name"
+                        style="@style/weatherreportitem.title"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Wind direction" >
+                    </TextView>
+
+                    <TextView
+                        android:id="@+id/value"
+                        style="@style/weatherreportitem.value"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/name"
+                        android:layout_weight="1"
+                        android:text="270°" >
+                    </TextView>
+                </RelativeLayout>
+            </TableRow>
+
+            <TableRow
+                android:id="@+id/tableRow1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" >
+
+                <RelativeLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:padding="10dp" >
+
+                    <TextView
+                        android:id="@+id/name"
+                        style="@style/weatherreportitem.title"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="Precipitation (12h)" >
+                    </TextView>
+
+                    <TextView
+                        android:id="@+id/value"
+                        style="@style/weatherreportitem.value"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:layout_below="@id/name"
+                        android:text="0.2 mm" >
+                    </TextView>
+                </RelativeLayout>
+
+                <RelativeLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:padding="10dp" >
+
+                    <TextView
+                        android:id="@+id/name"
+                        style="@style/weatherreportitem.title"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Precipitation (24h)" >
+                    </TextView>
+
+                    <TextView
+                        android:id="@+id/value"
+                        style="@style/weatherreportitem.value"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/name"
+                        android:layout_weight="1"
+                        android:text="10.0 mm" >
+                    </TextView>
+                </RelativeLayout>
+            </TableRow>
+        </TableLayout>
+    </LinearLayout>
+
+    <com.google.ads.AdView
+        android:id="@+id/adView"
+        style="@style/Theme.Tasks"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_gravity="bottom|center_horizontal"
+        ads:adSize="BANNER"
+        ads:adUnitId="a14ef8e2d06d8c7"
+        ads:backgroundColor="#FFFFFF"
+        android:gravity="bottom"
+        ads:loadAdOnCreate="true"
+        ads:primaryTextColor="#000000"
+        ads:secondaryTextColor="#333333"
+        ads:testDevices="TEST_EMULATOR" />
+
+</RelativeLayout>
