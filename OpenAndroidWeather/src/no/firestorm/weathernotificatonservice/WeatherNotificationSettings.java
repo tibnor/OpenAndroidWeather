@@ -43,6 +43,8 @@ public class WeatherNotificationSettings {
 	static final boolean PREFS_DOWNLOAD_ONLY_ON_WIFI_DEFAULT = false;
 	private static final String PREFS_UPDATE_RATE_KEY = "update_rate";
 	private static final int PREFS_UPDATE_RATE_DEFAULT = 60;
+	private static final String PREFS_IS_UPDATING_NOTIFICATION_KEY = "updateing_notification_time";
+	private static final long PREFS_IS_UPDATING_NOTIFICATION_DEFAULT = 0l;
 
 	/**
 	 * Check if the user only wants to download when on wifi
@@ -213,6 +215,50 @@ public class WeatherNotificationSettings {
 		final Editor settings = context.getSharedPreferences(PREFS_NAME, 0)
 				.edit();
 		settings.putInt(PREFS_UPDATE_RATE_KEY, updateRate);
+		settings.commit();
+		updateAlarm(context);
+	}
+
+	/*
+	 * Get if the notification is updating notification
+	 * 
+	 * @param context
+	 * 
+	 */
+	public static boolean getIsUpdatingNotification(Context context) {
+		final SharedPreferences settings = context.getSharedPreferences(
+				PREFS_NAME, 0);
+		long time = settings.getLong(PREFS_IS_UPDATING_NOTIFICATION_KEY,
+				PREFS_IS_UPDATING_NOTIFICATION_DEFAULT);
+		if (time == 0l) {
+			return false;
+		} else {
+			long age = System.currentTimeMillis() - time;
+			if (age > 3*60*1000){
+				return false;
+			} else {
+				return true;
+			}
+		}
+	}
+
+	/*
+	 * Set if the notification is updating notification
+	 * 
+	 * @param context
+	 * 
+	 * @param isUpdating
+	 */
+	public static void setIsUpdatingNotification(Context context,
+			boolean isUpdating) {
+		long time = 0l;
+		if (isUpdating) {
+			time = System.currentTimeMillis();
+		}
+
+		final Editor settings = context.getSharedPreferences(PREFS_NAME, 0)
+				.edit();
+		settings.putLong(PREFS_IS_UPDATING_NOTIFICATION_KEY, time);
 		settings.commit();
 		updateAlarm(context);
 	}

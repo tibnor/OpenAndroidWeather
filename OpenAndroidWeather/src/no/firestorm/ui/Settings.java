@@ -32,6 +32,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.drawable.AnimationDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
@@ -47,6 +48,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -57,8 +59,6 @@ import com.google.ads.AdView;
  * 
  */
 public class Settings extends Activity {
-	private AdView adView;
-	
 	/**
 	 * Callback class for update rate scroller
 	 */
@@ -117,6 +117,7 @@ public class Settings extends Activity {
 	}
 
 	private void getWeather() {
+		setProgressView(true);
 		final Intent intent = new Intent(Settings.this,
 				WeatherNotificationService.class);
 		intent.putExtra(WeatherNotificationService.INTENT_EXTRA_ACTION,
@@ -153,8 +154,6 @@ public class Settings extends Activity {
 		setRateButton();
 		setDownloadOnlyOnWifi();
 	}
-
-	
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -242,14 +241,49 @@ public class Settings extends Activity {
 	}
 
 	private void setGetWeatherButton() {
-		final ImageButton chooseStationButton = (ImageButton) findViewById(R.id.get_weather);
-		chooseStationButton.setOnClickListener(new OnClickListener() {
+		final ImageButton getWeatherButton = (ImageButton) findViewById(R.id.get_weather);
+		getWeatherButton.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
 				getWeather();
 			}
 		});
+
+		final ImageButton progressView = (ImageButton) findViewById(R.id.updating);
+		progressView.setImageResource(android.R.drawable.ic_popup_sync);
+
+		boolean isUpdating = WeatherNotificationSettings
+				.getIsUpdatingNotification(this);
+		setProgressView(getWeatherButton, progressView, isUpdating);
+	}
+	
+	private void setProgressView(boolean isUpdating){
+		final ImageButton getWeatherButton = (ImageButton) findViewById(R.id.get_weather);
+		final ImageButton progressView = (ImageButton) findViewById(R.id.updating);
+		setProgressView(getWeatherButton, progressView, isUpdating);
+	}
+
+	private void setProgressView(final ImageButton getWeatherButton,
+			final ImageButton progressView, boolean isUpdating) {
+		if (isUpdating){
+			progressView.setVisibility(ImageView.VISIBLE);
+			getWeatherButton.setVisibility(ImageView.GONE);
+		} else {
+			progressView.setVisibility(ImageView.GONE);
+			getWeatherButton.setVisibility(ImageView.VISIBLE);
+		}
+	}
+	
+	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+		final ImageButton progressView = (ImageButton) findViewById(R.id.updating);
+		AnimationDrawable anim = (AnimationDrawable) progressView.getDrawable();
+		if(hasFocus)
+			anim.start();
+		else
+			anim.start();
 	}
 
 	private void setRateButton() {
@@ -293,5 +327,6 @@ public class Settings extends Activity {
 			spinner.setSelection(id);
 		else
 			spinner.setSelection(0);
+
 	}
 }

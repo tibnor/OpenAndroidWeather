@@ -9,11 +9,10 @@
 		android:text="@string/app_name" android:layout_width="wrap_content"></TextView>
 
 	<View style="@style/TitleBarSpring"></View>
-	<ProgressBar android:id="@+id/title_refresh_progress"
-		android:visibility="gone" style="@style/TitleBarProgressIndicator"></ProgressBar>
 	<ImageView style="@style/TitleBarSeparator" />
 	<ImageButton style="@style/TitleBarAction"
 		android:contentDescription="Update" android:src="@drawable/ic_popup_sync"
 		android:onClick="onAddClick" android:id="@+id/get_weather"/>
+	<ImageButton style="@style/TitleBarAction" android:src="@android:drawable/ic_popup_sync" android:id="@+id/updating" android:clickable="false"/>
 </LinearLayout>
 

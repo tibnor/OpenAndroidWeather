@@ -35,13 +35,18 @@ import org.apache.http.HttpException;
 
 import android.accounts.NetworkErrorException;
 import android.app.AlarmManager;
-import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.IBinder;
+import android.os.Looper;
+import android.os.Message;
 import android.widget.RemoteViews;
 
 /**
@@ -59,7 +64,101 @@ import android.widget.RemoteViews;
  * 
  * @endcode
  */
-public class WeatherNotificationService extends IntentService {
+public class WeatherNotificationService extends Service {
+	private volatile Looper mServiceLooper;
+	private volatile ServiceHandler mServiceHandler;
+	private boolean mRedelivery;
+	private boolean isUpdating = false;
+
+	private final class ServiceHandler extends Handler {
+		public ServiceHandler(Looper looper) {
+			super(looper);
+		}
+
+		@Override
+		public void handleMessage(Message msg) {
+			onHandleIntent((Intent) msg.obj);
+			stopSelf(msg.arg1);
+		}
+	}
+
+	/**
+	 * Sets intent redelivery preferences. Usually called from the constructor
+	 * with your preferred semantics.
+	 * 
+	 * <p>
+	 * If enabled is true, {@link #onStartCommand(Intent, int, int)} will return
+	 * {@link Service#START_REDELIVER_INTENT}, so if this process dies before
+	 * {@link #onHandleIntent(Intent)} returns, the process will be restarted
+	 * and the intent redelivered. If multiple Intents have been sent, only the
+	 * most recent one is guaranteed to be redelivered.
+	 * 
+	 * <p>
+	 * If enabled is false (the default),
+	 * {@link #onStartCommand(Intent, int, int)} will return
+	 * {@link Service#START_NOT_STICKY}, and if the process dies, the Intent
+	 * dies along with it.
+	 */
+	public void setIntentRedelivery(boolean enabled) {
+		mRedelivery = enabled;
+	}
+
+	@Override
+	public void onCreate() {
+		super.onCreate();
+		HandlerThread thread = new HandlerThread(
+				"IntentService[WeatherNotificationService]");
+		thread.start();
+
+		mServiceLooper = thread.getLooper();
+		mServiceHandler = new ServiceHandler(mServiceLooper);
+	}
+
+	@Override
+    public void onStart(Intent intent, int startId) {
+		// If it is allready updating ignore the new command
+		if(intent.getIntExtra(INTENT_EXTRA_ACTION,
+				INTENT_EXTRA_ACTION_GET_TEMP)==INTENT_EXTRA_ACTION_GET_TEMP) {
+			if(isUpdating){
+				throw new UnsupportedOperationException("Not implemented correct stop of service");
+				stopSelf(startId);
+				return;
+			}
+		}
+        Message msg = mServiceHandler.obtainMessage();
+        msg.arg1 = startId;
+        msg.obj = intent;
+        mServiceHandler.sendMessage(msg);
+    }
+
+	/**
+	 * You should not override this method for your IntentService. Instead,
+	 * override {@link #onHandleIntent}, which the system calls when the
+	 * IntentService receives a start request.
+	 * 
+	 * @see android.app.Service#onStartCommand
+	 */
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+		onStart(intent, startId);
+		return mRedelivery ? START_REDELIVER_INTENT : START_NOT_STICKY;
+	}
+
+	@Override
+	public void onDestroy() {
+		mServiceLooper.quit();
+	}
+
+	/**
+	 * Unless you provide binding for your service, you don't need to implement
+	 * this method, because the default implementation returns null.
+	 * 
+	 * @see android.app.Service#onBind
+	 */
+	@Override
+	public IBinder onBind(Intent intent) {
+		return null;
+	}
 
 	@SuppressWarnings("unused")
 	private static final String LOG_ID = "no.firestorm.weatherservice";
@@ -86,14 +185,7 @@ public class WeatherNotificationService extends IntentService {
 	 * 
 	 */
 	public WeatherNotificationService() {
-		super("WeatherNotifivationService");
-	}
-
-	/**
-	 * @param name
-	 */
-	public WeatherNotificationService(String name) {
-		super(name);
+		super();
 	}
 
 	/**
@@ -136,12 +228,13 @@ public class WeatherNotificationService extends IntentService {
 		try {
 			if (isUsingClosestStation) {
 				GetWeather getWeather = new GetWeather(this);
-				weather  = getWeather.getWeatherElement();
+				weather = getWeather.getWeatherElement();
 				Station station = getWeather.getStation();
 				WeatherNotificationSettings.setStation(context,
 						station.getName(), station.getId());
 			} else {
-				int stationId = WeatherNotificationSettings.getStationId(context);
+				int stationId = WeatherNotificationSettings
+						.getStationId(context);
 				WsKlimaProxy proxy = new WsKlimaProxy();
 				weather = proxy.getTemperatureNow(stationId, context);
 			}
@@ -152,7 +245,6 @@ public class WeatherNotificationService extends IntentService {
 			throw e;
 		}
 
-		
 		// Save if data
 		if (weather != null)
 			WeatherNotificationSettings.setLastTemperature(context,
@@ -284,6 +376,8 @@ public class WeatherNotificationService extends IntentService {
 		// Post notification
 		final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		mNotificationManager.notify(1, notification);
+		WeatherNotificationSettings.setIsUpdatingNotification(this, false);
+		isUpdating = false;
 	}
 
 	/**
@@ -343,7 +437,6 @@ public class WeatherNotificationService extends IntentService {
 
 	}
 
-	@Override
 	protected void onHandleIntent(Intent intent) {
 		switch (intent.getIntExtra(INTENT_EXTRA_ACTION,
 				INTENT_EXTRA_ACTION_GET_TEMP)) {
@@ -404,7 +497,9 @@ public class WeatherNotificationService extends IntentService {
 	 * Update the temperature
 	 */
 	void showTemp() {
-		// Stops
+		this.isUpdating = true;
+		WeatherNotificationSettings.setIsUpdatingNotification(this, true);
+		// Stops if it can't connect to internet
 		if (!CheckInternetStatus.canConnectToInternet(this)) {
 			addConnectionChangedReceiver();
 			makeNotification(new NetworkErrorException());
