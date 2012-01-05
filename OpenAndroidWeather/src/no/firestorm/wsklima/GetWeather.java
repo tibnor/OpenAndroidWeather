@@ -159,15 +159,16 @@ public class GetWeather implements UpdateLocationListener {
 		final List<String> providers = locman.getAllProviders();
 
 		for (final String p : providers) {
-			final Location loc = locman.getLastKnownLocation(p);
+			Location loc = locman.getLastKnownLocation(p);
 			if (loc != null) {
 				final long age = System.currentTimeMillis() - loc.getTime();
-				if (age < LOCATION_MAX_AGE && isAccurateEnough(loc))
+				if (age < LOCATION_MAX_AGE && isAccurateEnough(loc) && age >0){
 					return loc;
+				}
 			}
 		}
+		
 		return null;
-
 	}
 
 	public boolean isAccurateEnough(Location location) {
