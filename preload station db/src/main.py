@@ -34,7 +34,7 @@ def lowerName(name):
     return "".join(name)
 
 # Find blacklist
-file = urllib.urlopen("http://22.wsklimaproxy.appspot.com/blacklist")
+file = urllib.urlopen("http://wsklimaproxy.appspot.com/blacklist")
 data = json.load(file)
 blacklist = set(data.get('station'))
 
