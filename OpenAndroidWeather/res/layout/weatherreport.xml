@@ -42,13 +42,13 @@
                     </TextView>
 
                     <TextView
-                        android:id="@+id/value"
+                        android:id="@id/StationName"
                         style="@style/weatherreportitem.value"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:layout_alignParentLeft="true"
                         android:layout_below="@id/name"
-                        android:text="Kjeller" >
+                        android:text="" >
                     </TextView>
                 </RelativeLayout>
 
@@ -70,7 +70,7 @@
                     </TextView>
 
                     <TextView
-                        android:id="@+id/value"
+                        android:id="@+id/time"
                         style="@style/weatherreportitem.value"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
@@ -103,13 +103,13 @@
                     </TextView>
 
                     <TextView
-                        android:id="@+id/value"
+                        android:id="@+id/temperature"
                         style="@style/weatherreportitem.value"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:layout_alignParentLeft="true"
                         android:layout_below="@id/name"
-                        android:text="-20.0 °C" >
+                        android:text="" >
                     </TextView>
                 </RelativeLayout>
 
@@ -135,13 +135,13 @@
                         android:layout_below="@id/name" >
 
                         <TextView
-                            android:id="@+id/value"
+                            android:id="@+id/temperatureMin"
                             style="@style/weatherreportitem.value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_below="@id/name"
                             android:layout_weight="1"
-                            android:text="-20.0 °C" >
+                            android:text="" >
                         </TextView>
 
                         <TextView
@@ -154,14 +154,15 @@
                         </TextView>
 
                         <TextView
-                            android:id="@+id/value"
+                            android:id="@+id/temperatureMax"
                             style="@style/weatherreportitem.value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="-20.0 °C" >
-                        </TextView>
+                            android:text="" />
+
                     </LinearLayout>
+
                 </RelativeLayout>
             </TableRow>
 
@@ -188,13 +189,13 @@
                     </TextView>
 
                     <TextView
-                        android:id="@+id/value"
+                        android:id="@+id/windSpeed"
                         style="@style/weatherreportitem.value"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:layout_alignParentLeft="true"
                         android:layout_below="@id/name"
-                        android:text="10.0 m/s" >
+                        android:text="" >
                     </TextView>
                 </RelativeLayout>
 
@@ -215,13 +216,13 @@
                     </TextView>
 
                     <TextView
-                        android:id="@+id/value"
+                        android:id="@+id/windDirection"
                         style="@style/weatherreportitem.value"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:layout_below="@id/name"
                         android:layout_weight="1"
-                        android:text="270°" >
+                        android:text="" >
                     </TextView>
                 </RelativeLayout>
             </TableRow>
@@ -245,17 +246,17 @@
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:text="Precipitation (12h)" >
+                        android:text="Precipitation (1h)" >
                     </TextView>
 
                     <TextView
-                        android:id="@+id/value"
+                        android:id="@+id/precipitationLashHour"
                         style="@style/weatherreportitem.value"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:layout_alignParentLeft="true"
                         android:layout_below="@id/name"
-                        android:text="0.2 mm" >
+                        android:text="" >
                     </TextView>
                 </RelativeLayout>
 
@@ -268,23 +269,23 @@
                     android:padding="10dp" >
 
                     <TextView
-                        android:id="@+id/name"
+                         android:id="@+id/name"
                         style="@style/weatherreportitem.title"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
-                        android:text="Precipitation (24h)" >
-                    </TextView>
+                        android:text="Precipitation (12h)" />
 
                     <TextView
-                        android:id="@+id/value"
+                       
+                        android:id="@+id/precipitationLast12h"
                         style="@style/weatherreportitem.value"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:layout_below="@id/name"
                         android:layout_weight="1"
-                        android:text="10.0 mm" >
-                    </TextView>
+                        android:text="" />
                 </RelativeLayout>
+
             </TableRow>
         </TableLayout>
     </LinearLayout>

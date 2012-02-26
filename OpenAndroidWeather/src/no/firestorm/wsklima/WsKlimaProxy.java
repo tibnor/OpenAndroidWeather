@@ -3,8 +3,14 @@ package no.firestorm.wsklima;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import no.firestorm.misc.CheckInternetStatus;
 import no.firestorm.weathernotificatonservice.WeatherNotificationSettings;
@@ -13,6 +19,7 @@ import no.firestorm.wsklima.database.WsKlimaDataBaseHelper;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -22,6 +29,8 @@ import org.json.JSONObject;
 
 import android.accounts.NetworkErrorException;
 import android.content.Context;
+import android.text.format.Time;
+import android.util.Log;
 
 /**
  * Proxy for getting weather measurements from met.no and storing relevant info.
@@ -59,7 +68,7 @@ public class WsKlimaProxy {
 		WeatherElement result = null;
 		for (final WeatherElement weatherElement : weather)
 			if (weatherElement.getTime() > latestTime) {
-				latestTime = weatherElement.getDate().getTime();
+				latestTime = weatherElement.getTime();
 				result = weatherElement;
 			}
 		return result;
@@ -68,11 +77,8 @@ public class WsKlimaProxy {
 	/**
 	 * Gets the latest temperature from selected station.
 	 * 
-	 * NOTE: If user wants to use the nearest station, it must be found first
-	 * and updated in {@link #setStation(Context, String, int)} This is not done
-	 * automatically!
 	 * 
-	 * 
+	 * @param station
 	 * @param context
 	 * @return the latest temperature
 	 * @throws NetworkErrorException
@@ -109,7 +115,8 @@ public class WsKlimaProxy {
 			if (status == 200) {
 				final String xmlString = EntityUtils.toString(r_entity);
 				final JSONObject val = new JSONObject(xmlString);
-				final Date time = new Date(val.getLong("time") * 1000);
+				final Time time = new Time();
+				time.set(val.getLong("time") * 1000);
 				final boolean isReliable = val.getBoolean("reliable");
 				// If not reliable save it in db
 				if (!isReliable) {
@@ -127,10 +134,10 @@ public class WsKlimaProxy {
 					throw new HttpException();
 			} else if (status == 410) {
 				// Station is not reliable
-					final WsKlimaDataBaseHelper db = new WsKlimaDataBaseHelper(
-							context);
-					db.setIsReliable(station, false);
-					return null;
+				final WsKlimaDataBaseHelper db = new WsKlimaDataBaseHelper(
+						context);
+				db.setIsReliable(station, false);
+				return null;
 
 			} else
 				throw new NetworkErrorException();
@@ -141,4 +148,91 @@ public class WsKlimaProxy {
 		}
 	}
 
+	public List<WeatherElement> getWeather(Integer station, String elements)
+			throws ClientProtocolException, IOException {
+		Time now = new Time();
+		now.setToNow();
+		return getWeather(station, elements, now);
+	}
+
+	public List<WeatherElement> getWeather(Integer station, String elements,
+			Time time) throws ClientProtocolException, IOException {
+		time.switchTimezone("UTC");
+		String date = time.year + "-" + (time.month + 1) + "-" + time.monthDay;
+		URI url = null;
+		try {
+			url = new URI(
+					"http://eklima.met.no/metdata/MetDataService?invoke=getMetData&timeserietypeID=2&format=&from="
+							+ date
+							+ "&to="
+							+ date
+							+ "&stations="
+							+ station
+							+ "&elements="
+							+ elements
+							+ "&hours="
+							+ time.hour
+							+ "&months=" + (time.month + 1) + "&username=");
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
+		final HttpClient client = new DefaultHttpClient();
+		final HttpGet request = new HttpGet(url);
+		Log.i("firestorm", url.toString());
+
+		final HttpResponse response = client.execute(request);
+		final int status = response.getStatusLine().getStatusCode();
+		final HttpEntity r_entity = response.getEntity();
+		if (status != 200) {
+			throw new IOException();
+		}
+		final String xmlString = EntityUtils.toString(r_entity);
+		Pattern p = Pattern.compile("<value.*?>(.*?)</value>");
+		Matcher m = p.matcher(xmlString);
+		List<String> values = new LinkedList<String>();
+		while (m.find()) {
+			values.add(m.group(1));
+		}
+		p = Pattern.compile("<id.*?>(.*?)</id>");
+		m = p.matcher(xmlString);
+		List<String> types = new LinkedList<String>();
+		while (m.find()) {
+			types.add(m.group(1));
+		}
+		p = Pattern.compile("<from.*?>(.*?)</from>");
+		m = p.matcher(xmlString);
+		m.find();
+		Time fromT = new Time();
+		fromT.parse3339(m.group(1));
+
+		int i = 0;
+		List<WeatherElement> result = new ArrayList<WeatherElement>(
+				values.size());
+		for (String val : values) {
+			WeatherElement w = new WeatherElement(fromT,
+					idToWeatherType(types.get(i)), val);
+			i++;
+			result.add(w);
+		}
+		return result;
+	}
+
+	private WeatherType idToWeatherType(String id) {
+		if (id.equals("TA"))
+			return WeatherType.temperature;
+		else if (id.equals("TAX"))
+			return WeatherType.temperatureMax;
+		else if (id.equals("TAN"))
+			return WeatherType.temperatureMin;
+		else if (id.equals("RR_1"))
+			return WeatherType.precipitationLastHour;
+		else if (id.equals("RR_12"))
+			return WeatherType.precipitationLast12h;
+		else if (id.equals("FF"))
+			return WeatherType.windSpeed;
+		else if (id.equals("DD"))
+			return WeatherType.windDirection;
+		else
+			return null;
+	}
 }

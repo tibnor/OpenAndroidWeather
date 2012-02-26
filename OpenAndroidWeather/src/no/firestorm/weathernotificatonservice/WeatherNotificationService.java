@@ -156,7 +156,7 @@ public class WeatherNotificationService extends IntentService {
 		// Save if data
 		if (weather != null)
 			WeatherNotificationSettings.setLastTemperature(context,
-					weather.getValue(), weather.getDate());
+					weather.getValue(), weather.getTime());
 		return weather;
 	}
 
@@ -314,8 +314,8 @@ public class WeatherNotificationService extends IntentService {
 			// Set title
 			tickerText = stationName;
 			contentTitle = stationName;
-			contentTime = df.format(temperature.getDate());
-			when = temperature.getDate().getTime();
+			contentTime = df.format(temperature.getTime());
+			when = temperature.getTime();
 
 			final Context context = WeatherNotificationService.this;
 			temperatureF = new Float(temperature.getValue());

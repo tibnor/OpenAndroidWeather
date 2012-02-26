@@ -2,6 +2,8 @@ package no.firestorm.wsklima;
 
 import java.util.Date;
 
+import android.text.format.Time;
+
 /**
  * Weather element that stores one data point for the weather.
  * 
@@ -11,7 +13,7 @@ import java.util.Date;
 public class WeatherElement {
 
 	/** Date and time when the weather was measured. */
-	private Date date;
+	private Time date;
 
 	/** Weather type that was measured. */
 	private WeatherType type;
@@ -29,7 +31,7 @@ public class WeatherElement {
 	 * @param value
 	 *            the value
 	 */
-	public WeatherElement(Date date, WeatherType type, String value) {
+	public WeatherElement(Time date, WeatherType type, String value) {
 		super();
 		this.date = date;
 		this.type = type;
@@ -41,7 +43,7 @@ public class WeatherElement {
 	 * 
 	 * @return the date
 	 */
-	public Date getDate() {
+	public Time getDate() {
 		return date;
 	}
 
@@ -52,7 +54,7 @@ public class WeatherElement {
 	 *         java.util.Date#getTime()
 	 */
 	public long getTime() {
-		return date.getTime();
+		return date.toMillis(false);
 	}
 
 	/**
@@ -79,7 +81,7 @@ public class WeatherElement {
 	 * @param date
 	 *            the new date
 	 */
-	public void setDate(Date date) {
+	public void setDate(Time date) {
 		this.date = date;
 	}
 
