@@ -148,21 +148,24 @@ public class WsKlimaProxy {
 		}
 	}
 
-	public List<WeatherElement> getWeather(Integer station, String elements)
+	public List<WeatherElement> getWeather(Integer station,Integer timeserieType, String elements)
 			throws ClientProtocolException, IOException {
 		Time now = new Time();
 		now.setToNow();
-		return getWeather(station, elements, now);
+		return getWeather(station,timeserieType, elements, now);
 	}
 
-	public List<WeatherElement> getWeather(Integer station, String elements,
-			Time time) throws ClientProtocolException, IOException {
+	public List<WeatherElement> getWeather(Integer station,
+			Integer timeserieType, String elements, Time time)
+			throws ClientProtocolException, IOException {
 		time.switchTimezone("UTC");
 		String date = time.year + "-" + (time.month + 1) + "-" + time.monthDay;
 		URI url = null;
 		try {
 			url = new URI(
-					"http://eklima.met.no/metdata/MetDataService?invoke=getMetData&timeserietypeID=2&format=&from="
+					"http://eklima.met.no/metdata/MetDataService?invoke=getMetData&timeserietypeID="
+							+ timeserieType
+							+ "&format=&from="
 							+ date
 							+ "&to="
 							+ date
@@ -172,7 +175,8 @@ public class WsKlimaProxy {
 							+ elements
 							+ "&hours="
 							+ time.hour
-							+ "&months=" + (time.month + 1) + "&username=");
+							+ "&months="
+							+ (time.month + 1) + "&username=");
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
@@ -209,6 +213,8 @@ public class WsKlimaProxy {
 		List<WeatherElement> result = new ArrayList<WeatherElement>(
 				values.size());
 		for (String val : values) {
+			if (val.contains("-99999"))
+				val = "";
 			WeatherElement w = new WeatherElement(fromT,
 					idToWeatherType(types.get(i)), val);
 			i++;
@@ -232,6 +238,12 @@ public class WsKlimaProxy {
 			return WeatherType.windSpeed;
 		else if (id.equals("DD"))
 			return WeatherType.windDirection;
+		else if (id.equals("FG_1"))
+			return WeatherType.windGustSpeed;
+		else if (id.equals("FFX"))
+			return WeatherType.windSpeedMax;
+		else if (id.equals("FGX"))
+			return WeatherType.windGustSpeedMax;
 		else
 			return null;
 	}

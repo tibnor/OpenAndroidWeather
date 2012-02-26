@@ -76,7 +76,7 @@
                         android:layout_height="wrap_content"
                         android:layout_alignParentLeft="true"
                         android:layout_below="@id/name"
-                        android:text="22:10" >
+                        android:text="" >
                     </TextView>
                 </RelativeLayout>
             </TableRow>
@@ -126,7 +126,7 @@
                         style="@style/weatherreportitem.title"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
-                        android:text="Min/max temperature (12h)" >
+                        android:text="Min/max temperature (today)" >
                     </TextView>
 
                     <LinearLayout
@@ -160,9 +160,85 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="" />
-
                     </LinearLayout>
+                </RelativeLayout>
+            </TableRow>
 
+            <TableRow
+                android:id="@+id/tableRow1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" >
+
+                <RelativeLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:padding="10dp" >
+
+                    <TextView
+                        android:id="@+id/name"
+                        style="@style/weatherreportitem.title"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Wind direction" />
+
+                    <LinearLayout
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/name" >
+
+                        <TextView
+                            android:id="@+id/windDirection"
+                            style="@style/weatherreportitem.value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@id/name"
+                            android:layout_weight="1" />
+                    </LinearLayout>
+                </RelativeLayout>
+
+                <RelativeLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:padding="10dp" >
+
+                    <TextView
+                        android:id="@+id/name"
+                        style="@style/weatherreportitem.title"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="Wind speed, m/s (gust)" >
+                    </TextView>
+
+                    <LinearLayout
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/name" >
+
+                        <TextView
+                            android:id="@+id/windSpeed"
+                            style="@style/weatherreportitem.value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@id/name"
+                            android:layout_weight="1"
+                            android:text="" >
+                        </TextView>
+
+                        <TextView
+                            android:id="@+id/windGustSpeed"
+                            style="@style/weatherreportitem.value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="" />
+                    </LinearLayout>
                 </RelativeLayout>
             </TableRow>
 
@@ -185,52 +261,33 @@
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:text="Wind speed" >
+                        android:text="Precipitation 1h/12h" >
                     </TextView>
 
-                    <TextView
-                        android:id="@+id/windSpeed"
-                        style="@style/weatherreportitem.value"
+                    <LinearLayout
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentLeft="true"
-                        android:layout_below="@id/name"
-                        android:text="" >
-                    </TextView>
+                        android:layout_below="@id/name" >
+
+                        <TextView
+                            android:id="@+id/precipitationLashHour"
+                            style="@style/weatherreportitem.value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@id/name"
+                            android:layout_weight="1"
+                            android:text="" >
+                        </TextView>
+
+                        <TextView
+                            android:id="@+id/precipitationLast12h"
+                            style="@style/weatherreportitem.value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="" />
+                    </LinearLayout>
                 </RelativeLayout>
-
-                <RelativeLayout
-                    xmlns:android="http://schemas.android.com/apk/res/android"
-                    android:layout_width="fill_parent"
-                    android:layout_height="fill_parent"
-                    android:layout_weight="1"
-                    android:orientation="horizontal"
-                    android:padding="10dp" >
-
-                    <TextView
-                        android:id="@+id/name"
-                        style="@style/weatherreportitem.title"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Wind direction" >
-                    </TextView>
-
-                    <TextView
-                        android:id="@+id/windDirection"
-                        style="@style/weatherreportitem.value"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@id/name"
-                        android:layout_weight="1"
-                        android:text="" >
-                    </TextView>
-                </RelativeLayout>
-            </TableRow>
-
-            <TableRow
-                android:id="@+id/tableRow1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" >
 
                 <RelativeLayout
                     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -246,46 +303,33 @@
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:text="Precipitation (1h)" >
+                        android:text="Max wind speed, m/s (gust)" >
                     </TextView>
 
-                    <TextView
-                        android:id="@+id/precipitationLashHour"
-                        style="@style/weatherreportitem.value"
+                    <LinearLayout
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentLeft="true"
-                        android:layout_below="@id/name"
-                        android:text="" >
-                    </TextView>
+                        android:layout_below="@id/name" >
+
+                        <TextView
+                            android:id="@+id/windSpeedMax"
+                            style="@style/weatherreportitem.value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@id/name"
+                            android:layout_weight="1"
+                            android:text="" >
+                        </TextView>
+
+                        <TextView
+                            android:id="@+id/windGustSpeedMax"
+                            style="@style/weatherreportitem.value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="" />
+                    </LinearLayout>
                 </RelativeLayout>
-
-                <RelativeLayout
-                    xmlns:android="http://schemas.android.com/apk/res/android"
-                    android:layout_width="fill_parent"
-                    android:layout_height="fill_parent"
-                    android:layout_weight="1"
-                    android:orientation="horizontal"
-                    android:padding="10dp" >
-
-                    <TextView
-                         android:id="@+id/name"
-                        style="@style/weatherreportitem.title"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Precipitation (12h)" />
-
-                    <TextView
-                       
-                        android:id="@+id/precipitationLast12h"
-                        style="@style/weatherreportitem.value"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@id/name"
-                        android:layout_weight="1"
-                        android:text="" />
-                </RelativeLayout>
-
             </TableRow>
         </TableLayout>
     </LinearLayout>

@@ -45,6 +45,7 @@ public class GetWeather implements UpdateLocationListener {
 	private WsKlimaProxy mProxy;
 	private WsKlimaDataBaseHelper mDb;
 	private Station mStation = null;
+	private WeatherElement mWeather = null;
 
 	public GetWeather(Context context) {
 		mContext = context;
@@ -85,7 +86,10 @@ public class GetWeather implements UpdateLocationListener {
 	// Get weather from wsklimaproxy
 	private WeatherElement getWeather(Station station)
 			throws NetworkErrorException, HttpException {
-		return mProxy.getTemperatureNow(station.getId(), mContext);
+		if (mWeather == null)
+			mWeather = mProxy.getTemperatureNow(station.getId(), mContext);
+		
+		return mWeather;
 
 	}
 

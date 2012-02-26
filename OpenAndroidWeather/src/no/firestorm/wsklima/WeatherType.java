@@ -33,6 +33,12 @@ public enum WeatherType {
 	windSpeed,
 	/** Wind direction in degrees */
 	windDirection,
+	/** Wind gust speed in m/s */
+	windGustSpeed,
+	/** Max wind gust speed in m/s during day*/
+	windGustSpeedMax,
+	/** Max wind speed in m/s during day*/
+	windSpeedMax,
 	/** Precipitation last hour in mm */
 	precipitationLastHour,
 	/** Precipitation last 12 hours in mm */
