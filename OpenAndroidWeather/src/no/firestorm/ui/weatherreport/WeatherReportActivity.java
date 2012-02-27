@@ -21,13 +21,8 @@ package no.firestorm.ui.weatherreport;
 
 import java.io.IOException;
 import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-
-import org.apache.http.HttpException;
-import org.apache.http.client.ClientProtocolException;
 
 import no.firestorm.R;
 import no.firestorm.ui.stationpicker.Station;
@@ -35,13 +30,19 @@ import no.firestorm.wsklima.GetWeather;
 import no.firestorm.wsklima.WeatherElement;
 import no.firestorm.wsklima.WsKlimaProxy;
 import no.firestorm.wsklima.exception.NoLocationException;
+
+import org.apache.http.HttpException;
+import org.apache.http.client.ClientProtocolException;
+
 import android.accounts.NetworkErrorException;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ProgressBar;
+import android.view.View.OnClickListener;
+import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class WeatherReportActivity extends Activity {
 	private Integer mStationId = null;
@@ -50,9 +51,22 @@ public class WeatherReportActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.weatherreport);
+		ImageButton updateButton = (ImageButton) findViewById(R.id.get_weather);
+		updateButton.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				updateReport();
+			}
+		});
+		
+		updateReport();
+
+	}
+
+	private void updateReport() {
 		// Find station
 		new FindStationTask().execute();
-
 	}
 
 	private void displayWeather(List<WeatherElement> weather) {
@@ -100,11 +114,30 @@ public class WeatherReportActivity extends Activity {
 		v.setText(value);
 	}
 
+	private void displayError(Throwable e) {
+		int message = 0;
+		if (e instanceof NetworkErrorException) {
+			message = R.string.error_download_long;
+		} else if (e instanceof HttpException) {
+			message = R.string.error_server_long;
+		} else if (e instanceof NoLocationException) {
+			message = R.string.error_location_long;
+		} else {
+			e.printStackTrace();
+			throw new UnknownError();
+		}
+
+		Toast toast = Toast.makeText(this, message, Toast.LENGTH_LONG);
+		toast.show();
+		findViewById(R.id.progressBar).setVisibility(View.GONE);
+		findViewById(R.id.get_weather).setVisibility(View.VISIBLE);
+	}
+
 	private class FindStationTask extends AsyncTask<Void, Void, GetWeather> {
-		
+		private Throwable error = null;
+
 		@Override
 		protected void onPreExecute() {
-			// TODO Auto-generated method stub
 			super.onPreExecute();
 			findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
 			findViewById(R.id.get_weather).setVisibility(View.GONE);
@@ -116,20 +149,22 @@ public class WeatherReportActivity extends Activity {
 			try {
 				gw.getWeatherElement();
 			} catch (NetworkErrorException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				error = e;
 			} catch (NoLocationException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				error = e;
 			} catch (HttpException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				error = e;
 			}
 			return gw;
 		}
 
 		@Override
 		protected void onPostExecute(GetWeather gw) {
+			if (error != null) {
+				displayError(error);
+				return;
+
+			}
 			WeatherElement w = null;
 			try {
 				w = gw.getWeatherElement();
@@ -192,8 +227,7 @@ public class WeatherReportActivity extends Activity {
 		protected List<WeatherElement> doInBackground(Integer... params) {
 			WsKlimaProxy proxy = new WsKlimaProxy();
 			try {
-				return proxy.getWeather(mStationId, 0,
-						"TAX,TAN,FGX,FFX");
+				return proxy.getWeather(mStationId, 0, "TAX,TAN,FGX,FFX");
 			} catch (ClientProtocolException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -209,7 +243,7 @@ public class WeatherReportActivity extends Activity {
 		protected void onPostExecute(List<WeatherElement> result) {
 			displayWeather(result);
 			findViewById(R.id.progressBar).setVisibility(View.GONE);
-			//findViewById(R.id.get_weather).setVisibility(View.VISIBLE);
+			findViewById(R.id.get_weather).setVisibility(View.VISIBLE);
 		}
 
 	}
