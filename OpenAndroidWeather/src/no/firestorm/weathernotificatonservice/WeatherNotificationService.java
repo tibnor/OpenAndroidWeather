@@ -26,6 +26,7 @@ import no.firestorm.R;
 import no.firestorm.misc.CheckInternetStatus;
 import no.firestorm.misc.TempToDrawable;
 import no.firestorm.ui.stationpicker.Station;
+import no.firestorm.ui.weatherreport.WeatherReportActivity;
 import no.firestorm.wsklima.GetWeather;
 import no.firestorm.wsklima.WeatherElement;
 import no.firestorm.wsklima.WsKlimaProxy;
@@ -87,22 +88,24 @@ public class WeatherNotificationService extends IntentService {
 	 * service set the notification.
 	 */
 	public static final int INTENT_EXTRA_ACTION_SET_NOTIFICATION = 3;
-	
+
 	/**
-	 * Station name for intent extra when INTENT_EXTRA_ACTION_SET_NOTIFICATION, string
+	 * Station name for intent extra when INTENT_EXTRA_ACTION_SET_NOTIFICATION,
+	 * string
 	 */
 	public static final String INTENT_EXTRA_INFO_STATION_NAME = "STATION";
-	
+
 	/**
-	 * Temperature for intent extra when INTENT_EXTRA_ACTION_SET_NOTIFICATION, string
+	 * Temperature for intent extra when INTENT_EXTRA_ACTION_SET_NOTIFICATION,
+	 * string
 	 */
 	public static final String INTENT_EXTRA_INFO_TEMPERATURE = "TEMPERATURE";
-	
+
 	/**
 	 * Time for intent extra when INTENT_EXTRA_ACTION_SET_NOTIFICATION, long
 	 */
 	public static final String INTENT_EXTRA_INFO_TIME = "Time";
-	
+
 	/**
 	 * 
 	 */
@@ -157,12 +160,13 @@ public class WeatherNotificationService extends IntentService {
 		try {
 			if (isUsingClosestStation) {
 				GetWeather getWeather = new GetWeather(this);
-				weather  = getWeather.getWeatherElement();
+				weather = getWeather.getWeatherElement();
 				Station station = weather.getStation();
 				WeatherNotificationSettings.setStation(context,
 						station.getName(), station.getId());
 			} else {
-				int stationId = WeatherNotificationSettings.getStationId(context);
+				int stationId = WeatherNotificationSettings
+						.getStationId(context);
 				WsKlimaProxy proxy = new WsKlimaProxy();
 				weather = proxy.getTemperatureNow(stationId, context);
 			}
@@ -173,7 +177,6 @@ public class WeatherNotificationService extends IntentService {
 			throw e;
 		}
 
-		
 		// Save if data
 		if (weather != null)
 			WeatherNotificationSettings.setLastTemperature(context,
@@ -195,7 +198,8 @@ public class WeatherNotificationService extends IntentService {
 		final DateFormat df = DateFormat.getTimeInstance(DateFormat.SHORT);
 		contentIcon = android.R.drawable.stat_notify_error;
 		final Context context = WeatherNotificationService.this;
-		contentTime = System.currentTimeMillis();;
+		contentTime = System.currentTimeMillis();
+		;
 		long when = (new Date()).getTime();
 
 		if (e instanceof NoLocationException) {
@@ -259,8 +263,7 @@ public class WeatherNotificationService extends IntentService {
 	 */
 	private void makeNotification(int tickerIcon, int contentIcon,
 			CharSequence tickerText, CharSequence contentTitle,
-			CharSequence contentText, long time, long when2,
-			Float temperature) {
+			CharSequence contentText, long time, long when2, Float temperature) {
 		final DateFormat df = DateFormat.getTimeInstance(DateFormat.SHORT);
 		CharSequence contentTime = df.format(time);
 		final long when = System.currentTimeMillis();
@@ -268,10 +271,14 @@ public class WeatherNotificationService extends IntentService {
 		Notification notification = null;
 
 		final Intent notificationIntent = new Intent(
-				WeatherNotificationService.this,
-				WeatherNotificationService.class);
-		final PendingIntent contentIntent = PendingIntent.getService(
+				WeatherNotificationService.this, WeatherReportActivity.class);
+		final PendingIntent contentIntent = PendingIntent.getActivity(
 				WeatherNotificationService.this, 0, notificationIntent, 0);
+		// final Intent notificationIntent = new Intent(
+		// WeatherNotificationService.this,
+		// WeatherNotificationService.class);
+		// final PendingIntent contentIntent = PendingIntent.getService(
+		// WeatherNotificationService.this, 0, notificationIntent, 0);
 
 		// Check if Notification.Builder exists (11+)
 		if (Build.VERSION.SDK_INT >= 11) {
@@ -320,7 +327,6 @@ public class WeatherNotificationService extends IntentService {
 	 */
 	private void makeNotification(WeatherElement weather) {
 
-
 		if (weather != null) {
 			// Has data
 			final String temperature = weather.getValue();
@@ -334,7 +340,7 @@ public class WeatherNotificationService extends IntentService {
 		} else {
 			int tickerIcon, contentIcon;
 			CharSequence tickerText, contentTitle, contentText;
-			long when,contentTime;
+			long when, contentTime;
 			Float temperatureF = null;
 			// No data
 			contentIcon = android.R.drawable.stat_notify_error;
@@ -349,15 +355,13 @@ public class WeatherNotificationService extends IntentService {
 					contentText, contentTime, when, temperatureF);
 		}
 
-
-
 	}
 
 	private void makeNotification(final String temperature,
 			final String stationName, final Long time) {
 		int tickerIcon, contentIcon;
 		CharSequence tickerText, contentTitle, contentText;
-		long when,contentTime;
+		long when, contentTime;
 		Float temperatureF = null;
 		// Find icon
 		temperatureF = new Float(temperature);
@@ -370,9 +374,8 @@ public class WeatherNotificationService extends IntentService {
 		when = time;
 
 		final Context context = WeatherNotificationService.this;
-		contentText = String.format("%s %.1f °C", context
-				.getString(R.string.temperatur_),
-				temperatureF);
+		contentText = String.format("%s %.1f °C",
+				context.getString(R.string.temperatur_), temperatureF);
 
 		updateAlarm(time);
 		makeNotification(tickerIcon, contentIcon, tickerText, contentTitle,
@@ -391,8 +394,10 @@ public class WeatherNotificationService extends IntentService {
 			break;
 		case INTENT_EXTRA_ACTION_SET_NOTIFICATION:
 			long time = intent.getLongExtra(INTENT_EXTRA_INFO_TIME, 0l);
-			String station = intent.getStringExtra(INTENT_EXTRA_INFO_STATION_NAME);
-			String temperature = intent.getStringExtra(INTENT_EXTRA_INFO_TEMPERATURE);
+			String station = intent
+					.getStringExtra(INTENT_EXTRA_INFO_STATION_NAME);
+			String temperature = intent
+					.getStringExtra(INTENT_EXTRA_INFO_TEMPERATURE);
 			makeNotification(temperature, station, time);
 			break;
 		default:
