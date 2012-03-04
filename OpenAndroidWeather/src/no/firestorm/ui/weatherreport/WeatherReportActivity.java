@@ -26,6 +26,7 @@ import java.util.Locale;
 
 import no.firestorm.R;
 import no.firestorm.ui.stationpicker.Station;
+import no.firestorm.weathernotificatonservice.WeatherNotificationService;
 import no.firestorm.wsklima.GetWeather;
 import no.firestorm.wsklima.WeatherElement;
 import no.firestorm.wsklima.WsKlimaProxy;
@@ -36,6 +37,7 @@ import org.apache.http.client.ClientProtocolException;
 
 import android.accounts.NetworkErrorException;
 import android.app.Activity;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
@@ -53,13 +55,13 @@ public class WeatherReportActivity extends Activity {
 		setContentView(R.layout.weatherreport);
 		ImageButton updateButton = (ImageButton) findViewById(R.id.get_weather);
 		updateButton.setOnClickListener(new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				updateReport();
 			}
 		});
-		
+
 		updateReport();
 
 	}
@@ -133,7 +135,7 @@ public class WeatherReportActivity extends Activity {
 		findViewById(R.id.get_weather).setVisibility(View.VISIBLE);
 	}
 
-	private class FindStationTask extends AsyncTask<Void, Void, GetWeather> {
+	private class FindStationTask extends AsyncTask<Void, Void, WeatherElement> {
 		private Throwable error = null;
 
 		@Override
@@ -144,10 +146,10 @@ public class WeatherReportActivity extends Activity {
 		}
 
 		@Override
-		protected GetWeather doInBackground(Void... params) {
+		protected WeatherElement doInBackground(Void... params) {
 			GetWeather gw = new GetWeather(WeatherReportActivity.this);
 			try {
-				gw.getWeatherElement();
+				return gw.getWeatherElement();
 			} catch (NetworkErrorException e) {
 				error = e;
 			} catch (NoLocationException e) {
@@ -155,31 +157,18 @@ public class WeatherReportActivity extends Activity {
 			} catch (HttpException e) {
 				error = e;
 			}
-			return gw;
+			return null;
 		}
 
 		@Override
-		protected void onPostExecute(GetWeather gw) {
+		protected void onPostExecute(WeatherElement w) {
 			if (error != null) {
 				displayError(error);
 				return;
 
 			}
-			WeatherElement w = null;
-			try {
-				w = gw.getWeatherElement();
-			} catch (NetworkErrorException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NoLocationException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (HttpException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
 			setText(R.id.temperature, w.getValue() + " °C");
-			Station station = gw.getStation();
+			Station station = w.getStation();
 			setText(R.id.StationName, station.getName());
 			mStationId = station.getId();
 
@@ -188,6 +177,23 @@ public class WeatherReportActivity extends Activity {
 					Locale.getDefault());
 			timeView.setText(df.format(w.getTime()));
 			new GetWeatherTask1().execute();
+
+			// Update notification:
+			Intent intent = new Intent(WeatherReportActivity.this,
+					WeatherNotificationService.class);
+			intent.putExtra(
+					WeatherNotificationService.INTENT_EXTRA_ACTION,
+					WeatherNotificationService.INTENT_EXTRA_ACTION_SET_NOTIFICATION);
+			intent.putExtra(
+					WeatherNotificationService.INTENT_EXTRA_INFO_STATION_NAME,
+					station.getName());
+			intent.putExtra(
+					WeatherNotificationService.INTENT_EXTRA_INFO_TEMPERATURE,
+					w.getValue());
+			intent.putExtra(
+					WeatherNotificationService.INTENT_EXTRA_INFO_TIME,
+					w.getTime());
+			startService(intent);
 		}
 
 	}

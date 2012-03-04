@@ -1,7 +1,9 @@
 package no.firestorm.wsklima;
 
-import java.util.Date;
-
+import no.firestorm.ui.stationpicker.Station;
+import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.text.format.Time;
 
 /**
@@ -10,7 +12,7 @@ import android.text.format.Time;
  * Date is the time when the weather was measured. Type is the weather type.
  * Value is the measured value as specified in WeatherType
  */
-public class WeatherElement {
+public class WeatherElement{
 
 	/** Date and time when the weather was measured. */
 	private Time date;
@@ -20,6 +22,9 @@ public class WeatherElement {
 
 	/** Value of the measurement, unit as specified in WeatherType. */
 	private String value;
+
+	/** Weather station for the observation */
+	private Station station;
 
 	/**
 	 * Instantiates a new weather element.
@@ -32,11 +37,17 @@ public class WeatherElement {
 	 *            the value
 	 */
 	public WeatherElement(Time date, WeatherType type, String value) {
+		this(date,type,value,null);
+	}
+
+	public WeatherElement(Time date, WeatherType type, String value,
+			Station station) {
 		super();
 		this.date = date;
 		this.type = type;
 		this.value = value;
-	}
+		this.station = station;
+	}	
 
 	/**
 	 * Gets the date.
@@ -83,6 +94,14 @@ public class WeatherElement {
 	 */
 	public void setDate(Time date) {
 		this.date = date;
+	}
+
+	public Station getStation() {
+		return station;
+	}
+
+	public void setStation(Station station) {
+		this.station = station;
 	}
 
 	/**

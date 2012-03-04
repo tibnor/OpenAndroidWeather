@@ -86,8 +86,10 @@ public class GetWeather implements UpdateLocationListener {
 	// Get weather from wsklimaproxy
 	private WeatherElement getWeather(Station station)
 			throws NetworkErrorException, HttpException {
-		if (mWeather == null)
+		if (mWeather == null) {
 			mWeather = mProxy.getTemperatureNow(station.getId(), mContext);
+			mWeather.setStation(station);
+		}
 		
 		return mWeather;
 
@@ -144,15 +146,6 @@ public class GetWeather implements UpdateLocationListener {
 
 		} else
 			throw new NoLocationException(null);
-	}
-
-	/**
-	 * Return station for weather, must be called after getWeatherElement
-	 * 
-	 * @return station
-	 */
-	public Station getStation() {
-		return mStation;
 	}
 
 	@Override
