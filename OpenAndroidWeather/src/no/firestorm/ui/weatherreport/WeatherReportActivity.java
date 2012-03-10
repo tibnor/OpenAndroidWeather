@@ -42,6 +42,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -58,16 +59,29 @@ public class WeatherReportActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				updateReport();
+				updateReport(false);
 			}
 		});
-
-		updateReport();
+		Button retryButton = (Button) findViewById(R.id.retry);
+		retryButton.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				updateReport(true);
+			}
+		});
+		updateReport(true);
 
 	}
 
-	private void updateReport() {
+	private void updateReport(boolean firstTime) {
 		// Find station
+		if(firstTime)
+			findViewById(R.id.progressBar).setVisibility(View.GONE);
+		else
+			findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
+		findViewById(R.id.get_weather).setVisibility(View.GONE);
+		setVisibility(View.GONE, View.INVISIBLE, View.VISIBLE, View.GONE, View.INVISIBLE);
 		new FindStationTask().execute();
 	}
 
@@ -99,11 +113,9 @@ public class WeatherReportActivity extends Activity {
 			case windGustSpeed:
 				setText(R.id.windGustSpeed, "(" + w.getValue() + ")");
 				break;
-			case precipitationLast12h:
-				setText(R.id.precipitationLast12h, w.getValue() + " mm");
-				break;
-			case precipitationLastHour:
-				setText(R.id.precipitationLast12h, w.getValue() + " mm");
+			case precipitation:
+				if (w.getValue()!="")
+					setText(R.id.precipitation, w.getValue() + " mm");
 				break;
 			default:
 				break;
@@ -128,11 +140,21 @@ public class WeatherReportActivity extends Activity {
 			e.printStackTrace();
 			throw new UnknownError();
 		}
-
-		Toast toast = Toast.makeText(this, message, Toast.LENGTH_LONG);
-		toast.show();
+		
+		setVisibility(View.GONE, View.VISIBLE, View.GONE, View.VISIBLE,
+				View.VISIBLE);
 		findViewById(R.id.progressBar).setVisibility(View.GONE);
 		findViewById(R.id.get_weather).setVisibility(View.VISIBLE);
+		((TextView) findViewById(R.id.info)).setText(message);
+	}
+
+	private void setVisibility(int report, int info, int progress, int retry,
+			int empty) {
+		findViewById(R.id.report).setVisibility(report);
+		findViewById(R.id.info).setVisibility(info);
+		findViewById(R.id.retry).setVisibility(retry);
+		findViewById(R.id.progressBarMain).setVisibility(progress);
+		findViewById(R.id.empty).setVisibility(empty);
 	}
 
 	private class FindStationTask extends AsyncTask<Void, Void, WeatherElement> {
@@ -141,8 +163,7 @@ public class WeatherReportActivity extends Activity {
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
-			findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
-			findViewById(R.id.get_weather).setVisibility(View.GONE);
+
 		}
 
 		@Override
@@ -171,6 +192,8 @@ public class WeatherReportActivity extends Activity {
 			Station station = w.getStation();
 			setText(R.id.StationName, station.getName());
 			mStationId = station.getId();
+			setVisibility(View.VISIBLE, View.GONE, View.GONE, View.GONE,
+					View.GONE);
 
 			TextView timeView = (TextView) findViewById(R.id.time);
 			final DateFormat df = DateFormat.getTimeInstance(DateFormat.SHORT,
@@ -190,8 +213,7 @@ public class WeatherReportActivity extends Activity {
 			intent.putExtra(
 					WeatherNotificationService.INTENT_EXTRA_INFO_TEMPERATURE,
 					w.getValue());
-			intent.putExtra(
-					WeatherNotificationService.INTENT_EXTRA_INFO_TIME,
+			intent.putExtra(WeatherNotificationService.INTENT_EXTRA_INFO_TIME,
 					w.getTime());
 			startService(intent);
 		}
@@ -206,7 +228,7 @@ public class WeatherReportActivity extends Activity {
 			WsKlimaProxy proxy = new WsKlimaProxy();
 			try {
 				return proxy.getWeather(mStationId, 2,
-						"FF,DD,TA,RR_1,RR_12,FG_1");
+						"FF,DD,TA,FG_1");
 			} catch (ClientProtocolException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -233,7 +255,7 @@ public class WeatherReportActivity extends Activity {
 		protected List<WeatherElement> doInBackground(Integer... params) {
 			WsKlimaProxy proxy = new WsKlimaProxy();
 			try {
-				return proxy.getWeather(mStationId, 0, "TAX,TAN,FGX,FFX");
+				return proxy.getWeather(mStationId, 0, "RR,TAX,TAN,FGX,FXX");
 			} catch (ClientProtocolException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

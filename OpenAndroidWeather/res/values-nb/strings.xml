@@ -44,4 +44,13 @@ Hvis du liker programmet er godt og ønsker videre utvikling vær snill ådoner!
 	<string name="rate">Gi omtale</string>
 	<string name="rate_full">Gi omtale i Android Market</string>
 		<string name="only_download_on_wifi">Last bare ned via WiFi</string>
+			<string name="precipitation">Nedbør</string>
+	<string name="max_wind">Maks vindhastighet, m/s (kast)</string>
+	<string name="wind">Vindhastighet, m/s (kast)</string>
+	<string name="wind_direction">Vindrettning</string>
+	<string name="minmaxtemp">Min/maks temperatur (døgn)</string>
+	<string name="updated">Oppdatert</string>
+	<string name="station">Værstasjon</string>
+	<string name="retry">Prøv igjen</string>
+	<string name="temperature">Temperatur</string>
 </resources>

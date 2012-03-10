@@ -39,6 +39,8 @@ public enum WeatherType {
 	windGustSpeedMax,
 	/** Max wind speed in m/s during day*/
 	windSpeedMax,
+	/** Precipitation (07-07) in mm */
+	precipitation,
 	/** Precipitation last hour in mm */
 	precipitationLastHour,
 	/** Precipitation last 12 hours in mm */

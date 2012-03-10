@@ -230,6 +230,8 @@ public class WsKlimaProxy {
 			return WeatherType.temperatureMax;
 		else if (id.equals("TAN"))
 			return WeatherType.temperatureMin;
+		else if (id.equals("RR"))
+			return WeatherType.precipitation;
 		else if (id.equals("RR_1"))
 			return WeatherType.precipitationLastHour;
 		else if (id.equals("RR_12"))
@@ -240,11 +242,11 @@ public class WsKlimaProxy {
 			return WeatherType.windDirection;
 		else if (id.equals("FG_1"))
 			return WeatherType.windGustSpeed;
-		else if (id.equals("FFX"))
+		else if (id.equals("FXX"))
 			return WeatherType.windSpeedMax;
 		else if (id.equals("FGX"))
 			return WeatherType.windGustSpeedMax;
 		else
-			return null;
+			throw new UnknownError();
 	}
 }
