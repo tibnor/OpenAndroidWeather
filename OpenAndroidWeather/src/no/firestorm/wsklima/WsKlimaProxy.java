@@ -154,9 +154,17 @@ public class WsKlimaProxy {
 		now.setToNow();
 		return getWeather(station,timeserieType, elements, now);
 	}
-
+	
 	public List<WeatherElement> getWeather(Integer station,
 			Integer timeserieType, String elements, Time time)
+			throws ClientProtocolException, IOException {
+		time.switchTimezone("UTC");
+		String hour = Integer.toString(time.hour);
+		return getWeather(station, timeserieType, elements, time,hour);
+	}
+
+	public List<WeatherElement> getWeather(Integer station,
+			Integer timeserieType, String elements, Time time,String hours)
 			throws ClientProtocolException, IOException {
 		time.switchTimezone("UTC");
 		String date = time.year + "-" + (time.month + 1) + "-" + time.monthDay;
@@ -174,7 +182,7 @@ public class WsKlimaProxy {
 							+ "&elements="
 							+ elements
 							+ "&hours="
-							+ time.hour
+							+ hours
 							+ "&months="
 							+ (time.month + 1) + "&username=");
 		} catch (URISyntaxException e) {
@@ -197,15 +205,23 @@ public class WsKlimaProxy {
 		while (m.find()) {
 			values.add(m.group(1));
 		}
+		if(values.isEmpty())
+			return null;
+		
 		p = Pattern.compile("<id.*?>(.*?)</id>");
 		m = p.matcher(xmlString);
 		List<String> types = new LinkedList<String>();
 		while (m.find()) {
-			types.add(m.group(1));
+			if (!Pattern.matches("^[0-9]*$", m.group(1)) )
+				types.add(m.group(1));
 		}
+		if(types.isEmpty())
+			return null;
+		
 		p = Pattern.compile("<from.*?>(.*?)</from>");
 		m = p.matcher(xmlString);
-		m.find();
+		if(!m.find())
+			return null;
 		Time fromT = new Time();
 		fromT.parse3339(m.group(1));
 
@@ -246,7 +262,9 @@ public class WsKlimaProxy {
 			return WeatherType.windSpeedMax;
 		else if (id.equals("FGX"))
 			return WeatherType.windGustSpeedMax;
+		else if (id.equals("RA"))
+			return WeatherType.precipitationInBucket;
 		else
-			throw new UnknownError();
+			throw new UnknownError("Uknown type: "+id);
 	}
 }

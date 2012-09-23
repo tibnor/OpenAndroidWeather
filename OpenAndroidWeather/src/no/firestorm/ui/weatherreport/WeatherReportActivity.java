@@ -20,15 +20,18 @@
 package no.firestorm.ui.weatherreport;
 
 import java.io.IOException;
-import java.text.DateFormat;
-import java.util.List;
-import java.util.Locale;
+import android.text.format.DateFormat;
+import android.text.format.Time;
 
+import java.util.LinkedList;
+import java.util.List;
 import no.firestorm.R;
 import no.firestorm.ui.stationpicker.Station;
 import no.firestorm.weathernotificatonservice.WeatherNotificationService;
+import no.firestorm.weathernotificatonservice.WeatherNotificationSettings;
 import no.firestorm.wsklima.GetWeather;
 import no.firestorm.wsklima.WeatherElement;
+import no.firestorm.wsklima.WeatherType;
 import no.firestorm.wsklima.WsKlimaProxy;
 import no.firestorm.wsklima.exception.NoLocationException;
 
@@ -37,6 +40,7 @@ import org.apache.http.client.ClientProtocolException;
 
 import android.accounts.NetworkErrorException;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -45,7 +49,6 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class WeatherReportActivity extends Activity {
 	private Integer mStationId = null;
@@ -64,7 +67,7 @@ public class WeatherReportActivity extends Activity {
 		});
 		Button retryButton = (Button) findViewById(R.id.retry);
 		retryButton.setOnClickListener(new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				updateReport(true);
@@ -76,16 +79,19 @@ public class WeatherReportActivity extends Activity {
 
 	private void updateReport(boolean firstTime) {
 		// Find station
-		if(firstTime)
+		if (firstTime)
 			findViewById(R.id.progressBar).setVisibility(View.GONE);
 		else
 			findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
 		findViewById(R.id.get_weather).setVisibility(View.GONE);
-		setVisibility(View.GONE, View.INVISIBLE, View.VISIBLE, View.GONE, View.INVISIBLE);
+		setVisibility(View.GONE, View.INVISIBLE, View.VISIBLE, View.GONE,
+				View.INVISIBLE);
 		new FindStationTask().execute();
 	}
 
 	private void displayWeather(List<WeatherElement> weather) {
+		if (weather == null)
+			return;
 
 		for (WeatherElement w : weather) {
 			switch (w.getType()) {
@@ -114,7 +120,7 @@ public class WeatherReportActivity extends Activity {
 				setText(R.id.windGustSpeed, "(" + w.getValue() + ")");
 				break;
 			case precipitation:
-				if (w.getValue()!="")
+				if (w.getValue() != "")
 					setText(R.id.precipitation, w.getValue() + " mm");
 				break;
 			default:
@@ -140,7 +146,7 @@ public class WeatherReportActivity extends Activity {
 			e.printStackTrace();
 			throw new UnknownError();
 		}
-		
+
 		setVisibility(View.GONE, View.VISIBLE, View.GONE, View.VISIBLE,
 				View.VISIBLE);
 		findViewById(R.id.progressBar).setVisibility(View.GONE);
@@ -168,15 +174,39 @@ public class WeatherReportActivity extends Activity {
 
 		@Override
 		protected WeatherElement doInBackground(Void... params) {
-			GetWeather gw = new GetWeather(WeatherReportActivity.this);
-			try {
-				return gw.getWeatherElement();
-			} catch (NetworkErrorException e) {
-				error = e;
-			} catch (NoLocationException e) {
-				error = e;
-			} catch (HttpException e) {
-				error = e;
+			final Context context = WeatherReportActivity.this;
+			boolean isUsingClosestStation = WeatherNotificationSettings
+					.isUsingNearestStation(context);
+			if (isUsingClosestStation) {
+				GetWeather gw = new GetWeather(WeatherReportActivity.this);
+				try {
+					return gw.getWeatherElement();
+				} catch (NetworkErrorException e) {
+					error = e;
+				} catch (NoLocationException e) {
+					error = e;
+				} catch (HttpException e) {
+					error = e;
+				}
+			} else {
+				int stationId = WeatherNotificationSettings
+						.getStationId(context);
+				String stationName = WeatherNotificationSettings
+						.getStationName(context);
+				Station station = new Station(stationName, stationId, 0, 0,
+						null, true);
+				WsKlimaProxy proxy = new WsKlimaProxy();
+				WeatherElement weather;
+				try {
+					weather = proxy.getTemperatureNow(stationId, context);
+					weather.setStation(station);
+					return weather;
+				} catch (NetworkErrorException e) {
+					error = e;
+				} catch (HttpException e) {
+					error = e;
+				}
+
 			}
 			return null;
 		}
@@ -195,11 +225,12 @@ public class WeatherReportActivity extends Activity {
 			setVisibility(View.VISIBLE, View.GONE, View.GONE, View.GONE,
 					View.GONE);
 
-			TextView timeView = (TextView) findViewById(R.id.time);
-			final DateFormat df = DateFormat.getTimeInstance(DateFormat.SHORT,
-					Locale.getDefault());
-			timeView.setText(df.format(w.getTime()));
+			final java.text.DateFormat df = DateFormat
+					.getTimeFormat(WeatherReportActivity.this);
+			setText(R.id.time, df.format(w.getTime()));
 			new GetWeatherTask1().execute();
+			new GetWeatherTask2().execute();
+			new GetPersipitationTask().execute();
 
 			// Update notification:
 			Intent intent = new Intent(WeatherReportActivity.this,
@@ -227,8 +258,7 @@ public class WeatherReportActivity extends Activity {
 		protected List<WeatherElement> doInBackground(Integer... params) {
 			WsKlimaProxy proxy = new WsKlimaProxy();
 			try {
-				return proxy.getWeather(mStationId, 2,
-						"FF,DD,TA,FG_1");
+				return proxy.getWeather(mStationId, 2, "FF,DD,TA,FG_1");
 			} catch (ClientProtocolException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -243,7 +273,6 @@ public class WeatherReportActivity extends Activity {
 		@Override
 		protected void onPostExecute(List<WeatherElement> result) {
 			displayWeather(result);
-			new GetWeatherTask2().execute();
 		}
 
 	}
@@ -255,7 +284,7 @@ public class WeatherReportActivity extends Activity {
 		protected List<WeatherElement> doInBackground(Integer... params) {
 			WsKlimaProxy proxy = new WsKlimaProxy();
 			try {
-				return proxy.getWeather(mStationId, 0, "RR,TAX,TAN,FGX,FXX");
+				return proxy.getWeather(mStationId, 0, "TAX,TAN,FGX,FXX");
 			} catch (ClientProtocolException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -266,6 +295,48 @@ public class WeatherReportActivity extends Activity {
 
 			return null;
 		}
+
+		@Override
+		protected void onPostExecute(List<WeatherElement> result) {
+			displayWeather(result);
+			findViewById(R.id.progressBar).setVisibility(View.GONE);
+			findViewById(R.id.get_weather).setVisibility(View.VISIBLE);
+		}
+
+	}
+
+	private class GetPersipitationTask extends
+			AsyncTask<Integer, Void, List<WeatherElement>> {
+
+		@Override
+protected List<WeatherElement> doInBackground(Integer... params) {
+	WsKlimaProxy proxy = new WsKlimaProxy();
+	try {
+		Time now = new Time();
+		now.setToNow();
+		now.switchTimezone("UTC");
+		String hours = "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24";
+		List<WeatherElement> res = proxy.getWeather(mStationId, 2, "RR_1",now,hours);
+		Double value = 0.;
+		for (WeatherElement w : res) {
+			value += Double.parseDouble(w.getValue());
+		}
+		WeatherElement w = res.get(res.size()-1);
+		w.setValue(String.format("%.1f", value));
+		w.setType(WeatherType.precipitation);
+		res = new LinkedList<WeatherElement>();
+		res.add(w);
+		return res;
+	} catch (ClientProtocolException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+
+	return null;
+}
 
 		@Override
 		protected void onPostExecute(List<WeatherElement> result) {

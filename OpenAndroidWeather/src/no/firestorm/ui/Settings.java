@@ -51,14 +51,11 @@ import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.google.ads.AdView;
-
 /**
  * Startup activity
  * 
  */
 public class Settings extends Activity {
-	private AdView adView;
 
 	/**
 	 * Callback class for update rate scroller

@@ -35,6 +35,7 @@ import no.firestorm.wsklima.exception.NoLocationException;
 import org.apache.http.HttpException;
 
 import android.accounts.NetworkErrorException;
+import android.annotation.TargetApi;
 import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.Notification;
@@ -167,8 +168,11 @@ public class WeatherNotificationService extends IntentService {
 			} else {
 				int stationId = WeatherNotificationSettings
 						.getStationId(context);
+				String stationName = WeatherNotificationSettings.getStationName(context);
+				Station station = new Station(stationName, stationId, 0, 0, null, true);
 				WsKlimaProxy proxy = new WsKlimaProxy();
 				weather = proxy.getTemperatureNow(stationId, context);
+				weather.setStation(station);
 			}
 
 		} catch (final NetworkErrorException e) {
@@ -261,6 +265,7 @@ public class WeatherNotificationService extends IntentService {
 	 *            Time shown in notification
 	 * @param when2
 	 */
+	@TargetApi(11)
 	private void makeNotification(int tickerIcon, int contentIcon,
 			CharSequence tickerText, CharSequence contentTitle,
 			CharSequence contentText, long time, long when2, Float temperature) {
@@ -283,6 +288,7 @@ public class WeatherNotificationService extends IntentService {
 		// Check if Notification.Builder exists (11+)
 		if (Build.VERSION.SDK_INT >= 11) {
 			// Honeycomb ++
+			
 			NotificationBuilder builder = new NotificationBuilder(this);
 			builder.setAutoCancel(false);
 			builder.setContentTitle(contentTitle);

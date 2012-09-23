@@ -44,5 +44,7 @@ public enum WeatherType {
 	/** Precipitation last hour in mm */
 	precipitationLastHour,
 	/** Precipitation last 12 hours in mm */
-	precipitationLast12h
+	precipitationLast12h,
+	/** Precipitation in bucket mm */
+	precipitationInBucket,
 }
