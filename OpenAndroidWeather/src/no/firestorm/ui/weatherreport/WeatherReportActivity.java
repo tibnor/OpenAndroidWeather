@@ -180,7 +180,11 @@ public class WeatherReportActivity extends Activity {
 			if (isUsingClosestStation) {
 				GetWeather gw = new GetWeather(WeatherReportActivity.this);
 				try {
-					return gw.getWeatherElement();
+					WeatherElement w = gw.getWeatherElement();
+					if (w != null)
+						return w;
+					else 
+						error = new NetworkErrorException();
 				} catch (NetworkErrorException e) {
 					error = e;
 				} catch (NoLocationException e) {
@@ -199,8 +203,11 @@ public class WeatherReportActivity extends Activity {
 				WeatherElement weather;
 				try {
 					weather = proxy.getTemperatureNow(stationId, context);
-					weather.setStation(station);
-					return weather;
+					if (weather != null){
+						weather.setStation(station);
+						return weather;
+					} else 
+						error = new NetworkErrorException("No data");
 				} catch (NetworkErrorException e) {
 					error = e;
 				} catch (HttpException e) {
@@ -272,7 +279,8 @@ public class WeatherReportActivity extends Activity {
 
 		@Override
 		protected void onPostExecute(List<WeatherElement> result) {
-			displayWeather(result);
+			if (result != null && result.size() > 0)
+				displayWeather(result);
 		}
 
 	}
@@ -298,7 +306,8 @@ public class WeatherReportActivity extends Activity {
 
 		@Override
 		protected void onPostExecute(List<WeatherElement> result) {
-			displayWeather(result);
+			if (result != null && result.size() > 0)
+				displayWeather(result);
 			findViewById(R.id.progressBar).setVisibility(View.GONE);
 			findViewById(R.id.get_weather).setVisibility(View.VISIBLE);
 		}
@@ -318,15 +327,17 @@ protected List<WeatherElement> doInBackground(Integer... params) {
 		String hours = "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24";
 		List<WeatherElement> res = proxy.getWeather(mStationId, 2, "RR_1",now,hours);
 		Double value = 0.;
-		for (WeatherElement w : res) {
-			value += Double.parseDouble(w.getValue());
-		}
-		WeatherElement w = res.get(res.size()-1);
-		w.setValue(String.format("%.1f", value));
-		w.setType(WeatherType.precipitation);
-		res = new LinkedList<WeatherElement>();
-		res.add(w);
+		if (res != null){
+			for (WeatherElement w : res) {
+				value += Double.parseDouble(w.getValue());
+			}
+			WeatherElement w = res.get(res.size()-1);
+			w.setValue(String.format("%.1f", value));
+			w.setType(WeatherType.precipitation);
+			res = new LinkedList<WeatherElement>();
+			res.add(w);
 		return res;
+		}
 	} catch (ClientProtocolException e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();

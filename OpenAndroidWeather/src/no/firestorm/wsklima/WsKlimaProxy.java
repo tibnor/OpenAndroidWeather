@@ -19,6 +19,7 @@ import no.firestorm.wsklima.database.WsKlimaDataBaseHelper;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
+import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -100,8 +101,7 @@ public class WsKlimaProxy {
 					+ station);
 		} catch (final URISyntaxException e) {
 			// Should not happen
-			e.printStackTrace();
-			return null;
+			throw new UnknownError(e.getReason());
 		}
 		// Log.v(LOG_ID, "url: " + url.toString());
 
@@ -148,23 +148,24 @@ public class WsKlimaProxy {
 		}
 	}
 
-	public List<WeatherElement> getWeather(Integer station,Integer timeserieType, String elements)
+	public List<WeatherElement> getWeather(Integer station,
+			Integer timeserieType, String elements)
 			throws ClientProtocolException, IOException {
 		Time now = new Time();
 		now.setToNow();
-		return getWeather(station,timeserieType, elements, now);
+		return getWeather(station, timeserieType, elements, now);
 	}
-	
+
 	public List<WeatherElement> getWeather(Integer station,
 			Integer timeserieType, String elements, Time time)
 			throws ClientProtocolException, IOException {
 		time.switchTimezone("UTC");
 		String hour = Integer.toString(time.hour);
-		return getWeather(station, timeserieType, elements, time,hour);
+		return getWeather(station, timeserieType, elements, time, hour);
 	}
 
 	public List<WeatherElement> getWeather(Integer station,
-			Integer timeserieType, String elements, Time time,String hours)
+			Integer timeserieType, String elements, Time time, String hours)
 			throws ClientProtocolException, IOException {
 		time.switchTimezone("UTC");
 		String date = time.year + "-" + (time.month + 1) + "-" + time.monthDay;
@@ -190,7 +191,7 @@ public class WsKlimaProxy {
 		}
 		final HttpClient client = new DefaultHttpClient();
 		final HttpGet request = new HttpGet(url);
-		Log.i("firestorm", url.toString());
+		//Log.i("firestorm", url.toString());
 
 		final HttpResponse response = client.execute(request);
 		final int status = response.getStatusLine().getStatusCode();
@@ -205,22 +206,22 @@ public class WsKlimaProxy {
 		while (m.find()) {
 			values.add(m.group(1));
 		}
-		if(values.isEmpty())
+		if (values.isEmpty())
 			return null;
-		
+
 		p = Pattern.compile("<id.*?>(.*?)</id>");
 		m = p.matcher(xmlString);
 		List<String> types = new LinkedList<String>();
 		while (m.find()) {
-			if (!Pattern.matches("^[0-9]*$", m.group(1)) )
+			if (!Pattern.matches("^[0-9]*$", m.group(1)))
 				types.add(m.group(1));
 		}
-		if(types.isEmpty())
+		if (types.isEmpty())
 			return null;
-		
+
 		p = Pattern.compile("<from.*?>(.*?)</from>");
 		m = p.matcher(xmlString);
-		if(!m.find())
+		if (!m.find())
 			return null;
 		Time fromT = new Time();
 		fromT.parse3339(m.group(1));
@@ -229,12 +230,17 @@ public class WsKlimaProxy {
 		List<WeatherElement> result = new ArrayList<WeatherElement>(
 				values.size());
 		for (String val : values) {
-			if (val.contains("-99999"))
-				val = "";
-			WeatherElement w = new WeatherElement(fromT,
-					idToWeatherType(types.get(i)), val);
+			if (!val.contains("-99999")) {
+				try {
+					WeatherElement w = new WeatherElement(fromT,
+							idToWeatherType(types.get(i)), val);
+					
+					result.add(w);
+				} catch (ParseException e) {
+					// do nothing
+				}
+			}
 			i++;
-			result.add(w);
 		}
 		return result;
 	}
@@ -265,6 +271,6 @@ public class WsKlimaProxy {
 		else if (id.equals("RA"))
 			return WeatherType.precipitationInBucket;
 		else
-			throw new UnknownError("Uknown type: "+id);
+			throw new ParseException("Uknown type: " + id);
 	}
 }

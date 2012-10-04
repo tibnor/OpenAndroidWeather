@@ -88,6 +88,8 @@ public class GetWeather implements UpdateLocationListener {
 			throws NetworkErrorException, HttpException {
 		if (mWeather == null) {
 			mWeather = mProxy.getTemperatureNow(station.getId(), mContext);
+			if (mWeather == null) 
+				return null;
 			mWeather.setStation(station);
 		}
 		
@@ -114,12 +116,19 @@ public class GetWeather implements UpdateLocationListener {
 		final Criteria criteria = new Criteria();
 		criteria.setPowerRequirement(Criteria.POWER_LOW);
 		final String provider = locMan.getBestProvider(criteria, true);
+		
 
 		if (provider != null) {
 			// Register provider
 			UpdateLocation getLocation = new UpdateLocation(this, mContext);
 			locMan.requestLocationUpdates(provider, 0, 0, getLocation,
 					Looper.getMainLooper());
+			try{
+				locMan.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 0, 0, getLocation,
+					Looper.getMainLooper());
+			} catch (IllegalArgumentException e){
+				// if passive provider does not exist.
+			};
 
 			// Wait for the updating of station to complete
 			synchronized (this) {

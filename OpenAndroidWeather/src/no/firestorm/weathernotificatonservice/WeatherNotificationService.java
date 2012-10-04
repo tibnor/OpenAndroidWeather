@@ -162,6 +162,8 @@ public class WeatherNotificationService extends IntentService {
 			if (isUsingClosestStation) {
 				GetWeather getWeather = new GetWeather(this);
 				weather = getWeather.getWeatherElement();
+				if (weather == null)
+					throw new NetworkErrorException();
 				Station station = weather.getStation();
 				WeatherNotificationSettings.setStation(context,
 						station.getName(), station.getId());
@@ -172,6 +174,8 @@ public class WeatherNotificationService extends IntentService {
 				Station station = new Station(stationName, stationId, 0, 0, null, true);
 				WsKlimaProxy proxy = new WsKlimaProxy();
 				weather = proxy.getTemperatureNow(stationId, context);
+				if (weather == null)
+					throw new NetworkErrorException();
 				weather.setStation(station);
 			}
 
@@ -182,10 +186,13 @@ public class WeatherNotificationService extends IntentService {
 		}
 
 		// Save if data
-		if (weather != null)
+		if (weather != null){
 			WeatherNotificationSettings.setLastTemperature(context,
 					weather.getValue(), weather.getTime());
-		return weather;
+			return weather;
+		} else {
+			throw new NetworkErrorException();
+		}
 	}
 
 	/**
