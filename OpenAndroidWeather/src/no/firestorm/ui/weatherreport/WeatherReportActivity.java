@@ -183,7 +183,7 @@ public class WeatherReportActivity extends Activity {
 					WeatherElement w = gw.getWeatherElement();
 					if (w != null)
 						return w;
-					else 
+					else
 						error = new NetworkErrorException();
 				} catch (NetworkErrorException e) {
 					error = e;
@@ -203,10 +203,10 @@ public class WeatherReportActivity extends Activity {
 				WeatherElement weather;
 				try {
 					weather = proxy.getTemperatureNow(stationId, context);
-					if (weather != null){
+					if (weather != null) {
 						weather.setStation(station);
 						return weather;
-					} else 
+					} else
 						error = new NetworkErrorException("No data");
 				} catch (NetworkErrorException e) {
 					error = e;
@@ -318,42 +318,47 @@ public class WeatherReportActivity extends Activity {
 			AsyncTask<Integer, Void, List<WeatherElement>> {
 
 		@Override
-protected List<WeatherElement> doInBackground(Integer... params) {
-	WsKlimaProxy proxy = new WsKlimaProxy();
-	try {
-		Time now = new Time();
-		now.setToNow();
-		now.switchTimezone("UTC");
-		String hours = "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24";
-		List<WeatherElement> res = proxy.getWeather(mStationId, 2, "RR_1",now,hours);
-		Double value = 0.;
-		if (res != null){
-			for (WeatherElement w : res) {
-				value += Double.parseDouble(w.getValue());
+		protected List<WeatherElement> doInBackground(Integer... params) {
+			WsKlimaProxy proxy = new WsKlimaProxy();
+			try {
+				Time now = new Time();
+				now.setToNow();
+				now.switchTimezone("UTC");
+				String hours = "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24";
+				List<WeatherElement> res = proxy.getWeather(mStationId, 2,
+						"RR_1", now, hours);
+				Double value = 0.;
+				if (res != null && !res.isEmpty()) {
+					for (WeatherElement w : res) {
+						value += Double.parseDouble(w.getValue());
+					}
+					WeatherElement w = res.get(res.size() - 1);
+					w.setValue(String.format("%.1f", value));
+					w.setType(WeatherType.precipitation);
+					res = new LinkedList<WeatherElement>();
+					res.add(w);
+					return res;
+				} else {
+					return null;
+				}
+			} catch (ClientProtocolException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-			WeatherElement w = res.get(res.size()-1);
-			w.setValue(String.format("%.1f", value));
-			w.setType(WeatherType.precipitation);
-			res = new LinkedList<WeatherElement>();
-			res.add(w);
-		return res;
-		}
-	} catch (ClientProtocolException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	} catch (IOException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
 
-	return null;
-}
+			return null;
+		}
 
 		@Override
 		protected void onPostExecute(List<WeatherElement> result) {
-			displayWeather(result);
-			findViewById(R.id.progressBar).setVisibility(View.GONE);
-			findViewById(R.id.get_weather).setVisibility(View.VISIBLE);
+			if (result != null) {
+				displayWeather(result);
+				findViewById(R.id.progressBar).setVisibility(View.GONE);
+				findViewById(R.id.get_weather).setVisibility(View.VISIBLE);
+			}
 		}
 
 	}

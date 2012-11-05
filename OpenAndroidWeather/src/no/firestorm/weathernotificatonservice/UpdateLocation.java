@@ -34,7 +34,7 @@ import android.os.Bundle;
  * 
  */
 public class UpdateLocation implements LocationListener {
-	private Location mLocation;
+	private Location mLocation = null;
 	private UpdateLocationListener mListener;
 	private Context mContext;
 
@@ -47,12 +47,16 @@ public class UpdateLocation implements LocationListener {
 		return mLocation;
 	}
 
+	public boolean hasLocation() {
+		return mLocation != null;
+	}
+	
 	@Override
 	public void onLocationChanged(Location location) {
 		mLocation = location;
 
 		if (mListener.isAccurateEnough(location)) {
-			stop();
+			this.stop();
 			mListener.locationUpdated(location);
 		}
 

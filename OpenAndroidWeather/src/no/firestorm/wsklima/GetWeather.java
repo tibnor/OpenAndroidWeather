@@ -60,9 +60,13 @@ public class GetWeather implements UpdateLocationListener {
 	 * the object and can be found by calling getStation()
 	 * 
 	 * @return Weather temperature
-	 * @throws NetworkErrorException if it can't connect to the web service
-	 * @throws NoLocationException if it can't get a location
-	 * @throws HttpException if it get response from a webserver but it is corrupted (e.g., login page of public wlan)
+	 * @throws NetworkErrorException
+	 *             if it can't connect to the web service
+	 * @throws NoLocationException
+	 *             if it can't get a location
+	 * @throws HttpException
+	 *             if it get response from a webserver but it is corrupted
+	 *             (e.g., login page of public wlan)
 	 */
 	public WeatherElement getWeatherElement() throws NetworkErrorException,
 			NoLocationException, HttpException {
@@ -88,11 +92,11 @@ public class GetWeather implements UpdateLocationListener {
 			throws NetworkErrorException, HttpException {
 		if (mWeather == null) {
 			mWeather = mProxy.getTemperatureNow(station.getId(), mContext);
-			if (mWeather == null) 
+			if (mWeather == null)
 				return null;
 			mWeather.setStation(station);
 		}
-		
+
 		return mWeather;
 
 	}
@@ -108,7 +112,6 @@ public class GetWeather implements UpdateLocationListener {
 			mLocation = loc;
 			return;
 		}
-		
 
 		// Find location provider
 		final LocationManager locMan = (LocationManager) mContext
@@ -116,41 +119,37 @@ public class GetWeather implements UpdateLocationListener {
 		final Criteria criteria = new Criteria();
 		criteria.setPowerRequirement(Criteria.POWER_LOW);
 		final String provider = locMan.getBestProvider(criteria, true);
-		
 
 		if (provider != null) {
 			// Register provider
 			UpdateLocation getLocation = new UpdateLocation(this, mContext);
 			locMan.requestLocationUpdates(provider, 0, 0, getLocation,
 					Looper.getMainLooper());
-			try{
-				locMan.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 0, 0, getLocation,
-					Looper.getMainLooper());
-			} catch (IllegalArgumentException e){
+			try {
+				locMan.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER,
+						0, 0, getLocation, Looper.getMainLooper());
+			} catch (IllegalArgumentException e) {
 				// if passive provider does not exist.
-			};
+			}
 
 			// Wait for the updating of station to complete
 			synchronized (this) {
 				try {
-					this.wait(2 * 60 * 1000);
-				} catch (final InterruptedException e) {
-					// If it did not get a good enough accuracy within 2
-					// minutes, use the latest one
-					getLocation.stop();
+					this.wait(60 * 1000);
 					loc = getLocation.getLocation();
-					if (loc == null) {
-						throw new NoLocationException(null);
-					} else {
-						mLocation = loc;
+				} catch (final InterruptedException e) {
+					// If it did not get a good enough accuracy within 1
+					// minute, use the latest one or last location from any provider.
+					getLocation.stop();
+					if (getLocation.hasLocation()) {
+						loc = getLocation.getLocation();
 					}
 				}
 			}
-			
-			loc = getLocation.getLocation();
-			if (loc == null) {
+
+			if (loc == null)
 				throw new NoLocationException(null);
-			} else 
+			else
 				mLocation = loc;
 
 		} else
@@ -174,19 +173,19 @@ public class GetWeather implements UpdateLocationListener {
 			Location loc = locman.getLastKnownLocation(p);
 			if (loc != null) {
 				final long age = System.currentTimeMillis() - loc.getTime();
-				if (age < LOCATION_MAX_AGE && isAccurateEnough(loc) && age >0){
+				if (age < LOCATION_MAX_AGE && isAccurateEnough(loc) && age > 0) {
 					return loc;
 				}
 			}
 		}
-		
+
 		return null;
 	}
 
 	public boolean isAccurateEnough(Location location) {
 
 		// Check if location is within accuracy demand
-		if (!location.hasAccuracy()){
+		if (!location.hasAccuracy()) {
 			return true;
 		} else if (location.getAccuracy() < accuracyDemand) {
 			// update accuracy demand
