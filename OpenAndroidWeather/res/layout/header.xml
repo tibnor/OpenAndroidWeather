@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="fill_parent" style="@style/TitleBar"
-	android:layout_height="wrap_content">
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/TitleBar"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:baselineAligned="false" >
+
 	<ImageView android:layout_height="wrap_content" android:id="@+id/imageView1"
 		android:layout_gravity="center" android:src="@drawable/icon"
 		android:layout_width="wrap_content" android:layout_margin="4dip"></ImageView>
@@ -9,11 +14,15 @@
 		android:text="@string/app_name" android:layout_width="wrap_content"></TextView>
 
 	<View style="@style/TitleBarSpring"></View>
-	<ProgressBar android:id="@+id/title_refresh_progress"
-		android:visibility="gone" style="@style/TitleBarProgressIndicator"></ProgressBar>
 	<ImageView style="@style/TitleBarSeparator" />
+
+	<ProgressBar
+	    android:id="@+id/progressBar" android:layout_gravity="center"
+	    android:layout_width="wrap_content" android:visibility="gone" 
+	    android:layout_height="match_parent" android:layout_margin="4dip"/>
 	<ImageButton style="@style/TitleBarAction"
-		android:contentDescription="Update" android:src="@drawable/ic_popup_sync"
-		android:onClick="onAddClick" android:id="@+id/get_weather"/>
+		android:contentDescription="Update"
+		android:src="@drawable/ic_popup_sync"
+		android:id="@+id/get_weather" />
 </LinearLayout>
 

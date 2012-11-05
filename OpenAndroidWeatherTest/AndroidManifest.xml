@@ -9,7 +9,7 @@
 		<uses-library android:name="android.test.runner" />
     
 </application>
-	<uses-sdk android:minSdkVersion="3" />
-	<instrumentation android:targetPackage="no.openandroidweather"
+	<uses-sdk android:minSdkVersion="15" />
+	<instrumentation android:targetPackage="no.firestorm"
 		android:name="android.test.InstrumentationTestRunner" />
 </manifest> 

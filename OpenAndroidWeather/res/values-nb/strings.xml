@@ -44,4 +44,18 @@ Hvis du liker programmet er godt og ønsker videre utvikling vær snill ådoner!
 	<string name="rate">Gi omtale</string>
 	<string name="rate_full">Gi omtale i Android Market</string>
 		<string name="only_download_on_wifi">Last bare ned via WiFi</string>
+			<string name="precipitation">Nedbør</string>
+	<string name="max_wind">Maks vindhastighet, m/s (kast)</string>
+	<string name="wind">Vindhastighet, m/s (kast)</string>
+	<string name="wind_direction">Vindrettning</string>
+	<string name="minmaxtemp">Min/maks temperatur (døgn)</string>
+	<string name="updated">Oppdatert</string>
+	<string name="station">Værstasjon</string>
+	<string name="retry">Prøv igjen</string>
+	<string name="temperature">Temperatur</string>
+	<string name="app_name">Norske Temperaturer</string>
+	<string name="error_download_long">Feil: klarte ikke å koble til severen. Vennligst sjekk at du er koblet til internett.</string>
+	<string name="error_server_long">Feil: feil på serveren. Vennligst prøv igjen senere.</string>
+	<string name="error_location_long">Feil: klarte ikke å finne din posisjon. Vennligst prøv igjen senere eller velg en stasjon manuelt.</string>
+	
 </resources>

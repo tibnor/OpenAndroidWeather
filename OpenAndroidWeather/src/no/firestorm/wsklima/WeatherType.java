@@ -24,5 +24,27 @@ package no.firestorm.wsklima;
  */
 public enum WeatherType {
 	/** Temperature measured in Celsius */
-	temperature
+	temperature,
+	/** Max temperature measured in Celsius during day*/
+	temperatureMax,
+	/** Min temperature measured in Celsius during day*/
+	temperatureMin,
+	/** Wind speed in m/s */
+	windSpeed,
+	/** Wind direction in degrees */
+	windDirection,
+	/** Wind gust speed in m/s */
+	windGustSpeed,
+	/** Max wind gust speed in m/s during day*/
+	windGustSpeedMax,
+	/** Max wind speed in m/s during day*/
+	windSpeedMax,
+	/** Precipitation (07-07) in mm */
+	precipitation,
+	/** Precipitation last hour in mm */
+	precipitationLastHour,
+	/** Precipitation last 12 hours in mm */
+	precipitationLast12h,
+	/** Precipitation in bucket mm */
+	precipitationInBucket,
 }

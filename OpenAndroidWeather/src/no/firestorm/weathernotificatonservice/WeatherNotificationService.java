@@ -26,6 +26,7 @@ import no.firestorm.R;
 import no.firestorm.misc.CheckInternetStatus;
 import no.firestorm.misc.TempToDrawable;
 import no.firestorm.ui.stationpicker.Station;
+import no.firestorm.ui.weatherreport.WeatherReportActivity;
 import no.firestorm.wsklima.GetWeather;
 import no.firestorm.wsklima.WeatherElement;
 import no.firestorm.wsklima.WsKlimaProxy;
@@ -34,6 +35,7 @@ import no.firestorm.wsklima.exception.NoLocationException;
 import org.apache.http.HttpException;
 
 import android.accounts.NetworkErrorException;
+import android.annotation.TargetApi;
 import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.Notification;
@@ -81,6 +83,29 @@ public class WeatherNotificationService extends IntentService {
 	 * service update the alarm for updating the notification.
 	 */
 	public static final int INTENT_EXTRA_ACTION_UPDATE_ALARM = 2;
+
+	/**
+	 * If INTENT_EXTRA_ACTION parameter in startup intent is set to this, the
+	 * service set the notification.
+	 */
+	public static final int INTENT_EXTRA_ACTION_SET_NOTIFICATION = 3;
+
+	/**
+	 * Station name for intent extra when INTENT_EXTRA_ACTION_SET_NOTIFICATION,
+	 * string
+	 */
+	public static final String INTENT_EXTRA_INFO_STATION_NAME = "STATION";
+
+	/**
+	 * Temperature for intent extra when INTENT_EXTRA_ACTION_SET_NOTIFICATION,
+	 * string
+	 */
+	public static final String INTENT_EXTRA_INFO_TEMPERATURE = "TEMPERATURE";
+
+	/**
+	 * Time for intent extra when INTENT_EXTRA_ACTION_SET_NOTIFICATION, long
+	 */
+	public static final String INTENT_EXTRA_INFO_TIME = "Time";
 
 	/**
 	 * 
@@ -136,14 +161,22 @@ public class WeatherNotificationService extends IntentService {
 		try {
 			if (isUsingClosestStation) {
 				GetWeather getWeather = new GetWeather(this);
-				weather  = getWeather.getWeatherElement();
-				Station station = getWeather.getStation();
+				weather = getWeather.getWeatherElement();
+				if (weather == null)
+					throw new NetworkErrorException();
+				Station station = weather.getStation();
 				WeatherNotificationSettings.setStation(context,
 						station.getName(), station.getId());
 			} else {
-				int stationId = WeatherNotificationSettings.getStationId(context);
+				int stationId = WeatherNotificationSettings
+						.getStationId(context);
+				String stationName = WeatherNotificationSettings.getStationName(context);
+				Station station = new Station(stationName, stationId, 0, 0, null, true);
 				WsKlimaProxy proxy = new WsKlimaProxy();
 				weather = proxy.getTemperatureNow(stationId, context);
+				if (weather == null)
+					throw new NetworkErrorException();
+				weather.setStation(station);
 			}
 
 		} catch (final NetworkErrorException e) {
@@ -152,12 +185,14 @@ public class WeatherNotificationService extends IntentService {
 			throw e;
 		}
 
-		
 		// Save if data
-		if (weather != null)
+		if (weather != null){
 			WeatherNotificationSettings.setLastTemperature(context,
-					weather.getValue(), weather.getDate());
-		return weather;
+					weather.getValue(), weather.getTime());
+			return weather;
+		} else {
+			throw new NetworkErrorException();
+		}
 	}
 
 	/**
@@ -169,11 +204,13 @@ public class WeatherNotificationService extends IntentService {
 	 */
 	private void makeNotification(Exception e) {
 		int tickerIcon, contentIcon;
-		CharSequence tickerText, contentTitle, contentText, contentTime;
+		CharSequence tickerText, contentTitle, contentText;
+		long contentTime;
 		final DateFormat df = DateFormat.getTimeInstance(DateFormat.SHORT);
 		contentIcon = android.R.drawable.stat_notify_error;
 		final Context context = WeatherNotificationService.this;
-		contentTime = df.format(new Date());
+		contentTime = System.currentTimeMillis();
+		;
 		long when = (new Date()).getTime();
 
 		if (e instanceof NoLocationException) {
@@ -235,23 +272,30 @@ public class WeatherNotificationService extends IntentService {
 	 *            Time shown in notification
 	 * @param when2
 	 */
+	@TargetApi(11)
 	private void makeNotification(int tickerIcon, int contentIcon,
 			CharSequence tickerText, CharSequence contentTitle,
-			CharSequence contentText, CharSequence contentTime, long when2,
-			Float temperature) {
+			CharSequence contentText, long time, long when2, Float temperature) {
+		final DateFormat df = DateFormat.getTimeInstance(DateFormat.SHORT);
+		CharSequence contentTime = df.format(time);
 		final long when = System.currentTimeMillis();
 		// Make notification
 		Notification notification = null;
 
 		final Intent notificationIntent = new Intent(
-				WeatherNotificationService.this,
-				WeatherNotificationService.class);
-		final PendingIntent contentIntent = PendingIntent.getService(
+				WeatherNotificationService.this, WeatherReportActivity.class);
+		final PendingIntent contentIntent = PendingIntent.getActivity(
 				WeatherNotificationService.this, 0, notificationIntent, 0);
+		// final Intent notificationIntent = new Intent(
+		// WeatherNotificationService.this,
+		// WeatherNotificationService.class);
+		// final PendingIntent contentIntent = PendingIntent.getService(
+		// WeatherNotificationService.this, 0, notificationIntent, 0);
 
 		// Check if Notification.Builder exists (11+)
 		if (Build.VERSION.SDK_INT >= 11) {
 			// Honeycomb ++
+			
 			NotificationBuilder builder = new NotificationBuilder(this);
 			builder.setAutoCancel(false);
 			builder.setContentTitle(contentTitle);
@@ -295,52 +339,60 @@ public class WeatherNotificationService extends IntentService {
 	 *            data will be shown
 	 */
 	private void makeNotification(WeatherElement weather) {
-		int tickerIcon, contentIcon;
-		CharSequence tickerText, contentTitle, contentText, contentTime;
-		final DateFormat df = DateFormat.getTimeInstance(DateFormat.SHORT);
-		long when;
-		Float temperatureF = null;
+
 		if (weather != null) {
 			// Has data
-			final WeatherElement temperature = weather;
+			final String temperature = weather.getValue();
 			// Find name
-			final String stationName = WeatherNotificationSettings
-					.getStationName(WeatherNotificationService.this);
+			final String stationName = weather.getStation().getName();
+			final Long time = weather.getTime();
 
-			// Find icon
-			tickerIcon = TempToDrawable.getDrawableFromTemp(Float
-					.valueOf(temperature.getValue()));
-			contentIcon = tickerIcon;
-			// Set title
-			tickerText = stationName;
-			contentTitle = stationName;
-			contentTime = df.format(temperature.getDate());
-			when = temperature.getDate().getTime();
-
-			final Context context = WeatherNotificationService.this;
-			temperatureF = new Float(temperature.getValue());
-			contentText = String.format("%s %.1f °C", context
-					.getString(R.string.temperatur_),
-					new Float(temperature.getValue()));
-
-			updateAlarm(weather);
+			makeNotification(temperature, stationName, time);
+			return;
 
 		} else {
+			int tickerIcon, contentIcon;
+			CharSequence tickerText, contentTitle, contentText;
+			long when, contentTime;
+			Float temperatureF = null;
 			// No data
 			contentIcon = android.R.drawable.stat_notify_error;
 			final Context context = WeatherNotificationService.this;
-			contentTime = df.format(new Date());
+			contentTime = System.currentTimeMillis();
 			when = (new Date()).getTime();
 			tickerText = context.getText(R.string.no_available_data);
 			contentTitle = context.getText(R.string.no_available_data);
 			contentText = context.getString(R.string.try_another_station);
 			tickerIcon = android.R.drawable.stat_notify_error;
-
+			makeNotification(tickerIcon, contentIcon, tickerText, contentTitle,
+					contentText, contentTime, when, temperatureF);
 		}
 
+	}
+
+	private void makeNotification(final String temperature,
+			final String stationName, final Long time) {
+		int tickerIcon, contentIcon;
+		CharSequence tickerText, contentTitle, contentText;
+		long when, contentTime;
+		Float temperatureF = null;
+		// Find icon
+		temperatureF = new Float(temperature);
+		tickerIcon = TempToDrawable.getDrawableFromTemp(temperatureF);
+		contentIcon = tickerIcon;
+		// Set title
+		tickerText = stationName;
+		contentTitle = stationName;
+		contentTime = time;
+		when = time;
+
+		final Context context = WeatherNotificationService.this;
+		contentText = String.format("%s %.1f °C",
+				context.getString(R.string.temperatur_), temperatureF);
+
+		updateAlarm(time);
 		makeNotification(tickerIcon, contentIcon, tickerText, contentTitle,
 				contentText, contentTime, when, temperatureF);
-
 	}
 
 	@Override
@@ -352,6 +404,14 @@ public class WeatherNotificationService extends IntentService {
 			break;
 		case INTENT_EXTRA_ACTION_UPDATE_ALARM:
 			updateAlarm();
+			break;
+		case INTENT_EXTRA_ACTION_SET_NOTIFICATION:
+			long time = intent.getLongExtra(INTENT_EXTRA_INFO_TIME, 0l);
+			String station = intent
+					.getStringExtra(INTENT_EXTRA_INFO_STATION_NAME);
+			String temperature = intent
+					.getStringExtra(INTENT_EXTRA_INFO_TEMPERATURE);
+			makeNotification(temperature, station, time);
 			break;
 		default:
 			showTemp();
@@ -438,7 +498,7 @@ public class WeatherNotificationService extends IntentService {
 			setAlarm(updateRate);
 	}
 
-	private void updateAlarm(WeatherElement weather) {
+	private void updateAlarm(long updateTime) {
 		final int updateRate = WeatherNotificationSettings.getUpdateRate(this);
 
 		if (updateRate <= 0) {
@@ -447,7 +507,7 @@ public class WeatherNotificationService extends IntentService {
 		} else {
 			// Check if weather element is more than 1 hour old
 			long tooOldTime = (new Date()).getTime() - 1000 * 3600;
-			if (weather.getTime() > tooOldTime)
+			if (updateTime > tooOldTime)
 				setAlarm(updateRate);
 			else
 				setShortAlarm();

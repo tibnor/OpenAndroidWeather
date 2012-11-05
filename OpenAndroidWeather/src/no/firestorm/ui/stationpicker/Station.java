@@ -24,6 +24,7 @@ import java.util.HashMap;
 import no.firestorm.wsklima.database.WsKlimaDataBaseHelper;
 import android.content.Context;
 import android.location.Location;
+import android.os.Bundle;
 
 /**
  * Weather station, with name, id and position
@@ -31,13 +32,15 @@ import android.location.Location;
 public class Station extends HashMap<String, String> implements
 		Comparable<Station> {
 	private static final long serialVersionUID = -1194829286083817084L;
-	/** Key in map for station name */
+	/** Key in map for station name, for listview*/
 	public static final String NAME = "name";
-	/** Key in map for distance between current position and station */
+	/** Key in map for distance between current position and station, for listview */
 	public static final String DISTANCE = "distance";
-	/** Key in map for direction from current position to station */
+	/** Key in map for direction from current position to station, for listview */
 	public static final String DIRECTION = "direction";
 
+	
+	
 	private String name;
 	private int id;
 	private float distanceToCurrentPosition;
@@ -80,6 +83,10 @@ public class Station extends HashMap<String, String> implements
 			put(DIRECTION, "");
 			put(DISTANCE, "");
 		}
+	}
+
+	public Station(Bundle extras) {
+	
 	}
 
 	/*

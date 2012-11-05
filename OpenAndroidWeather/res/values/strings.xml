@@ -6,6 +6,9 @@
 	<string name="Update_rate">Update rate:</string>
 	<string name="app_name">Norske Temperaturer</string>
 	<string name="download_error">Error: download error</string>
+	<string name="error_download_long">Error: could not connect to server. Please check your internet connection</string>
+	<string name="error_server_long">Error: internal server error. Please try again later.</string>
+	<string name="error_location_long">Error: could not find your position. Please try again later or select a station manually.</string>
 	<string name="press_for_update">Press here to try again</string>
 	<string name="temperatur_">Temperature: </string>
 	<string name="_tid_"> Time: </string>
@@ -44,4 +47,13 @@ If you like the app and want further development please donate!"""</string>
 	<string name="rate_full">Rate the app in Android Market</string>
 	<string name="location_error">Error: Could not find your location</string>
 	<string name="only_download_on_wifi">Only download on Wifi</string>
+	<string name="precipitation">Precipitation</string>
+	<string name="max_wind">Max wind speed, m/s (gust)</string>
+	<string name="wind">Wind speed, m/s (gust)</string>
+	<string name="wind_direction">Wind direction</string>
+	<string name="minmaxtemp">Min/max temperature (today)</string>
+	<string name="updated">Updated</string>
+	<string name="station">Station</string>
+	<string name="retry">Try again</string>
+	<string name="temperature">Temperature</string>
 </resources>

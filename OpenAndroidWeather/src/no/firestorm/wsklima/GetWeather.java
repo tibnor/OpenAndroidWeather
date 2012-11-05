@@ -45,6 +45,7 @@ public class GetWeather implements UpdateLocationListener {
 	private WsKlimaProxy mProxy;
 	private WsKlimaDataBaseHelper mDb;
 	private Station mStation = null;
+	private WeatherElement mWeather = null;
 
 	public GetWeather(Context context) {
 		mContext = context;
@@ -59,9 +60,13 @@ public class GetWeather implements UpdateLocationListener {
 	 * the object and can be found by calling getStation()
 	 * 
 	 * @return Weather temperature
-	 * @throws NetworkErrorException if it can't connect to the web service
-	 * @throws NoLocationException if it can't get a location
-	 * @throws HttpException if it get response from a webserver but it is corrupted (e.g., login page of public wlan)
+	 * @throws NetworkErrorException
+	 *             if it can't connect to the web service
+	 * @throws NoLocationException
+	 *             if it can't get a location
+	 * @throws HttpException
+	 *             if it get response from a webserver but it is corrupted
+	 *             (e.g., login page of public wlan)
 	 */
 	public WeatherElement getWeatherElement() throws NetworkErrorException,
 			NoLocationException, HttpException {
@@ -85,7 +90,14 @@ public class GetWeather implements UpdateLocationListener {
 	// Get weather from wsklimaproxy
 	private WeatherElement getWeather(Station station)
 			throws NetworkErrorException, HttpException {
-		return mProxy.getTemperatureNow(station.getId(), mContext);
+		if (mWeather == null) {
+			mWeather = mProxy.getTemperatureNow(station.getId(), mContext);
+			if (mWeather == null)
+				return null;
+			mWeather.setStation(station);
+		}
+
+		return mWeather;
 
 	}
 
@@ -100,7 +112,6 @@ public class GetWeather implements UpdateLocationListener {
 			mLocation = loc;
 			return;
 		}
-		
 
 		// Find location provider
 		final LocationManager locMan = (LocationManager) mContext
@@ -114,35 +125,35 @@ public class GetWeather implements UpdateLocationListener {
 			UpdateLocation getLocation = new UpdateLocation(this, mContext);
 			locMan.requestLocationUpdates(provider, 0, 0, getLocation,
 					Looper.getMainLooper());
+			try {
+				locMan.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER,
+						0, 0, getLocation, Looper.getMainLooper());
+			} catch (IllegalArgumentException e) {
+				// if passive provider does not exist.
+			}
 
 			// Wait for the updating of station to complete
 			synchronized (this) {
 				try {
-					this.wait(2 * 60 * 1000);
-				} catch (final InterruptedException e) {
-					// If it did not get a good enough accuracy within 2
-					// minutes, use the latest one
-					getLocation.stop();
+					this.wait(60 * 1000);
 					loc = getLocation.getLocation();
-					if (loc == null) {
-						throw new NoLocationException(null);
-					} else {
-						mLocation = loc;
+				} catch (final InterruptedException e) {
+					// If it did not get a good enough accuracy within 1
+					// minute, use the latest one or last location from any provider.
+					getLocation.stop();
+					if (getLocation.hasLocation()) {
+						loc = getLocation.getLocation();
 					}
 				}
 			}
 
+			if (loc == null)
+				throw new NoLocationException(null);
+			else
+				mLocation = loc;
+
 		} else
 			throw new NoLocationException(null);
-	}
-
-	/**
-	 * Return station for weather, must be called after getWeatherElement
-	 * 
-	 * @return station
-	 */
-	public Station getStation() {
-		return mStation;
 	}
 
 	@Override
@@ -159,21 +170,22 @@ public class GetWeather implements UpdateLocationListener {
 		final List<String> providers = locman.getAllProviders();
 
 		for (final String p : providers) {
-			final Location loc = locman.getLastKnownLocation(p);
+			Location loc = locman.getLastKnownLocation(p);
 			if (loc != null) {
 				final long age = System.currentTimeMillis() - loc.getTime();
-				if (age < LOCATION_MAX_AGE && isAccurateEnough(loc))
+				if (age < LOCATION_MAX_AGE && isAccurateEnough(loc) && age > 0) {
 					return loc;
+				}
 			}
 		}
-		return null;
 
+		return null;
 	}
 
 	public boolean isAccurateEnough(Location location) {
 
 		// Check if location is within accuracy demand
-		if (!location.hasAccuracy()){
+		if (!location.hasAccuracy()) {
 			return true;
 		} else if (location.getAccuracy() < accuracyDemand) {
 			// update accuracy demand

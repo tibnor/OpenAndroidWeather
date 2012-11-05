@@ -26,6 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.text.format.Time;
 
 public class WeatherNotificationSettings {
 	static final String PREFS_NAME = "no.WsKlimaProxy";
@@ -164,10 +165,10 @@ public class WeatherNotificationSettings {
 	 * @param value
 	 * @param time
 	 */
-	static void setLastTemperature(Context context, String value, Date time) {
+	static void setLastTemperature(Context context, String value, Long time) {
 		final Editor settings = context.getSharedPreferences(PREFS_NAME, 0)
 				.edit();
-		settings.putLong(PREFS_LAST_UPDATE_TIME_KEY, time.getTime());
+		settings.putLong(PREFS_LAST_UPDATE_TIME_KEY, time);
 		settings.putString(PREFS_LAST_WEATHER_KEY, value);
 		settings.commit();
 	}
