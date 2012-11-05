@@ -54,8 +54,7 @@
         <item name="android:textColor">?android:attr/textColorPrimaryInverse</item>
     </style>
 
-    <style name="newTextAppearance" parent="@android:style/TextAppearance">
-    </style>
+    <style name="newTextAppearance" parent="@android:style/TextAppearance"></style>
 
     <style name="newTextAppearance.StatusBar">
         <item name="android:textAppearance">?android:attr/textAppearanceSmall</item>
@@ -67,11 +66,10 @@
         <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="newTextAppearance.StatusBar.Icon">
-    </style>
+    <style name="newTextAppearance.StatusBar.Icon"></style>
 
     <style name="newTextAppearance.StatusBar.EventContent">
-                <item name="android:textColor">?android:attr/textColorSecondary</item>
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
         <item name="android:textSize">12sp</item>
     </style>
 
@@ -80,8 +78,8 @@
         <item name="android:textSize">16sp</item>
         <item name="android:textStyle">bold</item>
     </style>
-    
-   <style name="newTextAppearance.StatusBar.EventContent.Time">
+
+    <style name="newTextAppearance.StatusBar.EventContent.Time">
         <!-- inherit all -->
     </style>
 
@@ -199,6 +197,27 @@
         <item name="android:layout_marginLeft">4dip</item>
         <item name="android:layout_marginRight">4dip</item>
         <item name="android:textSize">20sp</item>
+    </style>
+
+    <style name="weatherreportitem">
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">20sp</item>
+    </style>
+
+    <style name="weatherreportitem.title">
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="weatherreportitem.value">
+        <item name="android:textSize">20sp</item>
+    </style>
+    
+    <style name="weatherreportitem.title.small">
+        <item name="android:textSize">10sp</item>
+    </style>
+
+    <style name="weatherreportitem.value.small">
+        <item name="android:textSize">15sp</item>
     </style>
 
 </resources>

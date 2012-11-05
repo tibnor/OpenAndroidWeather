@@ -7,6 +7,7 @@ from xml.dom.minidom import parse
 import urllib
 import json
 import sys 
+from gettypes import Station
 reload(sys) 
 sys.setdefaultencoding( "utf-8" ) 
 
@@ -34,7 +35,7 @@ def lowerName(name):
     return "".join(name)
 
 # Find blacklist
-file = urllib.urlopen("http://22.wsklimaproxy.appspot.com/blacklist")
+file = urllib.urlopen("http://wsklimaproxy.appspot.com/blacklist")
 data = json.load(file)
 blacklist = set(data.get('station'))
 
@@ -56,7 +57,7 @@ for s in stations:
         name = s.getElementsByTagName('name')[0].firstChild.data
         name = lowerName(name)
         lat = s.getElementsByTagName('latDec')[0].firstChild.data
-        long = s.getElementsByTagName('lonDec')[0].firstChild.data
-        string = 'insert into stations values (' + nr + ',\'' + name + '\',' + lat + ',' + long + ',1);\n'
+        lon = s.getElementsByTagName('lonDec')[0].firstChild.data
+        string = 'insert into stations values (' + nr + ',\'' + name + '\',' + lat + ',' + lon + ',1);\n'
         out.write(string)
 

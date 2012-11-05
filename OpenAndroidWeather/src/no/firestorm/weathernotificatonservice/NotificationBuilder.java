@@ -20,6 +20,7 @@
 package no.firestorm.weathernotificatonservice;
 
 import no.firestorm.R;
+import android.annotation.TargetApi;
 import android.app.Notification;
 import android.content.Context;
 import android.widget.RemoteViews;
@@ -28,6 +29,7 @@ import android.widget.RemoteViews;
  * Builder class for {@link Notification} objects. Allows easier control over
  * all the flags, as well as help constructing the typical notification layouts.
  */
+@TargetApi(11)
 public class NotificationBuilder extends Notification.Builder {
 	Context mContext;
 

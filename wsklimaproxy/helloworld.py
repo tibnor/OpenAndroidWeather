@@ -9,7 +9,9 @@ class MainPage(webapp.RequestHandler):
     
     def get(self):
         stationId = int(self.request.get("st"))
-        status = int(memcache.get("tempStatus:"+str(stationId)))
+        status = memcache.get("tempStatus:"+str(stationId))
+        if status is not None:
+            status = int(status)
         text = memcache.get("tempJSON:"+str(stationId))
         if text is None or status is None:
             station = WeatherStation.get_or_insert(str(stationId), id=stationId)

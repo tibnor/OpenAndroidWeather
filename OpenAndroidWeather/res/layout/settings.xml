@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:ads="http://schemas.android.com/apk/lib/com.google.ads"
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
@@ -21,6 +20,10 @@
 		android:gravity="right" android:layout_height="wrap_content"></TextView>
 	<Button android:layout_width="fill_parent" android:text="@string/choose_station"
 		android:id="@+id/choose_station" android:layout_height="wrap_content"></Button>
+
+	<Button android:layout_width="fill_parent" android:text="Weather report"
+		android:id="@+id/weather_report" android:layout_height="wrap_content"></Button>
+
 	<TextView android:layout_width="wrap_content"
 		android:textSize="20sp" android:text="@string/Update_rate"
 		android:layout_margin="4dip" android:layout_height="wrap_content"></TextView>
@@ -32,21 +35,5 @@
 	<Button android:text="@string/rate_full" android:layout_width="fill_parent"
 		android:id="@+id/rate" android:layout_height="wrap_content"></Button>
 </LinearLayout>
-
-  <com.google.ads.AdView
-      android:id="@+id/adView"
-      style="@style/Theme.Tasks"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_alignParentBottom="true"
-      android:layout_gravity="bottom|center_horizontal"
-      ads:adSize="BANNER"
-      ads:adUnitId="a14ef8e2d06d8c7"
-      android:gravity="bottom"
-      ads:loadAdOnCreate="true"
-      ads:backgroundColor="#FFFFFF" 
-ads:primaryTextColor="#000000" 
-ads:secondaryTextColor="#333333"
-      ads:testDevices="TEST_EMULATOR" />
 
 </RelativeLayout>
