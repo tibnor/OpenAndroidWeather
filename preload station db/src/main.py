@@ -57,7 +57,7 @@ for s in stations:
         name = s.getElementsByTagName('name')[0].firstChild.data
         name = lowerName(name)
         lat = s.getElementsByTagName('latDec')[0].firstChild.data
-        long = s.getElementsByTagName('lonDec')[0].firstChild.data
-        string = 'insert into stations values (' + nr + ',\'' + name + '\',' + lat + ',' + long + ',1);\n'
+        lon = s.getElementsByTagName('lonDec')[0].firstChild.data
+        string = 'insert into stations values (' + nr + ',\'' + name + '\',' + lat + ',' + lon + ',1);\n'
         out.write(string)
 
